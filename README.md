@@ -1,3 +1,3 @@
-# tiempo
+# Tiempo
 
-Información meteorologica
+Información meteorológica
