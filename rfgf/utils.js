@@ -207,7 +207,7 @@ function add_back(pagina) {
 		class: "back_button",
 		id: "field",
 		value: 'Meteo',
-		onclick: "openUrl('/')"
+		onclick: "openUrl('../')"
 	});
 	$('#results').append(boton_meteo);
 }
