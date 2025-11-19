@@ -36,10 +36,14 @@ function CambiaVista(e) {
 function openInNewTab(url) {
 	window.open(url, '_blank').focus();
 }
+
 function openUrl(url) {
+	const queryString = window.location.search.substring(1);
+	if (queryString) {
+		url += '?' + queryString;
+	}
 	window.open(url, '_self').focus();
 }
-
 function CambiaVistaUpdate(pagina) {
 	if (!pagina || !(pagina == 'praias' || pagina == 'poboacions')) {
 		pagina = 'praias'

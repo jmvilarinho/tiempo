@@ -207,7 +207,7 @@ function add_back(pagina) {
 		class: "back_button",
 		id: "field",
 		value: 'Meteo',
-		onclick: "openUrl('../')"
+		onclick: "openUrl('/')"
 	});
 	$('#results').append(boton_meteo);
 }
@@ -488,6 +488,10 @@ function openInNewTab(url) {
 }
 
 function openUrl(url) {
+	const queryString = window.location.search.substring(1);
+	if (queryString) {
+		url += '?' + queryString;
+	}
 	window.open(url, '_self').focus();
 }
 
