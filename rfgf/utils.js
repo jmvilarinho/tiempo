@@ -377,7 +377,7 @@ function getWeekNumber(date) {
 	return weekNo;
 }
 
-function isSameWeek(date1, date2) {
+function isSameWeek_old(date1, date2) {
 	const year1 = date1.getFullYear();
 	const year2 = date2.getFullYear();
 
@@ -386,6 +386,30 @@ function isSameWeek(date1, date2) {
 
 	return year1 === year2 && week1 === week2;
 }
+
+function getISOWeekYearAndWeek(date) {
+	const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+
+	// Thursday determines the ISO week-year
+	const dayNum = d.getUTCDay() || 7;
+	d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+
+	const weekYear = d.getUTCFullYear();
+
+	const yearStart = new Date(Date.UTC(weekYear, 0, 1));
+	const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+
+	return { weekYear, week };
+}
+
+function isSameWeek(date1, date2) {
+	const w1 = getISOWeekYearAndWeek(date1);
+	const w2 = getISOWeekYearAndWeek(date2);
+
+	return w1.weekYear === w2.weekYear && w1.week === w2.week;
+}
+
+
 
 // showing loading
 function displayLoading() {
