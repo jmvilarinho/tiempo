@@ -161,6 +161,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		ultima = item.ultima_jornada_jugada;
 		cont = 0;
 		previous = undefined;
+		tables_id = [];
 		jQuery.each(item.partidos, function (index, item2) {
 			cont += 1
 			var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
@@ -172,11 +173,13 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 					$('#results').append('<hr>');
 				}
 				mostrado = true;
-				show_portada_data('Xornada actual (#' + item2.nombre_jornada + ')', 'main_table_1', item2, item.cod_competicion, item.cod_grupo, data.nombre_equipo, cod_equipo, rfef);
+				show_portada_data('Xornada actual (#' + item2.nombre_jornada + ')', 'main_table_1_'+cont, item2, item.cod_competicion, item.cod_grupo, data.nombre_equipo, cod_equipo, rfef);
+				tables_id.push('main_table_1_'+cont);
 
 				if (previous) {
 					$('#results').append('<br>');
-					show_portada_data('Xornada anterior (#' + previous.nombre_jornada + ')', 'main_table_2', previous, undefined, undefined, undefined, cod_equipo, rfef);
+					show_portada_data('Xornada anterior (#' + previous.nombre_jornada + ')', 'main_table_2_'+cont, previous, undefined, undefined, undefined, cod_equipo, rfef);
+					tables_id.push('main_table_2_'+cont);
 				}
 				//return false;
 			}
@@ -184,7 +187,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		});
 	});
 
-	updatewitdh("main_table_1", "main_table_2");
+	updateWidth(...tables_id);
 
 	if (lineas == 0) {
 		var arrayLength = equipos.length;
@@ -289,6 +292,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 	}
 
 	if (item.goles_casa == "" && item.goles_fuera == "") {
+		span = 3;
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
 			+ data1

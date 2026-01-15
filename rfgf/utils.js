@@ -235,16 +235,27 @@ function color_goles(background, cod_equipo, codequipo_casa, codequipo_fuera, go
 	return color_resultado;
 }
 
-function updatewitdh(id_table_1, id_table_2) {
-	if ($("#" + id_table_2).length) {
-		if ($("#" + id_table_1).width() > $("#" + id_table_2).width())
-			maxWitdh = $("#" + id_table_1).width();
-		else
-			maxWitdh = $("#" + id_table_2).width();
+function updateWidth(...tableIds) {
+	let maxWidth = 0;
 
-		$("#" + id_table_1).css("width", maxWitdh + "px");
-		$("#" + id_table_2).css("width", maxWitdh + "px");
-	}
+	tableIds.forEach(id => {
+		const $el = $("#" + id);
+		if ($el.length) {
+			maxWidth = Math.max(maxWidth, $el.width());
+			console.log(`Width of #${id}: ${$el.width()}px`);
+		}
+	});
+
+	maxWidth += 20; // Adding some padding
+
+	tableIds.forEach(id => {
+		const $el = $("#" + id);
+		if ($el.length) {
+			$el.css("width", maxWidth + "px");
+			//document.getElementById(id).style.tableLayout = "fixed";
+			console.log(`Updated width of #${id} to: ${maxWidth}px`);
+		}
+	});
 }
 
 function getBackgroundColor(cont, isMy) {
