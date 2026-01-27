@@ -1,4 +1,4 @@
-function getPrevisionMunicipio(id, element) {
+function getPrevisionMunicipio(id, element, id_cofc = 0) {
 	const ms = Date.now();
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey + "&nocache=" + ms
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey;
@@ -15,7 +15,7 @@ function getPrevisionMunicipio(id, element) {
 			}
 			return JSON.parse(body);
 		})
-		.then(data => getPrevisionDatosMunicipio(data, element, id))
+		.then(data => getPrevisionDatosMunicipio(data, element, id, id_cofc))
 		.catch(error => {
 			console.error('Error:', error.message);
 			noPrevision(element, 0, error.message);
@@ -23,7 +23,7 @@ function getPrevisionMunicipio(id, element) {
 		});
 }
 
-function getPrevisionDatosMunicipio(data, element, id_municipio) {
+function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0) {
 	if (data['estado'] == 200) {
 		if ('error' in data && data['error'] != "") {
 			showError(data['error'], element);
@@ -34,7 +34,7 @@ function getPrevisionDatosMunicipio(data, element, id_municipio) {
 		}
 		if ("datos_json" in data) {
 			console.log("Datos completos para " + id_municipio);
-			createPrevisionMunicipio(data['datos_json'], element, id_municipio);
+			createPrevisionMunicipio(data['datos_json'], element, id_municipio, id_cofc);
 		} else {
 
 			console.log('Get prevision: ' + data['datos'])
@@ -48,13 +48,61 @@ function getPrevisionDatosMunicipio(data, element, id_municipio) {
 				.then(function (buffer) {
 					const decoder = new TextDecoder('iso-8859-1');
 					const text = decoder.decode(buffer);
-					createPrevisionMunicipio(JSON.parse(text), element, id_municipio);
+					createPrevisionMunicipio(JSON.parse(text), element, id_municipio, id_cofc);
 				});
 		}
 	}
 }
 
-async function createPrevisionMunicipio(data, element, id_municipio) {
+
+function loadFarmacia(id_cofc) {
+	fetch(proxyHostFarmacia + 'https://www.cofc.es/farmacia/index')
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			const div = document.getElementById('messageFarmacia-' + id_cofc);
+			div.style.display = 'block';
+			var data = data["datos_json"];
+			// --- filter by idPoblacion ---
+			const result = data.filter(item => item.idPoblacion === id_cofc);
+
+			if (result.length === 0) {
+				div.innerHTML = "<p>No hay farmacias en esta población.</p>";
+			} else {
+				let html = "<strong>Farmacia/s de guardia</strong><br>";
+				cont = 0
+				result.forEach(f => {
+					html += "<hr>";
+					html += `
+<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
+  <strong>${f.nombre}</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
+  </a>
+  Dirección: ${f.direccion}<br>
+  Horario: ${f.horario}<br>
+  Guardia: ${f.nombreGuardiaTipoTurno}<br>
+  Teléfono: ${f.telefono}<br>
+  Población: ${f.nombrePoblacion}
+        `;
+					cont += 1;
+				});
+				html += "";
+				div.innerHTML = html;
+			}
+
+
+
+		})
+		.catch(error => {
+			alert('Error fetching content: ' + error.message);
+		});
+}
+
+
+async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0) {
 	const now = new Date();
 	current_hour = now.getHours();
 
@@ -62,8 +110,13 @@ async function createPrevisionMunicipio(data, element, id_municipio) {
 	tabla += "<tr><th colspan=4>"
 		+ '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
-		+ "</a>"
-		+ "</th></tr>";
+		+ "</a>";
+	if (id_cofc != 0) {
+		tabla += "&nbsp;&nbsp;<img src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
+	}
+	tabla += "</th></tr>";
+	if (id_cofc != 0)
+		tabla += "<tr ><td  colspan=4 style=\"visibility: hidden; text-align: left;\"><div id=\"messageFarmacia-" + id_cofc + "\"></div></td></tr>";
 
 	var arrayLength = data[0]["prediccion"]["dia"].length;
 	maxItems = 3;
@@ -90,7 +143,7 @@ async function createPrevisionMunicipio(data, element, id_municipio) {
 			//tabla += municipioRow(datos, 5);
 			//tabla += municipioRow(datos, 6);
 		}
-		if (isTomorrow(datos["fecha"]) && cont < maxItems && (current_hour >= 12 || cont==1)) {
+		if (isTomorrow(datos["fecha"]) && cont < maxItems && (current_hour >= 12 || cont == 1)) {
 			var datos2 = data[0]["prediccion"]["dia"][i];
 
 			tabla += "<tr><th colspan=4>"

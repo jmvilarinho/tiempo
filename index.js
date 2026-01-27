@@ -357,6 +357,7 @@ function geoFindMe(divName) {
 // --------------------------------------------------------------------------------------------------
 
 const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=aemet&url=";
+const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
 
 function getPrevision(id, element, idmareas = 0) {
 	const ms = Date.now();
