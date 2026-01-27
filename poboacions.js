@@ -107,6 +107,8 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	current_hour = now.getHours();
 
 	var tabla = '<table class="center">';
+	if (id_cofc != 0)
+		tabla += "<tr ><td  colspan=4 style=\"text-align: left;\"><div id=\"messageFarmacia-" + id_cofc + "\"></div></td></tr>";
 	tabla += "<tr><th colspan=4>"
 		+ '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
@@ -115,8 +117,6 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 		tabla += "&nbsp;&nbsp;<img src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
 	}
 	tabla += "</th></tr>";
-	if (id_cofc != 0)
-		tabla += "<tr ><td  colspan=4 style=\"visibility: hidden; text-align: left;\"><div id=\"messageFarmacia-" + id_cofc + "\"></div></td></tr>";
 
 	var arrayLength = data[0]["prediccion"]["dia"].length;
 	maxItems = 3;
