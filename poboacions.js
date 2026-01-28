@@ -56,47 +56,46 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0) {
 
 
 function loadFarmacia(id_cofc) {
+	$('#iconoFarmacia-' + id_cofc).css('display', 'none');
 	fetch(proxyHostFarmacia + 'https://www.cofc.es/farmacia/index')
 		.then(response => {
 			if (!response.ok) {
+				$('#iconoFarmacia-' + id_cofc).show()
 				throw new Error('Network response was not ok');
 			}
 			return response.json();
 		})
 		.then(data => {
-			const div = document.getElementById('messageFarmacia-' + id_cofc);
-			div.style.display = 'block';
 			var data = data["datos_json"];
 			// --- filter by idPoblacion ---
 			const result = data.filter(item => item.idPoblacion === id_cofc);
 
 			if (result.length === 0) {
-				div.innerHTML = "<p>No hay farmacias en esta población.</p>";
+				html = "<p>No hay farmacias en esta población.</p>";
 			} else {
-				let html = "<strong>Farmacia/s de guardia</strong><br>";
+				html = "<strong><a href=\"https://www.cofc.es/farmacia/index\"  target=\"_new\" rel=\"noopener\">Farmacia/s de guardia</a></strong><br>";
 				cont = 0
 				result.forEach(f => {
 					html += "<hr>";
 					html += `
-<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
-  <strong>${f.nombre}</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-  </a>
-  Dirección: ${f.direccion}<br>
-  Horario: ${f.horario}<br>
-  Guardia: ${f.nombreGuardiaTipoTurno}<br>
-  Teléfono: ${f.telefono}<br>
-  Población: ${f.nombrePoblacion}
-        `;
+						<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
+						<strong>${f.nombre}</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
+						</a>
+						Dirección: ${f.direccion}<br>
+						Horario: ${f.horario}<br>
+						Guardia: ${f.nombreGuardiaTipoTurno}<br>
+						Teléfono: ${f.telefono}<br>
+						Población: ${f.nombrePoblacion}
+					`;
 					cont += 1;
 				});
 				html += "";
-				div.innerHTML = html;
+				newRow = "<tr ><td  colspan=4 style=\"text-align: left;\">" + html + "</td></tr>";
+				$('#tablaFarmacia-' + id_cofc + ' tbody').prepend(newRow);
 			}
-
-
-
 		})
 		.catch(error => {
+			$('#iconoFarmacia-' + id_cofc).show()
 			alert('Error fetching content: ' + error.message);
 		});
 }
@@ -106,15 +105,13 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	const now = new Date();
 	current_hour = now.getHours();
 
-	var tabla = '<table class="center">';
-	if (id_cofc != 0)
-		tabla += "<tr ><td  colspan=4 style=\"text-align: left;\"><div id=\"messageFarmacia-" + id_cofc + "\"></div></td></tr>";
+	var tabla = "<table id=\"tablaFarmacia-" + id_cofc + "\" class=\"center\">";
 	tabla += "<tr><th colspan=4>"
 		+ '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
 		+ "</a>";
 	if (id_cofc != 0) {
-		tabla += "&nbsp;&nbsp;<img src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
+		tabla += "&nbsp;&nbsp;<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
 	}
 	tabla += "</th></tr>";
 
