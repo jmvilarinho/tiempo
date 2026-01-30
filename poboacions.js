@@ -79,8 +79,7 @@ function loadFarmacia(id_cofc) {
 					html += "<hr>";
 					html += `
 						<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
-						<strong>${f.nombre}</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-						</a>
+						<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
 						Dirección: ${f.direccion}<br>
 						Horario: ${f.horario}<br>
 						Guardia: ${f.nombreGuardiaTipoTurno}<br>
