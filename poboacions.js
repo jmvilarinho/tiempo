@@ -84,7 +84,7 @@ function loadFarmacia(id_cofc) {
 						Dirección: ${f.direccion}<br>
 						Horario: ${f.horario}<br>
 						Guardia: ${f.nombreGuardiaTipoTurno}<br>
-						Teléfono: ${f.telefono}<br>
+						Teléfono: <a href='tel:${f.telefono}'>${f.telefono}</a><br>
 						Población: ${f.nombrePoblacion}
 					`;
 					cont += 1;
