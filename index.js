@@ -532,15 +532,20 @@ async function createPrevision(data, element, idmareas, id_playa) {
 			+ "</tr>";
 	}
 
+	var dt = new Date(data[0]["elaborado"]);
+	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+
+	tabla += '<tr "><td colspan=4>';
+	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
+	tabla += '</td ></tr >';
+
 	tabla += "</table>";
 
-	var dt = new Date(data[0]["elaborado"]);
-	var options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-	document.getElementById("data_prevision").innerHTML = "<p style='font-size:12px;'>"
-		+ "<a href='http://www.aemet.es' target='copyright'>"
-		+ "Previsión praias por AEMET: "
-		+ dt.toLocaleDateString("es-ES", options)
-		+ "</a></p>";
+	// document.getElementById("data_prevision").innerHTML = "<p style='font-size:12px;'>"
+	// 	+ "<a href='http://www.aemet.es' target='copyright'>"
+	// 	+ "Previsión praias por AEMET: "
+	// 	+ dt.toLocaleDateString("es-ES", fecha_prediccion)
+	// 	+ "</a></p>";
 
 	const keyDiv = document.createElement('div');
 	keyDiv.innerHTML = tabla

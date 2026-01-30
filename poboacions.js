@@ -177,7 +177,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
 	tabla += '<tr "><td colspan=4>';
-	tabla +=  'AEMET: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
+	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
 	tabla += '</td ></tr >';
 
 	tabla += "</table>";
