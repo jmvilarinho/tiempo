@@ -172,6 +172,14 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	tabla += '<tr  id="trmunicipio' + id_municipio + '"><td colspan=4>';
 	tabla += '<div id="divmunicipio' + id_municipio + '"><canvas hidden id="municipio' + id_municipio + '"></canvas></div>';
 	tabla += '</td ></tr >';
+
+	var dt = new Date(data[0]["elaborado"]);
+	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+
+	tabla += '<tr "><td colspan=4>';
+	tabla +=  'AEMET: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
+	tabla += '</td ></tr >';
+
 	tabla += "</table>";
 
 	const keyDiv = document.createElement('div');
@@ -180,13 +188,11 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	const mainDiv = document.getElementById(element);
 	mainDiv.appendChild(keyDiv);
 
-	var dt = new Date(data[0]["elaborado"]);
-	var options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-	document.getElementById("data_prevision_municipio").innerHTML = "<p style='font-size:12px;'>"
-		+ "<a href='http://www.aemet.es' target='copyright'>"
-		+ "Previsión poboacions por AEMET: "
-		+ dt.toLocaleDateString("es-ES", options)
-		+ "</a></p>";
+	// document.getElementById("data_prevision_municipio").innerHTML = "<p style='font-size:12px;'>"
+	// 	+ "<a href='http://www.aemet.es' target='copyright'>"
+	// 	+ "Previsión poboacions por AEMET: "
+	// 	+ dt.toLocaleDateString("es-ES", fecha_prediccion)
+	// 	+ "</a></p>";
 
 
 	const ms = Date.now();
