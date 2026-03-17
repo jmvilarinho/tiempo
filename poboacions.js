@@ -176,7 +176,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
-	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b></td></tr>";
+	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b><br><small>(Distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
 if (id_municipio != -1)	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	fetch(FUEL_PRICES_API_URL)

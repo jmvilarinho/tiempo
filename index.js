@@ -319,7 +319,7 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 	}
 
 	if (texto == "Temperatura na túa ubicación") {
-		html += "&nbsp;<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		html += "&nbsp;<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ",25)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		html += "<div id=\"combustible_ubicacion\"></div>";
 	}
 
