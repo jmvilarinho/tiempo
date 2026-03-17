@@ -279,7 +279,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 		<small>(${getField(item, ["Horario"])})</small><br>
         <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
         <small>${getField(item, ["Localidad"])}</small></td>
-        <td ${td_style}>${item._price.toFixed(3)} €/l
+        <td width=80 ${td_style}>${item._price.toFixed(3)} €/l
 		${extra_info}
 		`;
 
