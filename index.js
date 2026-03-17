@@ -297,16 +297,16 @@ function getLocalTime(time) {
 // --------------------------------------------------------------------------------------------------
 
 
-function getTemperatura(id, latitude, longitude, texto = "Temperatura actual", waze = true) {
+function getTemperatura(id, latitude, longitude, texto = "Temperatura actual", waze = true, fuel = false) {
 	const ms = Date.now();
 	const url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&current=temperature_2m,wind_speed_10m"
 	console.log('Get temperatura: ' + url)
 	fetch(url)
 		.then(response => response.json())
-		.then(data => getTemperaturanDatos(data, id, latitude, longitude, texto, waze));
+		.then(data => getTemperaturanDatos(data, id, latitude, longitude, texto, waze, fuel));
 }
 
-function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = true) {
+function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = true, fuel = false) {
 	const date = new Date(data["current"]["time"] + ':00Z');
 	temp = padTo2Digits(date.getHours()) + ':' + padTo2Digits(date.getMinutes());
 
@@ -318,7 +318,7 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 		html += " <a href=https://maps.google.com?q=" + latitude + "," + longitude + " target=_new  rel=noopener ><img src='img/dot.png' height='15px'></a>";
 	}
 
-	if (texto == "Temperatura na túa ubicación") {
+	if (fuel) {
 		html += "&nbsp;<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ",25)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		html += "<div id=\"combustible_ubicacion\"></div>";
 	}
@@ -345,7 +345,7 @@ function geoFindMe(divName) {
 		const latitude = position.coords.latitude;
 		const longitude = position.coords.longitude;
 
-		getTemperatura(divName, latitude, longitude, "Temperatura na túa ubicación", false)
+		getTemperatura(divName, latitude, longitude, "Temperatura na túa ubicación", false, true)
 	}
 
 	function error() {
