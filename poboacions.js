@@ -101,7 +101,6 @@ function loadFarmacia(id_municipio, id_cofc) {
 }
 
 const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
-const fuel_distancia_max_km = 10;
 
 function getField(item, keys) {
 	for (const key of keys) {
@@ -162,7 +161,7 @@ function getSafeLocation() {
 
 
 
-async function loadGasolinera(id_municipio, lat, lon) {
+async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10) {
 	if (id_municipio != -1) {
 		$('#iconoGasolinera-' + id_municipio).css('display', 'none');
 		td_style = "style=\"border:none;\"";
