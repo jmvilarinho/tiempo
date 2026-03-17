@@ -129,23 +129,61 @@ function parsePrice(priceStr) {
 	return parseFloat(priceStr.replace(',', '.'));
 }
 
+function getSafeLocation() {
+	try {
+		return new Promise((resolve) => {
+			if (!navigator.geolocation) {
+				// Geolocation not supported
+				resolve({ latitude: 0, longitude: 0 });
+				return;
+			}
+
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					resolve({
+						latitude: position.coords.latitude,
+						longitude: position.coords.longitude
+					});
+				},
+				(error) => {
+					// Permission denied or other error
+					console.warn("Geolocation error:", error.message);
+					resolve({ latitude: 0, longitude: 0 });
+				},
+				{ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+			);
+		});
+
+	} catch (error) {
+		console.warn("Error getting location: ", error.message);
+		return Promise.resolve({ latitude: 0, longitude: 0 });
+	}
+}
+
+
 
 async function loadGasolinera(id_municipio, lat, lon) {
-	$('#iconoGasolinera-' + id_municipio).css('display', 'none');
+	if (id_municipio != -1) {
+		$('#iconoGasolinera-' + id_municipio).css('display', 'none');
+		td_style = "style=\"border:none;\"";
+	} else {
+		$('#iconoGasolinera').css('display', 'none');
+		td_style = "";
+	}
 
 	const table = document.createElement("table");
 	table.style.borderCollapse = "collapse";
-	table.style.width = "100%";
 	table.style.border = "none";
+	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
-						tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><b>Precios Gasóleo A</b></td></tr>";
-						tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><hr></td></tr>";
+	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b></td></tr>";
+if (id_municipio != -1)	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	fetch(FUEL_PRICES_API_URL)
 		.then(response => {
 			if (!response.ok) {
-				$('#iconoGasolinera-' + id_municipio).show()
+				if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
 				throw new Error('Network response was not ok');
 			}
 			return response.json();
@@ -157,10 +195,9 @@ async function loadGasolinera(id_municipio, lat, lon) {
 			innerHTML = "";
 
 
-			navigator.geolocation.getCurrentPosition(pos => {
-
-				const currentLat = pos.coords.latitude;
-				const currentLon = pos.coords.longitude;
+			getSafeLocation().then((pos) => {
+				const currentLat = pos.latitude;
+				const currentLon = pos.longitude;
 
 				const userLat = lat;
 				const userLon = lon;
@@ -175,7 +212,11 @@ async function loadGasolinera(id_municipio, lat, lon) {
 					item._price = parsePrice(item.PrecioProducto);
 					item._lat = latitem;
 					item._lon = lonitem;
-					item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
+					if (currentLat !== 0 && currentLon !== 0) {
+						item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
+					} else {
+						item._distanceCurrent = "???";
+					}
 				});
 
 				// 1. Filter by distance
@@ -206,45 +247,61 @@ async function loadGasolinera(id_municipio, lat, lon) {
 
 				// Render table
 				result.forEach(item => {
+
+					if (item._distanceCurrent !== "???") {
+						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small></td>`;
+					} else {
+						extra_info = "</td>";
+					}
+
 					const row = document.createElement("tr");
 					row.innerHTML = `
-        <td style="border:none;">
+        <td ${td_style}>
 		<a href=https://maps.google.com?q=${item._lat},${item._lon} target=_new  rel=noopener >
 		<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
 		</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
 		<small>(${getField(item, ["Horario"])})</small><br>
         <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
         <small>${getField(item, ["Localidad"])}</small></td>
-        <td style="border:none;">${item._price.toFixed(3)} €/l<br>
-        <small>(${item._distanceCurrent.toFixed(2)} km.)</small></td>
-      `;
+        <td ${td_style}>${item._price.toFixed(3)} €/l
+		${extra_info}
+		`;
+
+
+
 					tbody.appendChild(row);
-					tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><hr></td></tr>";
+					if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 				});
 
 				if (nearby.length === 0) {
-					tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'>Sin gasolineras en " + fuel_distancia_max_km + " km.</td></tr>";
+					tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>Sin gasolineras en " + fuel_distancia_max_km + " km.</td></tr>";
 				} else {
 					const row = document.createElement("tr");
-					row.innerHTML = "<td style=\"border:none;\" colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal</a> " + data.Fecha + "</td>";
+					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal</a> " + data.Fecha + "</td>";
 					tbody.appendChild(row);
 
 				}
 
 				table.appendChild(tbody);
 				newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-				$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
-				document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
+				if (id_municipio != -1) {
+					$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
+				}
+				else {
+					document.getElementById("combustible_ubicacion").appendChild(table);
+				}
+
 
 			}, err => {
-				alert("Cannot get location: " + err.message);
+				console.log("Cannot get location: " + err.message);
 			});
 
 
 		})
 		.catch(error => {
-			$('#iconoGasolinera-' + id_municipio).show()
-			alert('Error fetching content: ' + error.message);
+			if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
+			console.log('Error fetching content: ' + error.message);
 		});
 
 
@@ -268,7 +325,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 
 	if (lat != 0 && lon != 0) {
 		tabla += "&nbsp;&nbsp;";
-		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Gasolinera\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Gasolinera\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 	}
 
 	tabla += "</th></tr>";

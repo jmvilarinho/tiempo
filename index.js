@@ -318,10 +318,17 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 		html += " <a href=https://maps.google.com?q=" + latitude + "," + longitude + " target=_new  rel=noopener ><img src='img/dot.png' height='15px'></a>";
 	}
 
+	if (texto == "Temperatura na túa ubicación") {
+		html += "&nbsp;<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		html += "<div id=\"combustible_ubicacion\"></div>";
+	}
+
 	keyDiv.innerHTML = html
 	keyDiv.style.textAlign = "center";
 	const mainDiv = document.getElementById(element);
 	mainDiv.appendChild(keyDiv);
+
+
 
 	document.getElementById("data_temperatura").innerHTML = "<p style='font-size:12px;'>"
 		+ "<a href='https://open-meteo.com/' target='copyright'>"
