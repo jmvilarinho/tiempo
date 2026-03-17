@@ -263,11 +263,11 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 				// Render table
 				result.forEach(item => {
 
-					l50 = 50*item._price;
+					repostaje = 40*item._price;
 					if (item._distanceCurrent !== "???") {
-						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>50l: ${(l50).toFixed(2)} €</small></td>`;
+						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>40l: ${(repostaje).toFixed(2)}€</small></td>`;
 					} else {
-						extra_info = `<br><small>50l: ${(l50).toFixed(2)} €</small></td>`;
+						extra_info = `<br><small>40l: ${(repostaje).toFixed(2)}€</small></td>`;
 					}
 
 					const row = document.createElement("tr");
