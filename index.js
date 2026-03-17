@@ -53,7 +53,6 @@ function CambiaVistaUpdate(pagina) {
 	console.log('Cargando página: ' + contenido)
 	setCookie('pagina', pagina, 30);
 
-
 	$(function () {
 		$("#DivContent").load(contenido);
 	});
@@ -536,7 +535,7 @@ async function createPrevision(data, element, idmareas, id_playa) {
 	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
 	tabla += '<tr "><td colspan=4>';
-	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
+	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion);
 	tabla += '</td ></tr >';
 
 	tabla += "</table>";

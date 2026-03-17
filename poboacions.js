@@ -100,7 +100,8 @@ function loadFarmacia(id_municipio, id_cofc) {
 		});
 }
 
-const DATA_URL = "https://sedeaplicaciones.minetur.gob.es//ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
+const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
+const fuel_distancia_max_km = 10;
 
 function getField(item, keys) {
 	for (const key of keys) {
@@ -135,16 +136,13 @@ async function loadGasolinera(id_municipio, lat, lon) {
 	const table = document.createElement("table");
 	table.style.borderCollapse = "collapse";
 	table.style.width = "100%";
+	table.style.border = "none";
 	const tbody = document.createElement("tbody");
-	const row = document.createElement("tr");
-	row.innerHTML = `
-        <td>Nombre</td>
-        <td>€/l</td>
-        <td>Distancia</td>
-      `;
-	tbody.appendChild(row);
 
-	fetch(DATA_URL)
+						tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><b>Precios Gasóleo A</b></td></tr>";
+						tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><hr></td></tr>";
+
+	fetch(FUEL_PRICES_API_URL)
 		.then(response => {
 			if (!response.ok) {
 				$('#iconoGasolinera-' + id_municipio).show()
@@ -172,46 +170,76 @@ async function loadGasolinera(id_municipio, lat, lon) {
 					//console.log('Gasolinera item: ', item);
 					const latitem = parseFloat(item.Latitud.replace(',', '.'));
 					const lonitem = parseFloat(item["Longitud (WGS84)"].replace(',', '.'));
+
 					item._distance = distance(userLat, userLon, latitem, lonitem);
 					item._price = parsePrice(item.PrecioProducto);
 					item._lat = latitem;
 					item._lon = lonitem;
-
 					item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
-
-
 				});
 
-				// Filter 10 km
-				const nearby = list.filter(item => item._distance <= 10);
+				// 1. Filter by distance
+				const nearby = list.filter(item => item._distance <= fuel_distancia_max_km);
 
-				// Sort by price ascending
+				// 2. Sort by price
 				nearby.sort((a, b) => a._price - b._price);
 
+				// 3. Take first 10
+				let result = nearby.slice(0, 10);
+
+				// 4. Include more if same price as last one
+				if (nearby.length > 10) {
+					const lastPrice = result[result.length - 1]._price;
+					console.log('Last price in top 10: ', lastPrice);
+
+					for (let i = 10; i < nearby.length; i++) {
+						if (nearby[i]._price === lastPrice) {
+							result.push(nearby[i]);
+						} else {
+							break;
+						}
+					}
+				}
+
+				// Sort by price ascending
+				result.sort((a, b) => a._price - b._price);
+
 				// Render table
-				nearby.forEach(item => {
+				result.forEach(item => {
 					const row = document.createElement("tr");
 					row.innerHTML = `
-        <td>
+        <td style="border:none;">
 		<a href=https://maps.google.com?q=${item._lat},${item._lon} target=_new  rel=noopener >
 		<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
 		</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
 		<small>(${getField(item, ["Horario"])})</small><br>
         <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
-        <small>(${getField(item, ["Localidad"])})</small></td>
-        <td>${item._price.toFixed(3)}</td>
-        <td>${item._distanceCurrent.toFixed(2)} km.</td>
+        <small>${getField(item, ["Localidad"])}</small></td>
+        <td style="border:none;">${item._price.toFixed(3)} €/l<br>
+        <small>(${item._distanceCurrent.toFixed(2)} km.)</small></td>
       `;
 					tbody.appendChild(row);
+					tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'><hr></td></tr>";
 				});
 
 				if (nearby.length === 0) {
-					tbody.innerHTML += "<tr><td colspan='6'>No stations within 10 km.</td></tr>";
+					tbody.innerHTML += "<tr><td style=\"border:none;\" colspan='2'>Sin gasolineras en " + fuel_distancia_max_km + " km.</td></tr>";
+				} else {
+					const row = document.createElement("tr");
+					row.innerHTML = "<td style=\"border:none;\" colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal</a> " + data.Fecha + "</td>";
+					tbody.appendChild(row);
+
 				}
+
+				table.appendChild(tbody);
+				newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
+				$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+				document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
 
 			}, err => {
 				alert("Cannot get location: " + err.message);
 			});
+
 
 		})
 		.catch(error => {
@@ -219,14 +247,6 @@ async function loadGasolinera(id_municipio, lat, lon) {
 			alert('Error fetching content: ' + error.message);
 		});
 
-	table.appendChild(tbody);
-
-	console.log('Gasolinera item: ', table.outerHTML);
-
-	newRow = "<tr ><td  colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-
-	$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
-	document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
 
 }
 
@@ -246,9 +266,9 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 		+ "Prevision para " + data[0]["nombre"]
 		+ "</a>";
 
-		if (lat != 0 && lon != 0) {
+	if (lat != 0 && lon != 0) {
 		tabla += "&nbsp;&nbsp;";
-		tabla += "<img id=\"iconoGasolinera-" + id_cofc + "\" src=\"img/gasolinera.png\" alt=\"Gasolinera\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Gasolinera\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Gasolinera\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Gasolinera\" >";
 	}
 
 	tabla += "</th></tr>";
