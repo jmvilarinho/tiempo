@@ -162,6 +162,16 @@ function getSafeLocation() {
 
 
 async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10) {
+	const stepDistanceKm = 5;
+	const minDistanceKm = 5;
+	const downDistanceKm = Math.max(minDistanceKm, fuel_distancia_max_km - stepDistanceKm);
+	const upDistanceKm = fuel_distancia_max_km + stepDistanceKm;
+	const containerId = id_municipio != -1 ? "divGasolinera-" + id_municipio : "combustible_ubicacion";
+	const container = document.getElementById(containerId);
+	if (container) {
+		container.innerHTML = "";
+	}
+
 	if (id_municipio != -1) {
 		$('#iconoGasolinera-' + id_municipio).css('display', 'none');
 		td_style = "style=\"border:none;\"";
@@ -176,8 +186,14 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
-	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b><br><small>(Distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
-if (id_municipio != -1)	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
+	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b>"
+		+ "<div style=\"margin-top:4px;\">"
+		+ "<button type=\"button\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\">&larr; -" + stepDistanceKm + " km</button>"
+		+ "&nbsp;"
+		+ "<button type=\"button\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\">+" + stepDistanceKm + " km &rarr;</button>"
+		+ "</div>"
+		+ "<small>(Distancia maxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
+	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	fetch(FUEL_PRICES_API_URL)
 		.then(response => {
@@ -282,9 +298,12 @@ if (id_municipio != -1)	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'
 				}
 
 				table.appendChild(tbody);
-				newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
 				if (id_municipio != -1) {
-					$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+					const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
+					if (!existingDiv) {
+						newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
+						$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+					}
 					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
 				}
 				else {
