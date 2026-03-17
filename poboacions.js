@@ -186,7 +186,9 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
-	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><b>Precios Gasóleo A</b>"
+	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
++"<img  src=\"img/down.png\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
+		+"&nbsp;<b>Precios Gasóleo A</b>&nbsp;"
 		+ "<div style=\"margin-top:4px;\">"
 		+ "<button type=\"button\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\">&larr; -" + stepDistanceKm + " km</button>"
 		+ "&nbsp;"
