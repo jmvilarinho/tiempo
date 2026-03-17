@@ -1,4 +1,4 @@
-function getPrevisionMunicipio(id, element, id_cofc = 0) {
+function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0) {
 	const ms = Date.now();
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey + "&nocache=" + ms
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey;
@@ -15,7 +15,7 @@ function getPrevisionMunicipio(id, element, id_cofc = 0) {
 			}
 			return JSON.parse(body);
 		})
-		.then(data => getPrevisionDatosMunicipio(data, element, id, id_cofc))
+		.then(data => getPrevisionDatosMunicipio(data, element, id, id_cofc, lat, lon))
 		.catch(error => {
 			console.error('Error:', error.message);
 			noPrevision(element, 0, error.message);
@@ -23,7 +23,8 @@ function getPrevisionMunicipio(id, element, id_cofc = 0) {
 		});
 }
 
-function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0) {
+function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0) {
+
 	if (data['estado'] == 200) {
 		if ('error' in data && data['error'] != "") {
 			showError(data['error'], element);
@@ -34,7 +35,7 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0) {
 		}
 		if ("datos_json" in data) {
 			console.log("Datos completos para " + id_municipio);
-			createPrevisionMunicipio(data['datos_json'], element, id_municipio, id_cofc);
+			createPrevisionMunicipio(data['datos_json'], element, id_municipio, id_cofc, lat, lon);
 		} else {
 
 			console.log('Get prevision: ' + data['datos'])
@@ -48,14 +49,14 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0) {
 				.then(function (buffer) {
 					const decoder = new TextDecoder('iso-8859-1');
 					const text = decoder.decode(buffer);
-					createPrevisionMunicipio(JSON.parse(text), element, id_municipio, id_cofc);
+					createPrevisionMunicipio(JSON.parse(text), element, id_municipio, id_cofc, lat, lon);
 				});
 		}
 	}
 }
 
 
-function loadFarmacia(id_cofc) {
+function loadFarmacia(id_municipio, id_cofc) {
 	$('#iconoFarmacia-' + id_cofc).css('display', 'none');
 	fetch(proxyHostFarmacia + 'https://www.cofc.es/farmacia/index')
 		.then(response => {
@@ -90,7 +91,7 @@ function loadFarmacia(id_cofc) {
 				});
 				html += "";
 				newRow = "<tr ><td  colspan=4 style=\"text-align: left;\">" + html + "</td></tr>";
-				$('#tablaFarmacia-' + id_cofc + ' tbody').prepend(newRow);
+				$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
 			}
 		})
 		.catch(error => {
@@ -99,19 +100,160 @@ function loadFarmacia(id_cofc) {
 		});
 }
 
+const DATA_URL = "https://sedeaplicaciones.minetur.gob.es//ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
 
-async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0) {
+function getField(item, keys) {
+	for (const key of keys) {
+		if (item[key] !== undefined && item[key] !== null) {
+			return item[key];
+		}
+	}
+	return "";
+}
+
+// Haversine formula to compute distance in km
+function distance(lat1, lon1, lat2, lon2) {
+	const R = 6371; // km
+	const toRad = deg => deg * Math.PI / 180;
+	const dLat = toRad(lat2 - lat1);
+	const dLon = toRad(lon2 - lon1);
+	const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+	return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+
+// Convert price string to float
+function parsePrice(priceStr) {
+	if (!priceStr) return Infinity;
+	return parseFloat(priceStr.replace(',', '.'));
+}
+
+
+async function loadGasolinera(id_municipio, lat, lon) {
+	$('#iconoGasolinera-' + id_municipio).css('display', 'none');
+
+	const table = document.createElement("table");
+	table.style.borderCollapse = "collapse";
+	table.style.width = "100%";
+	const tbody = document.createElement("tbody");
+	const row = document.createElement("tr");
+	row.innerHTML = `
+        <td>Nombre</td>
+        <td>€/l</td>
+        <td>Distancia</td>
+      `;
+	tbody.appendChild(row);
+
+	fetch(DATA_URL)
+		.then(response => {
+			if (!response.ok) {
+				$('#iconoGasolinera-' + id_municipio).show()
+				throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			//console.log('Gasolinera data: ', data);
+
+			const list = data.ListaEESSPrecio || [];
+			innerHTML = "";
+
+
+			navigator.geolocation.getCurrentPosition(pos => {
+
+				const currentLat = pos.coords.latitude;
+				const currentLon = pos.coords.longitude;
+
+				const userLat = lat;
+				const userLon = lon;
+
+				// Compute distance for each station
+				list.forEach(item => {
+					//console.log('Gasolinera item: ', item);
+					const latitem = parseFloat(item.Latitud.replace(',', '.'));
+					const lonitem = parseFloat(item["Longitud (WGS84)"].replace(',', '.'));
+					item._distance = distance(userLat, userLon, latitem, lonitem);
+					item._price = parsePrice(item.PrecioProducto);
+					item._lat = latitem;
+					item._lon = lonitem;
+
+					item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
+
+
+				});
+
+				// Filter 10 km
+				const nearby = list.filter(item => item._distance <= 10);
+
+				// Sort by price ascending
+				nearby.sort((a, b) => a._price - b._price);
+
+				// Render table
+				nearby.forEach(item => {
+					const row = document.createElement("tr");
+					row.innerHTML = `
+        <td>
+		<a href=https://maps.google.com?q=${item._lat},${item._lon} target=_new  rel=noopener >
+		<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
+		</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
+		<small>(${getField(item, ["Horario"])})</small><br>
+        <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
+        <small>(${getField(item, ["Localidad"])})</small></td>
+        <td>${item._price.toFixed(3)}</td>
+        <td>${item._distanceCurrent.toFixed(2)} km.</td>
+      `;
+					tbody.appendChild(row);
+				});
+
+				if (nearby.length === 0) {
+					tbody.innerHTML += "<tr><td colspan='6'>No stations within 10 km.</td></tr>";
+				}
+
+			}, err => {
+				alert("Cannot get location: " + err.message);
+			});
+
+		})
+		.catch(error => {
+			$('#iconoGasolinera-' + id_municipio).show()
+			alert('Error fetching content: ' + error.message);
+		});
+
+	table.appendChild(tbody);
+
+	console.log('Gasolinera item: ', table.outerHTML);
+
+	newRow = "<tr ><td  colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
+
+	$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+	document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
+
+}
+
+async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0) {
 	const now = new Date();
 	current_hour = now.getHours();
 
-	var tabla = "<table id=\"tablaFarmacia-" + id_cofc + "\" class=\"center\">";
-	tabla += "<tr><th colspan=4>"
-		+ '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
+
+	var tabla = "<table id=\"tablaMunicipio-" + id_municipio + "\" class=\"center\">";
+	tabla += "<tr><th colspan=4>";
+	if (id_cofc != 0) {
+		tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
+		tabla += "&nbsp;&nbsp;";
+	}
+
+	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
 		+ "</a>";
-	if (id_cofc != 0) {
-		tabla += "&nbsp;&nbsp;<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
+
+		if (lat != 0 && lon != 0) {
+		tabla += "&nbsp;&nbsp;";
+		tabla += "<img id=\"iconoGasolinera-" + id_cofc + "\" src=\"img/gasolinera.png\" alt=\"Gasolinera\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Gasolinera\" >";
 	}
+
+	tabla += "</th></tr>";
+
+
 	tabla += "</th></tr>";
 
 	var arrayLength = data[0]["prediccion"]["dia"].length;
@@ -176,7 +318,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
 	tabla += '<tr "><td colspan=4>';
-	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion) ;
+	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion);
 	tabla += '</td ></tr >';
 
 	tabla += "</table>";
