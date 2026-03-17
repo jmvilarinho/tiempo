@@ -188,12 +188,8 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 
 	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
 +"<img  src=\"img/down.png\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+"&nbsp;<b>Precios Gasóleo A</b>&nbsp;"
-		+ "<div style=\"margin-top:4px;\">"
-		+ "<button type=\"button\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\">&larr; -" + stepDistanceKm + " km</button>"
-		+ "&nbsp;"
-		+ "<button type=\"button\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\">+" + stepDistanceKm + " km &rarr;</button>"
-		+ "</div>"
+		+"&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
+	+"<img  src=\"img/up.png\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "<small>(Distancia maxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
