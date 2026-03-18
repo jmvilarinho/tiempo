@@ -273,27 +273,25 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 				// Render table
 				result.forEach(item => {
 
-					repostaje = 40 * item._price;
+					repostaje = 50 * item._price;
 					if (item._distanceCurrent !== "???") {
-						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>40l: ${(repostaje).toFixed(2)}€</small></td>`;
+						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>50l: ${(repostaje).toFixed(2)}€</small></td>`;
 					} else {
-						extra_info = `<br><small>40l: ${(repostaje).toFixed(2)}€</small></td>`;
+						extra_info = `<br><small>50l: ${(repostaje).toFixed(2)}€</small></td>`;
 					}
 
 					const row = document.createElement("tr");
 					row.innerHTML = `
-        <td ${td_style}>
-		<a href=https://maps.google.com?q=${item._lat},${item._lon} target=_new  rel=noopener >
-		<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
-		</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-		<small>(${getField(item, ["Horario"])})</small><br>
-        <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
-        <small>${getField(item, ["Localidad"])}</small></td>
-        <td width=70 ${td_style}>${item._price.toFixed(3)} €/l
-		${extra_info}
-		`;
-
-
+						<td ${td_style}>
+						<a href=https://maps.google.com?q=${item._lat},${item._lon} target=_new  rel=noopener >
+						<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
+						</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
+						<small>(${getField(item, ["Horario"])})</small><br>
+						<small>${getField(item, ["Dirección", "Direccion"])}</small><br>
+						<small>${getField(item, ["Localidad"])}</small></td>
+						<td width=70 ${td_style}>${item._price.toFixed(3)} €/l
+						${extra_info}
+						`;
 
 					tbody.appendChild(row);
 					if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
