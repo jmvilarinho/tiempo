@@ -140,7 +140,7 @@ function creaCalendario() {
 		// eventContent: function (info) {
 		// 	console.log(info);
 		// },
-		flexibleSlotTimeLimits: true,
+		flexibleSlotTimeLimits: false,
 		dayMaxEvents: true,
 		nowIndicator: true,
 		selectable: false,
