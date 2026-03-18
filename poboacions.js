@@ -261,7 +261,7 @@ async function getCCAACode(lat, lon) {
 	const data = await res.json();
 	const raw = data.address.state;
 	const comunidad = mapToComunidad(raw);
-	  return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
+	return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
 }
 
 async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10) {
@@ -289,7 +289,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
-		try {
+	try {
 		[comunidad, code] = await getCCAACode(lat, lon);
 		url = `https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/${code}/4`;
 	} catch (error) {
@@ -303,10 +303,10 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
 		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "<br>"
-		+ "<small>("+comunidad+") distancia máxima: " + fuel_distancia_max_km + " km</small></td></tr>";
+		+ "<small>(" + comunidad + ") distancia máxima: " + fuel_distancia_max_km + " km</small></td></tr>";
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
-
+	console.log('Get gasolinera data: ' + url);
 	fetch(url)
 		.then(response => {
 			if (!response.ok) {
@@ -317,10 +317,8 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 		})
 		.then(data => {
 			//console.log('Gasolinera data: ', data);
-
 			const list = data.ListaEESSPrecio || [];
 			innerHTML = "";
-
 
 			getSafeLocation().then((pos) => {
 				const currentLat = pos.latitude;
@@ -339,6 +337,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 					item._price = parsePrice(item.PrecioProducto);
 					item._lat = latitem;
 					item._lon = lonitem;
+
 					if (currentLat !== 0 && currentLon !== 0) {
 						item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
 					} else {
@@ -358,8 +357,6 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 				// 4. Include more if same price as last one
 				if (nearby.length > 10) {
 					const lastPrice = result[result.length - 1]._price;
-					console.log('Last price in top 10: ', lastPrice);
-
 					for (let i = 10; i < nearby.length; i++) {
 						if (nearby[i]._price === lastPrice) {
 							result.push(nearby[i]);
