@@ -75,21 +75,54 @@ function loadFarmacia(id_municipio, id_cofc) {
 				html = "<p>No hay farmacias en esta población.</p>";
 			} else {
 				html = "<strong><a href=\"https://www.cofc.es/farmacia/index\"  target=\"_new\" rel=\"noopener\">Farmacia/s de guardia</a></strong><br>";
-				cont = 0
-				result.forEach(f => {
-					html += "<hr>";
-					html += `
-						<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
-						<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-						Dirección: ${f.direccion}<br>
-						Horario: ${f.horario}<br>
-						Guardia: ${f.nombreGuardiaTipoTurno}<br>
-						Teléfono: <a href='tel:${f.telefono}'>${f.telefono}</a><br>
-						Población: ${f.nombrePoblacion}
-					`;
-					cont += 1;
+
+				// Sort by distance from current position
+				getSafeLocation().then((pos) => {
+					const currentLat = pos.latitude;
+					const currentLon = pos.longitude;
+
+					// Calculate distance for each pharmacy
+					result.forEach(f => {
+						const latitem = parseFloat(f.latitud);
+						const lonitem = parseFloat(f.longitud);
+
+						if (currentLat !== 0 && currentLon !== 0) {
+							f._distance = distance(currentLat, currentLon, latitem, lonitem);
+							console.log(`Distance to ${f.nombre}: ${f._distance.toFixed(2)} km`);
+						} else {
+							f._distance = Infinity;
+						}
+					});
+
+					// Sort by distance
+					result.sort((a, b) => a._distance - b._distance);
+
+					cont = 0;
+					result.forEach(f => {
+						html += "<hr>";
+						let distanceInfo = "";
+						if (f._distance !== Infinity) {
+							distanceInfo = `<br><small>(${f._distance.toFixed(2)} km desde tu ubicación)</small>`;
+						}
+						html += `
+							<a href=https://maps.google.com?q=${f.latitud},${f.longitud} target=_new  rel=noopener >
+							<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
+							Dirección: ${f.direccion}<br>
+							Horario: ${f.horario}<br>
+							Guardia: ${f.nombreGuardiaTipoTurno}<br>
+							Teléfono: <a href='tel:${f.telefono}'>${f.telefono}</a><br>
+							Población: ${f.nombrePoblacion}
+							${distanceInfo}
+						`;
+						cont += 1;
+					});
+					html += "";
+
+					const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
+					if (farmaciaDiv) {
+						farmaciaDiv.innerHTML = html;
+					}
 				});
-				html += "";
 
 				const existingDiv = document.getElementById("divFarmacia-" + id_cofc);
 				if (!existingDiv) {
