@@ -170,7 +170,99 @@ function getSafeLocation() {
 	}
 }
 
+const CCAA_CODES = {
+	"Andalucía": "01",
+	"Aragón": "02",
+	"Asturias": "03",
+	"Illes Balears": "04",
+	"Canarias": "05",
+	"Cantabria": "06",
+	"Castilla y León": "07",
+	"Castilla-La Mancha": "08",
+	"Cataluña": "09",
+	"Comunidad Valenciana": "10",
+	"Extremadura": "11",
+	"Galicia": "12",
+	"Madrid": "13",
+	"Murcia": "14",
+	"Navarra": "15",
+	"País Vasco": "16",
+	"La Rioja": "17",
+	"Ceuta": "18",
+	"Melilla": "19"
+};
 
+const normalize = (str) =>
+	str
+		?.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.trim();
+
+const aliases = {
+	"galicia": "Galicia",
+	"galiza": "Galicia",
+
+	"principality of asturias": "Asturias",
+
+	"basque country": "País Vasco",
+	"euskadi": "País Vasco",
+
+	"catalonia": "Cataluña",
+	"catalunya": "Cataluña",
+
+	"valencian community": "Comunidad Valenciana",
+	"comunitat valenciana": "Comunidad Valenciana",
+
+	"community of madrid": "Madrid",
+
+	"castile and leon": "Castilla y León",
+	"castile-la mancha": "Castilla-La Mancha",
+
+	"andalusia": "Andalucía",
+
+	"balearic islands": "Illes Balears",
+	"baleares": "Illes Balears",
+
+	"canary islands": "Canarias",
+
+	"navarre": "Navarra",
+	"rioja": "La Rioja"
+};
+
+function mapToComunidad(raw) {
+	if (!raw) return null;
+
+	const norm = normalize(raw);
+
+	// direct
+	for (const c in CCAA_CODES) {
+		if (normalize(c) === norm) return c;
+	}
+
+	// alias
+	if (aliases[norm]) return aliases[norm];
+
+	// partial
+	for (const c in CCAA_CODES) {
+		if (norm.includes(normalize(c))) return c;
+	}
+
+	return null;
+}
+
+async function getCCAACode(lat, lon) {
+	const res = await fetch(
+		`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+		{
+			headers: { "User-Agent": "vila-app" }
+		}
+	);
+	const data = await res.json();
+	const raw = data.address.state;
+	const comunidad = mapToComunidad(raw);
+	  return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
+}
 
 async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10) {
 	const stepDistanceKm = 5;
@@ -197,15 +289,25 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	table.style.margin = "0 auto";
 	const tbody = document.createElement("tbody");
 
+		try {
+		[comunidad, code] = await getCCAACode(lat, lon);
+		url = `https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/${code}/4`;
+	} catch (error) {
+		url = FUEL_PRICES_API_URL;
+		comunidad = "Galicia";
+	}
+
+
 	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
 		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
 		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "<br>"
-		+ "<small>(Distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
+		+ "<small>("+comunidad+") distancia máxima: " + fuel_distancia_max_km + " km</small></td></tr>";
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
-	fetch(FUEL_PRICES_API_URL)
+
+	fetch(url)
 		.then(response => {
 			if (!response.ok) {
 				if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
