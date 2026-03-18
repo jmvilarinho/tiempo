@@ -264,7 +264,7 @@ async function getCCAACode(lat, lon) {
 	return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
 }
 
-async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10) {
+async function loadGasolinera(text,id_municipio, lat, lon, fuel_distancia_max_km = 10) {
 	const stepDistanceKm = 5;
 	const minDistanceKm = 5;
 	const downDistanceKm = Math.max(minDistanceKm, fuel_distancia_max_km - stepDistanceKm);
@@ -299,11 +299,12 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 
 
 	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
-		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
+		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
-		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
+		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "<br>"
-		+ "<small>(" + comunidad + ") distancia máxima: " + fuel_distancia_max_km + " km</small></td></tr>";
+		+ "<small>Cerca de " + text + "</small><br>"
+		+ "<small>(distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	console.log('Get gasolinera data: ' + url);
@@ -400,7 +401,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 					tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>Sin gasolineras en " + fuel_distancia_max_km + " km.</td></tr>";
 				} else {
 					const row = document.createElement("tr");
-					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal</a> " + data.Fecha + "</td>";
+					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal (" + comunidad + ")</a> " + data.Fecha + "</td>";
 					tbody.appendChild(row);
 
 				}
@@ -445,7 +446,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	tabla += "<tr><th colspan=4>";
 
 	if (lat != 0 && lon != 0) {
-		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('"+data[0]["nombre"]+"'," + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		tabla += "&nbsp;&nbsp;";
 	}
 	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'

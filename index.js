@@ -314,7 +314,7 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 	html = '';
 
 	if (fuel) {
-		html += "<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ",35)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		html += "<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera( 'ubicación actual',-1," + latitude + "," + longitude + ",35)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		html += "&nbsp;&nbsp;";
 	}
 
