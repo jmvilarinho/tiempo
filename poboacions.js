@@ -349,10 +349,12 @@ async function loadGasolinera(text,id_municipio, lat, lon, fuel_distancia_max_km
 				// 1. Filter by distance
 				const nearby = list.filter(item => item._distance <= fuel_distancia_max_km);
 
-				// 2. Sort by price, then by distance
+				// 2. Sort by price, then by distance (prefer current location distance if available)
 				nearby.sort((a, b) => {
 					if (a._price !== b._price) return a._price - b._price;
-					return a._distance - b._distance;
+					const aDist = a._distanceCurrent !== "???" ? a._distanceCurrent : a._distance;
+					const bDist = b._distanceCurrent !== "???" ? b._distanceCurrent : b._distance;
+					return aDist - bDist;
 				});
 
 				// 3. Take first 10
@@ -370,10 +372,12 @@ async function loadGasolinera(text,id_municipio, lat, lon, fuel_distancia_max_km
 					}
 				}
 
-				// Sort by price ascending, then nearest distance
+				// Sort by price ascending, then nearest distance (prefer current location distance if available)
 				result.sort((a, b) => {
 					if (a._price !== b._price) return a._price - b._price;
-					return a._distance - b._distance;
+					const aDist = a._distanceCurrent !== "???" ? a._distanceCurrent : a._distance;
+					const bDist = b._distanceCurrent !== "???" ? b._distanceCurrent : b._distance;
+					return aDist - bDist;
 				});
 
 				// Render table
