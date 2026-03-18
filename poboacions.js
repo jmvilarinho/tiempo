@@ -90,8 +90,20 @@ function loadFarmacia(id_municipio, id_cofc) {
 					cont += 1;
 				});
 				html += "";
-				newRow = "<tr ><td  colspan=4 style=\"text-align: left;\">" + html + "</td></tr>";
-				$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+
+				const existingDiv = document.getElementById("divFarmacia-" + id_cofc);
+				if (!existingDiv) {
+					const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divFarmacia-" + id_cofc + "\"></div></td></tr>";
+					const table = document.getElementById('tablaMunicipio-' + id_municipio);
+					const targetTbody = table ? table.querySelector('tbody') : null;
+					if (targetTbody) {
+						targetTbody.insertAdjacentHTML('afterbegin', newRow);
+					}
+				}
+				const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
+				if (farmaciaDiv) {
+					farmaciaDiv.innerHTML = html;
+				}
 			}
 		})
 		.catch(error => {
@@ -100,7 +112,6 @@ function loadFarmacia(id_municipio, id_cofc) {
 		});
 }
 
-const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
 
 function getField(item, keys) {
 	for (const key of keys) {
@@ -187,11 +198,11 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 	const tbody = document.createElement("tbody");
 
 	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
-+"<img  src=\"img/down.png\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+"&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
-	+"<img  src=\"img/up.png\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+"<br>"
-		+ "<small>(Distancia maxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
+		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
+		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
+		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
+		+ "<br>"
+		+ "<small>(Distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	fetch(FUEL_PRICES_API_URL)
@@ -262,7 +273,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 				// Render table
 				result.forEach(item => {
 
-					repostaje = 40*item._price;
+					repostaje = 40 * item._price;
 					if (item._distanceCurrent !== "???") {
 						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>40l: ${(repostaje).toFixed(2)}€</small></td>`;
 					} else {
@@ -278,7 +289,7 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 		<small>(${getField(item, ["Horario"])})</small><br>
         <small>${getField(item, ["Dirección", "Direccion"])}</small><br>
         <small>${getField(item, ["Localidad"])}</small></td>
-        <td width=80 ${td_style}>${item._price.toFixed(3)} €/l
+        <td width=70 ${td_style}>${item._price.toFixed(3)} €/l
 		${extra_info}
 		`;
 
@@ -301,8 +312,12 @@ async function loadGasolinera(id_municipio, lat, lon, fuel_distancia_max_km = 10
 				if (id_municipio != -1) {
 					const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
 					if (!existingDiv) {
-						newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-						$('#tablaMunicipio-' + id_municipio + ' tbody').prepend(newRow);
+						const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
+						const tableMunicipio = document.getElementById('tablaMunicipio-' + id_municipio);
+						const targetTbody = tableMunicipio ? tableMunicipio.querySelector('tbody') : null;
+						if (targetTbody) {
+							targetTbody.insertAdjacentHTML('afterbegin', newRow);
+						}
 					}
 					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
 				}
@@ -329,29 +344,20 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	const now = new Date();
 	current_hour = now.getHours();
 
-
 	var tabla = "<table id=\"tablaMunicipio-" + id_municipio + "\" class=\"center\">";
 	tabla += "<tr><th colspan=4>";
 
-if (lat != 0 && lon != 0) {                                                                           tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";      
-tabla += "&nbsp;&nbsp;";
-
-}
-
+	if (lat != 0 && lon != 0) {
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "&nbsp;&nbsp;";
+	}
 	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
 		+ "</a>";
-
-if (id_cofc != 0) {    
-
-tabla += "&nbsp;&nbsp;";
-	tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";                                                   tabla += "&nbsp;&nbsp;";                           }
-
-
-
-	tabla += "</th></tr>";
-
-
+	if (id_cofc != 0) {
+		tabla += "&nbsp;&nbsp;";
+		tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >"; tabla += "&nbsp;&nbsp;";
+	}
 	tabla += "</th></tr>";
 
 	var arrayLength = data[0]["prediccion"]["dia"].length;

@@ -311,7 +311,14 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 	temp = padTo2Digits(date.getHours()) + ':' + padTo2Digits(date.getMinutes());
 
 	const keyDiv = document.createElement('div');
-	html = texto + " " + data["current"]["temperature_2m"] + "&deg;";
+	html = '';
+
+	if (fuel) {
+		html += "<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ",35)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		html += "&nbsp;&nbsp;";
+	}
+
+	html += texto + " " + data["current"]["temperature_2m"] + "&deg;";
 	if (waze) {
 		html += " <a href=https://waze.com/ul?ll=" + latitude + "," + longitude + "&z=100 target=_new  rel=noopener ><img src='img/waze.png' height='15px'></a>";
 	} else {
@@ -319,7 +326,6 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 	}
 
 	if (fuel) {
-		html += "&nbsp;<img id=\"iconoGasolinera\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera( -1," + latitude + "," + longitude + ",25)\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		html += "<div id=\"combustible_ubicacion\"></div>";
 	}
 
@@ -364,6 +370,8 @@ function geoFindMe(divName) {
 
 const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=aemet&url=";
 const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
+const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
+
 
 function getPrevision(id, element, idmareas = 0) {
 	const ms = Date.now();
