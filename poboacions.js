@@ -332,19 +332,22 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 
 	var tabla = "<table id=\"tablaMunicipio-" + id_municipio + "\" class=\"center\">";
 	tabla += "<tr><th colspan=4>";
-	if (id_cofc != 0) {
-		tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";
-		tabla += "&nbsp;&nbsp;";
-	}
+
+if (lat != 0 && lon != 0) {                                                                           tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";      
+tabla += "&nbsp;&nbsp;";
+
+}
 
 	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
 		+ "</a>";
 
-	if (lat != 0 && lon != 0) {
-		tabla += "&nbsp;&nbsp;";
-		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"15px\"/ onclick=\"loadGasolinera(" + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
-	}
+if (id_cofc != 0) {    
+
+tabla += "&nbsp;&nbsp;";
+	tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >";                                                   tabla += "&nbsp;&nbsp;";                           }
+
+
 
 	tabla += "</th></tr>";
 
