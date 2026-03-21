@@ -1,20 +1,4 @@
 
-function openMaps(lat, lng) {
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isAndroid) {
-        // Opens directly in Maps app (no blank tab)
-        window.location.href = `geo:${lat},${lng}?q=${lat},${lng}`;
-    } else if (isiOS) {
-        // Opens Apple Maps
-        window.location.href = `https://maps.apple.com/?q=${lat},${lng}`;
-    } else {
-        // Desktop / Windows → open in new tab
-        window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank");
-    }
-}
-
 function isValidColor(strColor) {
 	const s = new Option().style;
 	s.color = strColor;
