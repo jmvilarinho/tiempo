@@ -324,6 +324,7 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 		html += " <a href=https://waze.com/ul?ll=" + latitude + "," + longitude + "&z=100 target=_new  rel=noopener ><img src='img/waze.png' height='15px'></a>";
 	} else {
 		html += " <a href=https://maps.google.com?q=" + latitude + "," + longitude + " target=_new  rel=noopener ><img src='img/dot.png' height='15px'></a>";
+		html += " <a href=\"#\" onclick=\"openMaps(" + latitude + "," + longitude + "\") ><img src='img/dot.png' height='15px'></a>";
 	}
 
 	if (fuel) {
