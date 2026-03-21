@@ -121,6 +121,15 @@ td {
 	display: inline-block;
 	margin: 4px 2px;
 	cursor: pointer;
+	padding: 5px 20px;
+	font-size: 14px;
+}
+
+input {
+	display: inline-block;
+	margin: 4px 2px;
+	padding: 5px 20px;
+	font-size: 14px;
 }
 
 .ntype2 {

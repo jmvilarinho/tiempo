@@ -105,7 +105,7 @@ function loadFarmacia(id_municipio, id_cofc) {
 							distanceInfo = `<br><small>(${f._distance.toFixed(2)} km desde tu ubicación)</small>`;
 						}
 						html += `
-							<a href="#" onclick="openMaps(${f.latitud},${f.longitud})">
+							<a href="#" onclick="openMaps(event,${f.latitud},${f.longitud})">
 							<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
 							Dirección: ${f.direccion}<br>
 							Horario: ${f.horario}<br>
@@ -426,7 +426,7 @@ async function loadGasolinera(text,id_municipio, lat, lon, fuel_distancia_max_km
 					const row = document.createElement("tr");
 					row.innerHTML = `
 						<td ${td_style}>
-						<a href="#" onclick="openMaps(${item._lat},${item._lon})">
+						<a href="#" onclick="openMaps(event,${item._lat},${item._lon})">
 						<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
 						</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
 						<small>(${getField(item, ["Horario"])})</small><br>

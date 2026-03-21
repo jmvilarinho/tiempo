@@ -81,6 +81,25 @@ function CambiaVistaUpdate(pagina) {
 		onclick: "CambiaVistaUpdate('poboacions')"
 	});
 	$('#OtherPage').append(boton_favoritos);
+
+	var boton_meteogalicia = $('<input/>').attr({
+		type: "button",
+		class: 'back_button',
+		id: "field",
+		value: 'Meteogalicia',
+		onclick: "openInNewTab(meteogalcia_url)"
+	});
+	$('#OtherPage').append(boton_meteogalicia);
+
+	var boton_rfgf = $('<input/>').attr({
+		type: "button",
+		class: 'back_button',
+		id: "field",
+		value: 'RFGF',
+		onclick: "openUrl('rfgf/')"
+	});
+	$('#OtherPage').append(boton_rfgf);
+
 };
 
 function includeHTML(file) {
@@ -321,10 +340,11 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 
 	html += texto + " " + data["current"]["temperature_2m"] + "&deg;";
 	if (waze) {
-		html += " <a href=waze://?ll=" + latitude + "," + longitude + "&z=100 target=_new  rel=noopener ><img src='img/waze.png' height='15px'></a>";
+		//html += " <a href=waze://?ll=" + latitude + "," + longitude + "&z=100 target=_new  rel=noopener ><img src='img/waze.png' height='15px'></a>";
+		html += " <a href=\"#\" onclick=\"openWaze(event," + latitude + "," + longitude + ")\" ><img src='img/waze.png' height='15px'></a>";
 	} else {
 		//html += " <a href=https://maps.google.com?q=" + latitude + "," + longitude + " target=_new  rel=noopener ><img src='img/dot.png' height='15px'></a>";
-		html += " <a href=\"#\" onclick=\"openMaps(" + latitude + "," + longitude + ")\" ><img src='img/dot.png' height='15px'></a>";
+		html += " <a href=\"#\" onclick=\"openMaps(event," + latitude + "," + longitude + ")\" ><img src='img/dot.png' height='15px'></a>";
 	}
 
 	if (fuel) {

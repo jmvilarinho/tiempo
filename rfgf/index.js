@@ -99,7 +99,10 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa != '')
 					casa += '&nbsp;(' + item.posicion_equipo_casa + 'º)';
 				//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
-				campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
+				//campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
+				campo = " <a href=\"#\" onclick=\"openWazeSearch(event,'" + item.campo + "')\" >"+ item.campo + '</a> <img src="../img/waze.png" height="15px">';
+
+
 			}
 
 			if (item.equipo_casa != 'Descansa') {

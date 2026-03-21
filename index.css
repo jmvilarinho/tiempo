@@ -8,12 +8,22 @@
 	display: inline-block;
 	margin: 4px 2px;
 	cursor: pointer;
+	padding: 5px 20px;
+	font-size: 14px;
+}
+
+input {
+	display: inline-block;
+	margin: 4px 2px;
+	padding: 5px 20px;
+	font-size: 14px;
 }
 
 a {
 	text-decoration: none;
 	outline: none;
 }
+
 a:focus,
 a:hover,
 a:visited {
@@ -59,4 +69,3 @@ td {
 .right-aligned {
 	float: right;
 }
-
