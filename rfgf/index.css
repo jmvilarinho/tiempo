@@ -23,6 +23,10 @@
 }
 */
 
+body {
+    font-size: clamp(18px, 2vw, 20px);
+}
+
 h4 {
 	font-size: 12px;
 }
