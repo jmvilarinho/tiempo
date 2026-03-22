@@ -100,6 +100,7 @@ function CambiaVistaUpdate(pagina) {
 	});
 	$('#OtherPage').append(boton_rfgf);
 
+	geoFindMe("yourTemperature");
 };
 
 function includeHTML(file) {
@@ -354,9 +355,8 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 	keyDiv.innerHTML = html
 	keyDiv.style.textAlign = "center";
 	const mainDiv = document.getElementById(element);
+	mainDiv.innerHTML = "";
 	mainDiv.appendChild(keyDiv);
-
-
 
 	document.getElementById("data_temperatura").innerHTML = "<p style='font-size:12px;'>"
 		+ "<a href='https://open-meteo.com/' target='copyright'>"
