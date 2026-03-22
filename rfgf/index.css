@@ -1,3 +1,28 @@
+/* Use a media query to add a breakpoint at 800px: */
+/* The width is 100%, when the viewport is 800px or smaller */
+/*
+@media screen and (max-width: 800px) {
+	.left,
+	.main,
+	.right {
+		width: 100%;
+	}
+}
+*/
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+/*
+@media screen and (max-height: 450px) {
+	.sidenav {
+		padding-top: 15px;
+	}
+
+	.sidenav a {
+		font-size: 18px;
+	}
+}
+*/
+
 h4 {
 	font-size: 12px;
 }
@@ -37,17 +62,6 @@ th.font_responsive{
 	float: left;
 	width: 60%;
 	/* The width is 60%, by default */
-}
-
-/* Use a media query to add a breakpoint at 800px: */
-@media screen and (max-width: 800px) {
-
-	.left,
-	.main,
-	.right {
-		width: 100%;
-		/* The width is 100%, when the viewport is 800px or smaller */
-	}
 }
 
 .table_noborder {
@@ -250,16 +264,7 @@ input {
 	padding: 8px;
 }
 
-/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-@media screen and (max-height: 450px) {
-	.sidenav {
-		padding-top: 15px;
-	}
 
-	.sidenav a {
-		font-size: 18px;
-	}
-}
 
 
 /* creating css loader */
