@@ -24,7 +24,7 @@
 */
 @media (min-width: 1024px) {
 	html.android-device body {
-		zoom: 1.1;
+		zoom: 1.0;
 	}
 }
 
