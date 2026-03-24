@@ -23,8 +23,8 @@
 }
 */
 @media (min-width: 1024px) {
-	body {
-		zoom: 1.8;
+	html.android-device body {
+		zoom: 1.1;
 	}
 }
 
@@ -364,8 +364,3 @@ input {
 	top: 0;
 }
 
-@media (min-width: 1024px) {
-	body {
-		zoom: 1.8;
-	}
-}
