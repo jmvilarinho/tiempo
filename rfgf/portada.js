@@ -49,14 +49,6 @@ async function load_portada(cod_equipo, addHistory = true, rfef = false, codgrup
 	hideLoading();
 }
 
-function escapeJsArgPortada(value) {
-	return String(value == null ? '' : value)
-		.replace(/\\/g, '\\\\')
-		.replace(/'/g, "\\'")
-		.replace(/\r/g, '\\r')
-		.replace(/\n/g, '\\n');
-}
-
 async function load_tv_player(url) {
 	var url_search = 'https://streamer-cdn.ott.tiivii.com/v2/sgca/ott_tiivii/search?sort=-created_on&page=1&limit=100&searchin=title,tags&filter[status]=published&filter[value][contains]=Jogafan';
 
@@ -254,27 +246,21 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 			//campo = '<a href="https://waze.com/ul?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
 			//campo = '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.codigo_postal_campo + ' ' + item.direccion_campo + ' ' + item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
-			var campoQueryText = String((item.codigo_postal_campo == null ? '' : item.codigo_postal_campo) + ' ' + (item.direccion_campo == null ? '' : item.direccion_campo) + ' ' + (item.campo == null ? '' : item.campo));
-			var campoJsEscaped = escapeJsArgPortada(campoQueryText);
-			var campoHtmlEscaped = String(item.campo == null ? '' : item.campo).replace(/"/g, '&quot;');
-			campo = `<a href="#" onclick="openMapsSearch(event,'${campoJsEscaped}')">${campoHtmlEscaped} </a> <img src="../img/dot.png" height="15px">`;
+			campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
+			direccionEscape = String(item.direccion_campo).replace(/"/g, '').replace(/'/g, '');
+			campo = `<a href="#" onclick="openMapsSearch(event,'${item.codigo_postal_campo} ${direccionEscape} ${campoEscape}')">${item.campo} </a> <img src="../img/dot.png" height="15px">`;
 		}
 	}
-
-	var codequipoCasaEscaped = escapeJsArgPortada(item.codequipo_casa);
-	var codequipoFueraEscaped = escapeJsArgPortada(item.codequipo_fuera);
-	var codgrupoEscaped = escapeJsArgPortada(codgrupo);
-	var codcompeticionEscaped = escapeJsArgPortada(codcompeticion);
 
 	casa = ''
 	fuera = ''
 	if (item.equipo_casa != 'Descansa') {
 		if (item.escudo_equipo_casa != '')
-			casa = '<a href="javascript:load_plantilla(\'' + codequipoCasaEscaped + '\')" title="Plantilla">'
+			casa = '<a href="javascript:load_plantilla(\'' + item.codequipo_casa + '\')" title="Plantilla">'
 				+ '<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_logo">' + '</a>' + br;
 
 		if (item.codequipo_casa != '')
-			casa += '&nbsp;<a href="javascript:load_xornadas(\'' + codequipoCasaEscaped + '\',false,' + rfef + ',\'' + codgrupoEscaped + '\',\'' + codcompeticionEscaped + '\')">' + item.equipo_casa + '</a>';
+			casa += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + item.equipo_casa + '</a>';
 		else
 			casa += '&nbsp;' + item.equipo_casa + '&nbsp;';
 
@@ -284,11 +270,11 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 
 	if (item.equipo_fuera != 'Descansa') {
 		if (item.escudo_equipo_fuera != '')
-			fuera = '<a href="javascript:load_plantilla(\'' + codequipoFueraEscaped + '\')" title="Plantilla">'
+			fuera = '<a href="javascript:load_plantilla(\'' + item.codequipo_fuera + '\')" title="Plantilla">'
 				+ '<img src="https://www.futgal.es' + item.escudo_equipo_fuera + '" align="absmiddle" class="escudo_logo">' + '</a>' + br;
 
 		if (item.codequipo_fuera != '')
-			fuera += '&nbsp;<a href="javascript:load_xornadas(\'' + codequipoFueraEscaped + '\',false,' + rfef + ',\'' + codgrupoEscaped + '\',\'' + codcompeticionEscaped + '\')">' + item.equipo_fuera + '</a>';
+			fuera += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + item.equipo_fuera + '</a>';
 		else
 			fuera += '&nbsp;' + item.equipo_fuera + '&nbsp;';
 
@@ -329,7 +315,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 			xogo = '';
 
 		if (item.codacta != '')
-			click = '  title="Acta" onclick="javascript:load_acta(\'' + escapeJsArgPortada(item.codacta) + '\');" ';
+			click = '  title="Acta" onclick="javascript:load_acta(\'' + item.codacta + '\');" ';
 		else
 			click = '';
 

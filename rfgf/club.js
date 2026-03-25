@@ -12,14 +12,6 @@ function getSunday(d) {
 	return d.toISOString().slice(0, 10);
 }
 
-function escapeJsArgClub(value) {
-	return String(value == null ? '' : value)
-		.replace(/\\/g, '\\\\')
-		.replace(/'/g, "\\'")
-		.replace(/\r/g, '\\r')
-		.replace(/\n/g, '\\n');
-}
-
 
 async function load_club(cod_club, timestamp = '', addHistory = true) {
 	displayLoading();
@@ -85,8 +77,8 @@ function show_club(data, cod_club, current_date) {
 	week_after = current_date.addDays(7);
 
 	club_name = getClubName(cod_club, '');
-	back = "<a href=\"javascript:load_club('" + escapeJsArgClub(cod_club) + "','" + escapeJsArgClub(week_before) + "',false)\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
-	forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_club('" + escapeJsArgClub(cod_club) + "','" + escapeJsArgClub(week_after) + "',false)\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
+	back = "<a href=\"javascript:load_club('" + cod_club + "','" + week_before + "',false)\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
+	forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_club('" + cod_club + "','" + week_after + "',false)\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
 	$('#club_tabla').append('<table id="0" class="favoritos">'
 		+ '<tr>'
 		+ '<th colspan=3 align="absmiddle">' + club_name + '</th>'
@@ -187,10 +179,10 @@ function show_partidos_club(title, item, id, local) {
 		dia_str = item.fecha.replace(/-/g, "/") + hora;
 	}
 
-	campo = '<a href="javascript:load_campo(\'' + escapeJsArgClub(item.codigo_campo) + '\')">' + item.campo + '</a>';
+	campo = '<a href="javascript:load_campo(\'' + item.codigo_campo + '\')">' + item.campo + '</a>';
 
 	if (item.equipo_local.trim() != '') {
-		casa = '<a href="javascript:load_portada(\'' + escapeJsArgClub(item.codigo_equipo_local) + '\')">' + item.equipo_local + '</a>';
+		casa = '<a href="javascript:load_portada(\'' + item.codigo_equipo_local + '\')">' + item.equipo_local + '</a>';
 		casa = '<img src="https://www.futgal.es' + item.escudo_equipo_local + '" align="absmiddle" class="escudo_logo_medio">&nbsp;&nbsp;' + casa + '&nbsp;';
 	} else {
 		casa = 'Descansa';
@@ -198,7 +190,7 @@ function show_partidos_club(title, item, id, local) {
 	}
 
 	if (item.equipo_visitante.trim() != '') {
-		fuera = '<a href="javascript:load_portada(\'' + escapeJsArgClub(item.codigo_equipo_visitante) + '\')">' + item.equipo_visitante + '</a>';
+		fuera = '<a href="javascript:load_portada(\'' + item.codigo_equipo_visitante + '\')">' + item.equipo_visitante + '</a>';
 		fuera = '<img src="https://www.futgal.es' + item.escudo_equipo_visitante + '" align="absmiddle" class="escudo_logo_medio">&nbsp;&nbsp;' + fuera + '&nbsp;';
 	} else {
 		fuera = 'Descansa';

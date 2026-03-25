@@ -1,12 +1,4 @@
 // #####################################################################################################################################################
-function escapeJsArgIndex(value) {
-	return String(value == null ? '' : value)
-		.replace(/\\/g, '\\\\')
-		.replace(/'/g, "\\'")
-		.replace(/\r/g, '\\r')
-		.replace(/\n/g, '\\n');
-}
-
 async function load_xornadas(cod_equipo, addHistory = true, rfef = false, codgrupo = '', codcompeticion = '') {
 	displayLoading();
 	setCookie('paginaRFGF', 'xornadas', 30)
@@ -80,10 +72,6 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 
 		cont = 0;
 		jQuery.each(itemCompeticion.partidos, function (index, item) {
-			var codequipoCasaEscaped = escapeJsArgIndex(item.codequipo_casa);
-			var codequipoFueraEscaped = escapeJsArgIndex(item.codequipo_fuera);
-			var codGrupoEscaped = escapeJsArgIndex(itemCompeticion.cod_grupo);
-			var codCompeticionEscaped = escapeJsArgIndex(itemCompeticion.cod_competicion);
 			var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
 			var dt = new Date(item.fecha.replace(pattern, '$3-$2-$1 12:00'));
 			background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
@@ -105,17 +93,15 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				campo = item.campo;
 			} else {
 				if (item.codequipo_casa != '')
-					casa = '<a href="javascript:load_xornadas(\'' + codequipoCasaEscaped + '\',false,' + rfef + ',\'' + codGrupoEscaped + '\',\'' + codCompeticionEscaped + '\')">' + item.equipo_casa + '</a>';
+					casa = '<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_casa + '</a>';
 				else
 					casa = item.equipo_casa;
 				if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa != '')
 					casa += '&nbsp;(' + item.posicion_equipo_casa + 'º)';
 				//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 				//campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
-				var campoText = String(item.campo == null ? '' : item.campo);
-				var campoJsEscaped = escapeJsArgIndex(campoText);
-				var campoHtmlEscaped = campoText.replace(/"/g, '&quot;');
-				campo = " <a href=\"#\" onclick=\"openWazeSearch(event,'" + campoJsEscaped + "')\" >" + campoHtmlEscaped + '</a> <img src="../img/waze.png" height="15px">';
+				campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
+				campo = " <a href=\"#\" onclick=\"openWazeSearch(event,'" + campoEscape + "')\" >"+ item.campo + '</a> <img src="../img/waze.png" height="15px">';
 
 
 			}
@@ -133,7 +119,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				if (item.equipo_fuera != cod_equipo && item.posicion_equipo_fuera != '')
 					fuera += '(' + item.posicion_equipo_fuera + 'º)&nbsp;';
 				if (item.codequipo_fuera != '')
-					fuera += '<a href="javascript:load_xornadas(\'' + codequipoFueraEscaped + '\',false,' + rfef + ',\'' + codGrupoEscaped + '\',\'' + codCompeticionEscaped + '\')">' + item.equipo_fuera + '</a>';
+					fuera += '<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_fuera + '</a>';
 				else
 					fuera += item.equipo_fuera;
 			}
@@ -155,7 +141,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 			if (item.goles_casa != '' && item.goles_fuera != '') {
 				goles_html = item.goles_casa + ' - ' + item.goles_fuera + xogo;
 				if (item.codacta != '') {
-					goles_html = '<a href="javascript:load_acta(\'' + escapeJsArgIndex(item.codacta) + '\')" title="Acta">' + goles_html + '</a>';
+					goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')" title="Acta">' + goles_html + '</a>';
 				}
 			} else {
 				goles_html = ' ';
@@ -292,7 +278,7 @@ function show_clasificacion(data, cod_grupo, cod_equipo, rfef = false) {
 		else
 			puntos = item.puntos;
 
-		equipo = '<a href="javascript:load_portada(\'' + escapeJsArgIndex(item.codequipo) + '\',true,' + rfef + ',\'' + escapeJsArgIndex(cod_grupo) + '\',\'' + escapeJsArgIndex(data.codigo_competicion) + '\')">' + item.nombre + '</a>';
+		equipo = '<a href="javascript:load_portada(\'' + item.codequipo  + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion +  '\')">' + item.nombre + '</a>';
 		equipo = '<img src="https://www.futgal.es' + item.url_img + '" align="absmiddle" class="escudo_widget">&nbsp;' + equipo
 
 		diff = item.goles_a_favor - item.goles_en_contra;
@@ -394,7 +380,7 @@ function show_goleadores(data, cod_grupo, cod_equipo) {
 
 		$('#results').append('<tr>');
 
-		equipo = '<a href="javascript:load_portada(\'' + escapeJsArgIndex(item.codigo_equipo) + '\',true,' + rfef + ',\'' + escapeJsArgIndex(cod_grupo) + '\',\'' + escapeJsArgIndex(data.codigo_competicion) + '\')">' + item.nombre_equipo + '</a>';
+		equipo = '<a href="javascript:load_portada(\'' + item.codigo_equipo  + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion + + '\')">' + item.nombre_equipo + '</a>';
 		equipo = '<img src="https://www.futgal.es' + item.escudo_equipo + '" align="absmiddle" class="escudo_widget">&nbsp;' + equipo
 
 		$('#results').append(

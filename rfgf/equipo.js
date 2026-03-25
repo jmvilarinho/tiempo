@@ -109,7 +109,8 @@ function show_equipo(data, cod_equipo,rfef=false) {
 			}
 			else {
 				casa = '<a href="?cod_equipo=' + item.codequipo_casa + '">' + item.equipo_casa + '</a>';
-				campo = '<a href="https://maps.google.com?q=' + item.campo + '" target="_blank">' + item.campo + ' <img src="../img/dot.png" height="20px"></a>';
+				campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
+				campo = '<a href="https://maps.google.com?q=' + campoEscape + '" target="_blank">' + item.campo + ' <img src="../img/dot.png" height="20px"></a>';
 			}
 			casa = casa + '&nbsp;<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_widget">';
 

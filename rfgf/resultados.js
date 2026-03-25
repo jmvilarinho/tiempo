@@ -44,14 +44,6 @@ async function load_resultados(cod_grupo, cod_equipo, jornada, cod_competicion, 
 	hideLoading();
 }
 
-function escapeJsArgResultados(value) {
-	return String(value == null ? '' : value)
-		.replace(/\\/g, '\\\\')
-		.replace(/'/g, "\\'")
-		.replace(/\r/g, '\\r')
-		.replace(/\n/g, '\\n');
-}
-
 function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, rfef = false) {
 	$('#results').append('<br>');
 	$('#results').append(data.nombre_competicion + ' (' + data.nombre_grupo + ')<br>');
@@ -59,13 +51,13 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 
 	j = parseInt(data.jornada);
 	if ((j - 1) > 0) {
-		back = "<a href=\"javascript:load_resultados('" + escapeJsArgResultados(codgrupo) + "','" + escapeJsArgResultados(cod_equipo) + "','" + escapeJsArgResultados(j - 1) + "','" + escapeJsArgResultados(cod_competicion) + "',false," + rfef + ")\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
+		back = "<a href=\"javascript:load_resultados('" + codgrupo + "','" + cod_equipo + "','" + (j - 1) + "','" + cod_competicion + "',false," + rfef + ")\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
 	} else {
 		back = '';
 	}
 
 	if (data.jornada < data.listado_jornadas[0].jornadas.length)
-		forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_resultados('" + escapeJsArgResultados(codgrupo) + "','" + escapeJsArgResultados(cod_equipo) + "','" + escapeJsArgResultados(j + 1) + "','" + escapeJsArgResultados(cod_competicion) + "',false," + rfef + ")\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
+		forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_resultados('" + codgrupo + "','" + cod_equipo + "','" + (j + 1) + "','" + cod_competicion + "',false," + rfef + ")\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
 	else
 		forward = '';
 
@@ -91,7 +83,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		if (item.Nombre_equipo_local == 'Descansa') {
 			casa = item.Nombre_equipo_local;
 		} else if (item.CodEquipo_local != "") {
-			casa = '<a href="javascript:load_xornadas(\'' + escapeJsArgResultados(item.CodEquipo_local) + '\',false,' + rfef + ',\'' + escapeJsArgResultados(codgrupo) + '\',\'' + escapeJsArgResultados(cod_competicion) + '\')">' + item.Nombre_equipo_local + '</a>';
+			casa = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_local + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + item.Nombre_equipo_local + '</a>';
 		} else {
 			casa = item.Nombre_equipo_local;
 		}
@@ -102,7 +94,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		if (item.Nombre_equipo_visitante == 'Descansa') {
 			fuera = item.Nombre_equipo_visitante;
 		} else if (item.CodEquipo_visitante != "") {
-			fuera = '<a href="javascript:load_xornadas(\'' + escapeJsArgResultados(item.CodEquipo_visitante) + '\',false,' + rfef + ',\'' + escapeJsArgResultados(codgrupo) + '\',\'' + escapeJsArgResultados(cod_competicion) + '\')">' + item.Nombre_equipo_visitante + '</a>';
+			fuera = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_visitante + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + item.Nombre_equipo_visitante + '</a>';
 		} else {
 			fuera = item.Nombre_equipo_visitante;
 		}
@@ -125,7 +117,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		if (item.Goles_casa != "" && item.Goles_visitante != "") {
 			goles_html = item.Goles_casa + ' - ' + item.Goles_visitante + xogo;
 			if (item.codacta != '') {
-				goles_html = '<a href="javascript:load_acta(\'' + escapeJsArgResultados(item.codacta) + '\')">' + goles_html + '</a>';
+				goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')">' + goles_html + '</a>';
 			}
 		}
 

@@ -12,14 +12,6 @@ function getSunday(d) {
 	return d.toISOString().slice(0, 10);
 }
 
-function escapeJsArgCampo(value) {
-	return String(value == null ? '' : value)
-		.replace(/\\/g, '\\\\')
-		.replace(/'/g, "\\'")
-		.replace(/\r/g, '\\r')
-		.replace(/\n/g, '\\n');
-}
-
 
 async function load_campo(cod_campo, timestamp = '', addHistory = true) {
 	displayLoading();
@@ -93,8 +85,8 @@ async function show_campo(data, cod_campo, current_date) {
 	}
 
 
-	back = "<a href=\"javascript:load_campo('" + escapeJsArgCampo(cod_campo) + "','" + escapeJsArgCampo(week_before) + "',false)\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
-	forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_campo('" + escapeJsArgCampo(cod_campo) + "','" + escapeJsArgCampo(week_after) + "',false)\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
+	back = "<a href=\"javascript:load_campo('" + cod_campo + "','" + week_before + "',false)\"><img class=\"escudo_widget\" src=../img/back.png></a>&nbsp;&nbsp;&nbsp;";
+	forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_campo('" + cod_campo + "','" + week_after + "',false)\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
 	$('#campo_tabla').append('<table id="0" class="favoritos">'
 		+ campo
 		+ '<tr>'
@@ -224,7 +216,7 @@ function show_partido(item, id, local) {
 	}
 
 	if (item.equipo_local.trim() != '') {
-		casa = '<a href="javascript:load_portada(\'' + escapeJsArgCampo(item.codigo_equipo_local) + '\')">' + item.equipo_local + '</a>';
+		casa = '<a href="javascript:load_portada(\'' + item.codigo_equipo_local + '\')">' + item.equipo_local + '</a>';
 		casa = '<img src="https://www.futgal.es' + item.escudo_equipo_local + '" align="absmiddle" class="escudo_logo_medio">&nbsp;&nbsp;' + casa + '&nbsp;';
 	} else {
 		casa = 'Descansa';
@@ -232,7 +224,7 @@ function show_partido(item, id, local) {
 	}
 
 	if (item.equipo_visitante.trim() != '') {
-		fuera = '<a href="javascript:load_portada(\'' + escapeJsArgCampo(item.codigo_equipo_visitante) + '\')">' + item.equipo_visitante + '</a>';
+		fuera = '<a href="javascript:load_portada(\'' + item.codigo_equipo_visitante + '\')">' + item.equipo_visitante + '</a>';
 		fuera = '<img src="https://www.futgal.es' + item.escudo_equipo_visitante + '" align="absmiddle" class="escudo_logo_medio">&nbsp;&nbsp;' + fuera + '&nbsp;';
 	} else {
 		fuera = 'Descansa';
