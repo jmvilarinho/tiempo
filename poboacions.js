@@ -595,6 +595,9 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 			$('#divmunicipio' + id_municipio).html('Error obtendo precipitacións');
 			return false;
 		});
+
+	// Fetch Meteosix precipitation data
+	getMeteosixPrecipitacion(id_municipio, lat, lon, element);
 }
 
 function municipioRow(datos, index) {
@@ -647,7 +650,7 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 		}
 		if ("datos_json" in data) {
 			console.log("Datos completos precipitacion para " + id_municipio);
-			createPrevisionPrecipitacionMunicipio(data['datos_json'], element, id_municipio);
+			createPrevisionPrecipitacionMunicipio(data['datos_json'], element, id_municipio, null);
 		} else {
 
 			console.log('Get precipitacion: ' + data['datos'])
@@ -661,7 +664,7 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 				.then(function (buffer) {
 					const decoder = new TextDecoder('iso-8859-1');
 					const text = decoder.decode(buffer);
-					createPrevisionPrecipitacionMunicipio(JSON.parse(text), element, id_municipio);
+					createPrevisionPrecipitacionMunicipio(JSON.parse(text), element, id_municipio, null);
 				})
 				.catch(error => {
 					console.error('Error:', error);
@@ -674,8 +677,70 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 	}
 }
 
-async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
-	//console.log(data[0]["prediccion"]["dia"][0]['precipitacion']);
+function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
+	// MeteoGalicia API endpoint for precipitation data
+	const apiKey = '2jBydgUAK6Op9eVTGmOW2De2Z0q1S3FKKe56bpuv7nd0S79jx1r9400A2sFoHF6a';
+	const now = new Date();
+	const startTime = now.toISOString().split('.')[0];
+	const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('.')[0];
+
+	// curl "https://servizos.meteogalicia.gal/apiv5/findPlaces?location=ordes&API_KEY=2jBydgUAK6Op9eVTGmOW2De2Z0q1S3FKKe56bpuv7nd0S79jx1r9400A2sFoHF6a"
+
+	if (!(id_municipio in id_map)) {
+		console.warn('No MeteoGalicia ID for municipio ' + id_municipio);
+		window.meteosixPrecipitacionData = null;
+		return;
+	}
+
+	const meteogaliciaUrl = `https://servizos.meteogalicia.gal/apiv5/getNumericForecastInfo?locationIds=${id_map[id_municipio]}&variables=precipitation_amount&startTime=${startTime}&endTime=${endTime}&API_KEY=${apiKey}`;
+
+	console.log('Get MeteoGalicia precipitation data: ' + meteogaliciaUrl);
+
+	fetch(proxyHost + meteogaliciaUrl)
+		.then(response => response.json())
+		.then(data => {
+			console.log('MeteoGalicia precipitation data loaded for ' + id_municipio);
+			window.meteosixPrecipitacionData = data;
+			// Re-render chart with both datasets
+			renderChartWithBothDatasets(id_municipio);
+		})
+		.catch(error => {
+			console.warn('Could not fetch MeteoGalicia data:', error);
+			window.meteosixPrecipitacionData = null;
+		});
+}
+
+function extractMeteosixPrecipitacion(meteosixData, labels) {
+	// Parse MeteoGalicia API response: data items are {time: "2026-03-25T06:00:00Z", value: 0.5}
+	// Build a map from hour string ("06") -> precipitation value, then align with AEMET labels
+	const hourMap = {};
+
+	try {
+		if (meteosixData && meteosixData.results && meteosixData.results.length > 0) {
+			const result = meteosixData.results[0];
+			if (result.variables && result.variables.length > 0) {
+				const precipVar = result.variables[0];
+				if (precipVar.data && precipVar.data.length > 0) {
+					precipVar.data.forEach(item => {
+						// item.time is ISO string like "2026-03-25T06:00:00Z"
+						const hourStr = String(new Date(item.time).getUTCHours()).padStart(2, '0');
+						hourMap[hourStr] = (hourMap[hourStr] || 0) + (Number(item.value) || 0);
+					});
+				}
+			}
+		}
+	} catch (error) {
+		console.error('Error parsing MeteoGalicia data:', error);
+	}
+
+	// Return values aligned with AEMET labels
+	return labels.map(label => {
+		const key = String(label).padStart(2, '0');
+		return hourMap[key] !== undefined ? hourMap[key] : null;
+	});
+}
+
+async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio, meteosixData = null) {
 	var datos_array = [];
 	const now = new Date();
 	current_hour = now.getHours()
@@ -685,11 +750,8 @@ async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio
 
 	var today_encontrado = false;
 	for (var i = 0; i < arrayLength; i++) {
-		//console.log("procesar dia" + datos_array_dia[i]['fecha']);
 		if (today_encontrado) {
-			// dia siguiente
 			today_encontrado = false;
-
 			manana = datos_array_dia[i]['precipitacion'];
 			for (var x = 0; x < manana.length; x++) {
 				hora = Number(manana[x]['periodo']);
@@ -697,11 +759,9 @@ async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio
 					datos_array.push(manana[x]);
 				}
 			}
-
 		}
 		if (isToday(datos_array_dia[i]['fecha'])) {
 			today_encontrado = true;
-
 			hoy = datos_array_dia[i]['precipitacion'];
 			for (var x = 0; x < hoy.length; x++) {
 				hora = Number(hoy[x]['periodo']);
@@ -717,68 +777,160 @@ async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio
 		$('#divmunicipio' + id_municipio).html('Non hai datos de precipitacións');
 		return;
 	}
-	var labels = [];
-	var data = [];
-	var max = 0;
 
+	var labels = [];
+	var data_aemet = [];
+	var max = 0;
 
 	for (var i = 0; i < arrayLength; i++) {
 		hora = Number(datos_array[i]['periodo']);
 		precipitacion = Number(datos_array[i]['value']);
 		if (hora >= current_hour || true) {
 			labels.push(datos_array[i]['periodo']);
-			data.push(precipitacion);
+			data_aemet.push(precipitacion);
 			if (precipitacion > max) {
 				max = precipitacion;
 			}
 		}
 	}
 
+	// Store chart context for later updates
+	window.chartData = window.chartData || {};
+	window.chartData[id_municipio] = {
+		labels: labels,
+		data_aemet: data_aemet,
+		canvas_id: 'municipio' + id_municipio,
+		container_id: 'divmunicipio' + id_municipio,
+		row_id: 'trmunicipio' + id_municipio,
+		max: max
+	};
 
-	if (max > 0) {
-		var image = document.getElementById('municipio' + id_municipio);
-		image.style.visibility = "visible";
+	// Initial render with AEMET data only
+	renderChart(id_municipio);
+}
 
-		// Get the drawing context on the canvas
-		var myContext = document.getElementById('municipio' + id_municipio).getContext('2d');
+function renderChart(id_municipio) {
+	if (!window.chartData || !window.chartData[id_municipio]) return;
+
+	const chartInfo = window.chartData[id_municipio];
+	const max = chartInfo.max;
+	const labels = chartInfo.labels;
+	const data_aemet = chartInfo.data_aemet;
+
+	// Extract MeteoGalicia data if available
+	let data_meteosix = null;
+	if (window.meteosixPrecipitacionData) {
+		data_meteosix = extractMeteosixPrecipitacion(window.meteosixPrecipitacionData, labels);
+	}
+	console.log('Extracted MeteoGalicia data for ' + id_municipio + ': ', data_meteosix);
+	console.log('AEMET data for ' + id_municipio + ': ', data_aemet);
+
+	const hasMeteosix = data_meteosix !== null && data_meteosix.some(v => v !== null && v !== undefined);
+
+	// Compute effective max across both datasets before deciding to render
+	let effectiveMax = chartInfo.max;
+	if (hasMeteosix) {
+		const mesoMax = Math.max(...data_meteosix.map(v => v || 0));
+		if (mesoMax > effectiveMax) effectiveMax = mesoMax;
+		chartInfo.max = effectiveMax;
+	}
+
+	if (effectiveMax > 0) {
+		const canvas = document.getElementById(chartInfo.canvas_id);
+		if (!canvas) return;
+
+		canvas.style.visibility = "visible";
+
+		// Destroy previous chart if it exists
+		if (window.chartInstances && window.chartInstances[id_municipio]) {
+			window.chartInstances[id_municipio].destroy();
+		}
+
+		if (!window.chartInstances) {
+			window.chartInstances = {};
+		}
+
+		var myContext = canvas.getContext('2d');
+
+		var datasets = [
+			{
+				label: 'AEMET',
+				backgroundColor: "rgba(30, 100, 220, 0.75)",
+				borderColor: "rgba(30, 100, 220, 1)",
+				borderWidth: 1,
+				data: data_aemet,
+				order: 1
+			}
+		];
+
+		// Always add MeteoGalicia dataset when available, even with zeros, for side-by-side comparison
+		if (hasMeteosix) {
+			datasets.push({
+				label: 'MeteoGalicia',
+				backgroundColor: "rgba(230, 120, 0, 0.75)",
+				borderColor: "rgba(230, 120, 0, 1)",
+				borderWidth: 1,
+				data: data_meteosix,
+				order: 2
+			});
+		}
+
 		var myChart = new Chart(myContext, {
 			type: 'bar',
 			data: {
 				labels: labels,
-				datasets: [{
-					label: 'mm',
-					backgroundColor: "blue",
-					data: data,
-				}
-				],
+				datasets: datasets,
 			},
 			options: {
 				plugins: {
 					title: {
 						display: true,
-						text: 'Precipitación total (hora)'
+						text: 'Precipitación (mm/hora)'
 					},
 					legend: {
-						display: false
+						display: hasMeteosix,
+						position: 'bottom',
+						labels: {
+							boxWidth: 10,
+							boxHeight: 10,
+							padding: 8,
+							font: {
+								size: 10
+							}
+						}
 					},
+					tooltip: {
+						callbacks: {
+							label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) : 'N/D'} mm`
+						}
+					}
 				},
 				scales: {
 					y: {
 						beginAtZero: true,
 						suggestedMin: 0,
-						suggestedMax: 4,
+						suggestedMax: Math.max(4, effectiveMax),
 						title: {
 							display: true,
 							text: 'mm'
 						}
 					}
 				}
-
 			}
 		});
+
+		window.chartInstances[id_municipio] = myChart;
 	} else {
-		$('#trmunicipio' + id_municipio).remove();
+		const row = document.getElementById(chartInfo.row_id);
+		if (row) {
+			row.remove();
+		}
 	}
+}
+
+function renderChartWithBothDatasets(id_municipio) {
+	// Re-render chart when MeteoGalicia data is available
+	renderChart(id_municipio);
 }
 
 function getPrintDateHour(dateInput) {

@@ -395,7 +395,7 @@ const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.e
 const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
 
 
-function getPrevision(id, element, idmareas = 0) {
+function getPrevision(id, element, idmareas = 0, lat = 0, lon = 0) {
 	const ms = Date.now();
 	// Playas     : https://opendata.aemet.es/opendata/api/prediccion/especifica/playa/1501902/?api_key=eyJhbGciO
 	// Municipios : https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/27045/?api_key=eyJhb...
@@ -414,7 +414,7 @@ function getPrevision(id, element, idmareas = 0) {
 			}
 			return JSON.parse(body);
 		})
-		.then(data => getPrevisionDatos(data, element, idmareas, id))
+		.then(data => getPrevisionDatos(data, element, idmareas, id, lat, lon))
 		.catch(error => {
 			console.error('Error:', error);
 			noPrevision(element, idmareas, error.message);
@@ -439,7 +439,7 @@ async function noPrevision(element, idmareas = 0, error = '') {
 	total_elementos = total_elementos - 1;
 }
 
-async function getPrevisionDatos(data, element, idmareas, id_playa) {
+async function getPrevisionDatos(data, element, idmareas, id_playa, lat = 0, lon = 0) {
 	if (data['estado'] == 200) {
 		if ('error' in data && data['error'] != "") {
 			mareas = '';
@@ -455,7 +455,7 @@ async function getPrevisionDatos(data, element, idmareas, id_playa) {
 		}
 		if ("datos_json" in data) {
 			console.log("Datos completos para " + id_playa);
-			createPrevision(data['datos_json'], element, idmareas, id_playa);
+			createPrevision(data['datos_json'], element, idmareas, id_playa, lat, lon);
 		} else {
 
 			console.log('Get prevision: ' + data['datos'])
@@ -469,7 +469,7 @@ async function getPrevisionDatos(data, element, idmareas, id_playa) {
 				.then(function (buffer) {
 					const decoder = new TextDecoder('iso-8859-1');
 					const text = decoder.decode(buffer);
-					createPrevision(JSON.parse(text), element, idmareas, id_playa);
+					createPrevision(JSON.parse(text), element, idmareas, id_playa, lat, lon);
 				});
 		}
 	}
@@ -485,8 +485,8 @@ function getFechaES(fecha) {
 	return dt.toLocaleDateString("es-ES", options)
 }
 
-async function createPrevision(data, element, idmareas, id_playa) {
-	var tabla = '<table class="center">';
+async function createPrevision(data, element, idmareas, id_playa, lat = 0, lon = 0) {
+	var tabla = '<table id="tablaMunicipio-' + id_playa + '" class="center">';
 	var datos;
 	var datos2;
 
@@ -500,8 +500,14 @@ async function createPrevision(data, element, idmareas, id_playa) {
 	var date = new Date;
 	var hour = date.getHours();
 
-	tabla += "<tr><th colspan=4>"
-		+ '<a href="https://www.aemet.es/es/eltiempo/prediccion/playas/' + aplanaTexto(data[0]["nombre"]) + '-' + id_playa + '" target="_new" rel="noopener" >'
+	tabla += "<tr><th colspan=4>";
+
+	if (lat != 0 && lon != 0) {
+		tabla += "<img id=\"iconoGasolinera-" + id_playa + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('"+data[0]["nombre"]+"'," + id_playa + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "&nbsp;&nbsp;";
+	}
+
+	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/playas/' + aplanaTexto(data[0]["nombre"]) + '-' + id_playa + '" target="_new" rel="noopener" >'
 		+ "Prevision para " + data[0]["nombre"]
 		+ '</a>'
 		+ "</th></tr>";
