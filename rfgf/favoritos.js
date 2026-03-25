@@ -197,7 +197,7 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 			//campo = '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
-			campo = "<a href=\"#\" onclick=\"openMapsSearch(event,'" + campoEscape + "')\">" + campoEscape + '</a> <img src="../img/dot.png" height="15px">';
+			campo = "<a href=\"#\" onclick=\"openMapsSearch(event,'" + campoEscape + "')\">" + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 		}
 	}
 
