@@ -22,13 +22,13 @@
 	}
 }
 */
-
+/*
 @media (min-width: 1024px) {
 	html.android-device body {
 		zoom: 1.0;
 	}
 }
-
+*/
 body {
     font-size: clamp(18px, 2vw, 20px);
 }
