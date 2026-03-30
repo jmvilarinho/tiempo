@@ -55,432 +55,6 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, la
 	}
 }
 
-
-function loadFarmacia(id_municipio, id_cofc) {
-	$('#iconoFarmacia-' + id_cofc).css('display', 'none');
-	fetch(proxyHostFarmacia + 'https://www.cofc.es/farmacia/index')
-		.then(response => {
-			if (!response.ok) {
-				$('#iconoFarmacia-' + id_cofc).show()
-				throw new Error('Network response was not ok');
-			}
-			return response.json();
-		})
-		.then(data => {
-			var data = data["datos_json"];
-			// --- filter by idPoblacion ---
-			const result = data.filter(item => item.idPoblacion === id_cofc);
-
-			if (result.length === 0) {
-				html = "<p>No hay farmacias en esta población.</p>";
-			} else {
-				html = "<strong><a href=\"https://www.cofc.es/farmacia/index\"  target=\"_new\" rel=\"noopener\">Farmacia/s de guardia</a></strong><br>";
-
-				// Sort by distance from current position
-				getSafeLocation().then((pos) => {
-					const currentLat = pos.latitude;
-					const currentLon = pos.longitude;
-
-					// Calculate distance for each pharmacy
-					result.forEach(f => {
-						const latitem = parseFloat(f.latitud);
-						const lonitem = parseFloat(f.longitud);
-
-						if (currentLat !== 0 && currentLon !== 0) {
-							f._distance = distance(currentLat, currentLon, latitem, lonitem);
-							console.log(`Distance to ${f.nombre}: ${f._distance.toFixed(2)} km`);
-						} else {
-							f._distance = Infinity;
-						}
-					});
-
-					// Sort by distance
-					result.sort((a, b) => a._distance - b._distance);
-
-					cont = 0;
-					result.forEach(f => {
-						html += "<hr>";
-						let distanceInfo = "";
-						if (f._distance !== Infinity) {
-							distanceInfo = `<br><small>(${f._distance.toFixed(2)} km desde tu ubicación)</small>`;
-						}
-						html += `
-							<a href="#" onclick="openMaps(event,${f.latitud},${f.longitud})">
-							<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-							Dirección: ${f.direccion}<br>
-							Horario: ${f.horario}<br>
-							Guardia: ${f.nombreGuardiaTipoTurno}<br>
-							Teléfono: <a href='tel:${f.telefono}'>${f.telefono}</a><br>
-							Población: ${f.nombrePoblacion}
-							${distanceInfo}
-						`;
-						cont += 1;
-					});
-					html += "";
-
-					const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
-					if (farmaciaDiv) {
-						farmaciaDiv.innerHTML = html;
-					}
-				});
-
-				const existingDiv = document.getElementById("divFarmacia-" + id_cofc);
-				if (!existingDiv) {
-					const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divFarmacia-" + id_cofc + "\"></div></td></tr>";
-					const table = document.getElementById('tablaMunicipio-' + id_municipio);
-					const targetTbody = table ? table.querySelector('tbody') : null;
-					if (targetTbody) {
-						targetTbody.insertAdjacentHTML('afterbegin', newRow);
-					}
-				}
-				const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
-				if (farmaciaDiv) {
-					farmaciaDiv.innerHTML = html;
-				}
-			}
-		})
-		.catch(error => {
-			$('#iconoFarmacia-' + id_cofc).show()
-			alert('Error fetching content: ' + error.message);
-		});
-}
-
-
-function getField(item, keys) {
-	for (const key of keys) {
-		if (item[key] !== undefined && item[key] !== null) {
-			return item[key];
-		}
-	}
-	return "";
-}
-
-// Haversine formula to compute distance in km
-function distance(lat1, lon1, lat2, lon2) {
-	const R = 6371; // km
-	const toRad = deg => deg * Math.PI / 180;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
-	const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-	return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-
-// Convert price string to float
-function parsePrice(priceStr) {
-	if (!priceStr) return Infinity;
-	return parseFloat(priceStr.replace(',', '.'));
-}
-
-function getSafeLocation() {
-	try {
-		return new Promise((resolve) => {
-			if (!navigator.geolocation) {
-				// Geolocation not supported
-				resolve({ latitude: 0, longitude: 0 });
-				return;
-			}
-
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					resolve({
-						latitude: position.coords.latitude,
-						longitude: position.coords.longitude
-					});
-				},
-				(error) => {
-					// Permission denied or other error
-					console.warn("Geolocation error:", error.message);
-					resolve({ latitude: 0, longitude: 0 });
-				},
-				{ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-			);
-		});
-
-	} catch (error) {
-		console.warn("Error getting location: ", error.message);
-		return Promise.resolve({ latitude: 0, longitude: 0 });
-	}
-}
-
-const CCAA_CODES = {
-	"Andalucía": "01",
-	"Aragón": "02",
-	"Asturias": "03",
-	"Illes Balears": "04",
-	"Canarias": "05",
-	"Cantabria": "06",
-	"Castilla y León": "07",
-	"Castilla-La Mancha": "08",
-	"Cataluña": "09",
-	"Comunidad Valenciana": "10",
-	"Extremadura": "11",
-	"Galicia": "12",
-	"Madrid": "13",
-	"Murcia": "14",
-	"Navarra": "15",
-	"País Vasco": "16",
-	"La Rioja": "17",
-	"Ceuta": "18",
-	"Melilla": "19"
-};
-
-const normalize = (str) =>
-	str
-		?.toLowerCase()
-		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.trim();
-
-const aliases = {
-	"galicia": "Galicia",
-	"galiza": "Galicia",
-
-	"principality of asturias": "Asturias",
-
-	"basque country": "País Vasco",
-	"euskadi": "País Vasco",
-
-	"catalonia": "Cataluña",
-	"catalunya": "Cataluña",
-
-	"valencian community": "Comunidad Valenciana",
-	"comunitat valenciana": "Comunidad Valenciana",
-
-	"community of madrid": "Madrid",
-
-	"castile and leon": "Castilla y León",
-	"castile-la mancha": "Castilla-La Mancha",
-
-	"andalusia": "Andalucía",
-
-	"balearic islands": "Illes Balears",
-	"baleares": "Illes Balears",
-
-	"canary islands": "Canarias",
-
-	"navarre": "Navarra",
-	"rioja": "La Rioja"
-};
-
-function mapToComunidad(raw) {
-	if (!raw) return null;
-
-	const norm = normalize(raw);
-
-	// direct
-	for (const c in CCAA_CODES) {
-		if (normalize(c) === norm) return c;
-	}
-
-	// alias
-	if (aliases[norm]) return aliases[norm];
-
-	// partial
-	for (const c in CCAA_CODES) {
-		if (norm.includes(normalize(c))) return c;
-	}
-
-	return null;
-}
-
-async function getCCAACode(lat, lon) {
-	const res = await fetch(
-		`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-		{
-			headers: { "User-Agent": "vila-app" }
-		}
-	);
-	const data = await res.json();
-	const raw = data.address.state;
-	const comunidad = mapToComunidad(raw);
-	return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
-}
-
-async function loadGasolinera(text,id_municipio, lat, lon, fuel_distancia_max_km = 10) {
-	const stepDistanceKm = 5;
-	const minDistanceKm = 5;
-	const downDistanceKm = Math.max(minDistanceKm, fuel_distancia_max_km - stepDistanceKm);
-	const upDistanceKm = fuel_distancia_max_km + stepDistanceKm;
-	const containerId = id_municipio != -1 ? "divGasolinera-" + id_municipio : "combustible_ubicacion";
-	const container = document.getElementById(containerId);
-	if (container) {
-		container.innerHTML = "";
-	}
-
-	if (id_municipio != -1) {
-		$('#iconoGasolinera-' + id_municipio).css('display', 'none');
-		td_style = "style=\"border:none;\"";
-	} else {
-		$('#iconoGasolinera').css('display', 'none');
-		td_style = "";
-	}
-
-	const table = document.createElement("table");
-	table.style.borderCollapse = "collapse";
-	table.style.border = "none";
-	table.style.margin = "0 auto";
-	const tbody = document.createElement("tbody");
-
-	try {
-		[comunidad, code] = await getCCAACode(lat, lon);
-		url = `https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/${code}/4`;
-	} catch (error) {
-		url = FUEL_PRICES_API_URL;
-		comunidad = "Galicia";
-	}
-
-
-	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
-		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
-		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+ "<br>"
-		+ "<small>Cerca de " + text + "</small><br>"
-		+ "<small>(distancia máxima: " + fuel_distancia_max_km + " km)</small></td></tr>";
-	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
-
-	console.log('Get gasolinera data: ' + url);
-	fetch(url)
-		.then(response => {
-			if (!response.ok) {
-				if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
-				throw new Error('Network response was not ok');
-			}
-			return response.json();
-		})
-		.then(data => {
-			//console.log('Gasolinera data: ', data);
-			const list = data.ListaEESSPrecio || [];
-			innerHTML = "";
-
-			getSafeLocation().then((pos) => {
-				const currentLat = pos.latitude;
-				const currentLon = pos.longitude;
-
-				const userLat = lat;
-				const userLon = lon;
-
-				// Compute distance for each station
-				list.forEach(item => {
-					//console.log('Gasolinera item: ', item);
-					const latitem = parseFloat(item.Latitud.replace(',', '.'));
-					const lonitem = parseFloat(item["Longitud (WGS84)"].replace(',', '.'));
-
-					item._distance = distance(userLat, userLon, latitem, lonitem);
-					item._price = parsePrice(item.PrecioProducto);
-					item._lat = latitem;
-					item._lon = lonitem;
-
-					if (currentLat !== 0 && currentLon !== 0) {
-						item._distanceCurrent = distance(currentLat, currentLon, latitem, lonitem);
-					} else {
-						item._distanceCurrent = "???";
-					}
-				});
-
-				// 1. Filter by distance
-				const nearby = list.filter(item => item._distance <= fuel_distancia_max_km);
-
-				// 2. Sort by price, then by distance (prefer current location distance if available)
-				nearby.sort((a, b) => {
-					if (a._price !== b._price) return a._price - b._price;
-					const aDist = a._distanceCurrent !== "???" ? a._distanceCurrent : a._distance;
-					const bDist = b._distanceCurrent !== "???" ? b._distanceCurrent : b._distance;
-					return aDist - bDist;
-				});
-
-				// 3. Take first 10
-				let result = nearby.slice(0, 10);
-
-				// 4. Include more if same price as last one
-				if (nearby.length > 10) {
-					const lastPrice = result[result.length - 1]._price;
-					for (let i = 10; i < nearby.length; i++) {
-						if (nearby[i]._price === lastPrice) {
-							result.push(nearby[i]);
-						} else {
-							break;
-						}
-					}
-				}
-
-				// Sort by price ascending, then nearest distance (prefer current location distance if available)
-				result.sort((a, b) => {
-					if (a._price !== b._price) return a._price - b._price;
-					const aDist = a._distanceCurrent !== "???" ? a._distanceCurrent : a._distance;
-					const bDist = b._distanceCurrent !== "???" ? b._distanceCurrent : b._distance;
-					return aDist - bDist;
-				});
-
-				// Render table
-				result.forEach(item => {
-
-					repostaje = 50 * item._price;
-					if (item._distanceCurrent !== "???") {
-						extra_info = `<br><small>(${item._distanceCurrent.toFixed(2)} km.)</small><br><small>50l: ${(repostaje).toFixed(2)}€</small></td>`;
-					} else {
-						extra_info = `<br><small>50l: ${(repostaje).toFixed(2)}€</small></td>`;
-					}
-
-					const row = document.createElement("tr");
-					row.innerHTML = `
-						<td ${td_style}>
-						<a href="#" onclick="openMaps(event,${item._lat},${item._lon})">
-						<strong>${getField(item, ["Rótulo", "Rotulo"])}</a>
-						</strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-						<small>(${getField(item, ["Horario"])})</small><br>
-						<small>${getField(item, ["Dirección", "Direccion"])}</small><br>
-						<small>${getField(item, ["Localidad"])}</small></td>
-						<td width=70 ${td_style}>${item._price.toFixed(3)} €/l
-						${extra_info}
-						`;
-
-					tbody.appendChild(row);
-					if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
-				});
-
-				if (nearby.length === 0) {
-					tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>Sin gasolineras en " + fuel_distancia_max_km + " km.</td></tr>";
-				} else {
-					const row = document.createElement("tr");
-					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal (" + comunidad + ")</a> " + data.Fecha + "</td>";
-					tbody.appendChild(row);
-
-				}
-
-				table.appendChild(tbody);
-				if (id_municipio != -1) {
-					const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
-					if (!existingDiv) {
-						const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-						const tableMunicipio = document.getElementById('tablaMunicipio-' + id_municipio);
-						const targetTbody = tableMunicipio ? tableMunicipio.querySelector('tbody') : null;
-						if (targetTbody) {
-							targetTbody.insertAdjacentHTML('afterbegin', newRow);
-						}
-					}
-					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
-				}
-				else {
-					document.getElementById("combustible_ubicacion").appendChild(table);
-				}
-
-
-			}, err => {
-				console.log("Cannot get location: " + err.message);
-			});
-
-
-		})
-		.catch(error => {
-			if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
-			console.log('Error fetching content: ' + error.message);
-		});
-
-
-}
-
 async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0) {
 	const now = new Date();
 	current_hour = now.getHours();
@@ -489,7 +63,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	tabla += "<tr><th colspan=4>";
 
 	if (lat != 0 && lon != 0) {
-		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('"+data[0]["nombre"]+"'," + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('" + data[0]["nombre"] + "'," + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		tabla += "&nbsp;&nbsp;";
 	}
 	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
@@ -582,11 +156,16 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 
 
 	const ms = Date.now();
+
+
+	// Fetch Meteosix precipitation data and wait for completion
+	await getMeteosixPrecipitacion(id_municipio, lat, lon, element);
+
+
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey + "&nocache=" + ms
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey;
 	url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio;
-	console.log('Get precipitacion municipio: ' + proxyHost + url);
-
+	console.log('Get precipitacion AEMET: ' + url);
 	fetch(proxyHost + url)
 		.then(response => response.json())
 		.then(data => getPrevisionPrecipitacionMunicipio(data, element, id_municipio))
@@ -595,9 +174,6 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 			$('#divmunicipio' + id_municipio).html('Error obtendo precipitacións');
 			return false;
 		});
-
-	// Fetch Meteosix precipitation data
-	getMeteosixPrecipitacion(id_municipio, lat, lon, element);
 }
 
 function municipioRow(datos, index) {
@@ -677,37 +253,74 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 	}
 }
 
-function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
+const precipitacion_metosix_test = 0; // Set to 1 to inject random test data for MeteoGalicia precipitation
+const precipitacion_aemet_test = 0; // Set to 1 to inject random test data for AEMET precipitation
+const precipitacion_debug = 0; // Set to 1 to enable debug logs for precipitation data
+
+async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	// MeteoGalicia API endpoint for precipitation data
-	const apiKey = '2jBydgUAK6Op9eVTGmOW2De2Z0q1S3FKKe56bpuv7nd0S79jx1r9400A2sFoHF6a';
+
 	const now = new Date();
-	const startTime = now.toISOString().split('.')[0];
-	const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('.')[0];
+	const formatLocalDateTime = (d) => {
+		const pad = n => String(n).padStart(2, '0');
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+	};
+	const startTime = formatLocalDateTime(now);
+	const enddate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+	const endTime = formatLocalDateTime(enddate);
 
 	// curl "https://servizos.meteogalicia.gal/apiv5/findPlaces?location=ordes&API_KEY=2jBydgUAK6Op9eVTGmOW2De2Z0q1S3FKKe56bpuv7nd0S79jx1r9400A2sFoHF6a"
-
 	if (!(id_municipio in id_map)) {
 		console.warn('No MeteoGalicia ID for municipio ' + id_municipio);
-		window.meteosixPrecipitacionData = null;
+		window.precipitacionData = null;
 		return;
 	}
 
-	const meteogaliciaUrl = `https://servizos.meteogalicia.gal/apiv5/getNumericForecastInfo?locationIds=${id_map[id_municipio]}&variables=precipitation_amount&startTime=${startTime}&endTime=${endTime}&API_KEY=${apiKey}`;
+	const meteogaliciaUrl = `https://servizos.meteogalicia.gal/apiv5/getNumericForecastInfo?locationIds=${id_map[id_municipio]}%26variables=precipitation_amount%26startTime=${startTime}%26endTime=${endTime}`;
+	console.log('Get precipitacion MeteoGalicia: ' + meteogaliciaUrl, id_municipio);
 
-	console.log('Get MeteoGalicia precipitation data: ' + meteogaliciaUrl);
+	try {
+		const response = await fetch(proxyHostMeteosix + meteogaliciaUrl);
+		const data = await response.json();
 
-	fetch(proxyHost + meteogaliciaUrl)
-		.then(response => response.json())
-		.then(data => {
-			console.log('MeteoGalicia precipitation data loaded for ' + id_municipio);
-			window.meteosixPrecipitacionData = data;
-			// Re-render chart with both datasets
+		if (data && 'statusCode' in data && data.statusCode == 500) {
+			console.warn('MeteoGalicia API error for ' + id_municipio + ': ' + (data.error || 'Unknown error'));
+			window.precipitacionData = null;
+			return;
+		}
+
+		// Inject random test precipitation data
+		if (precipitacion_metosix_test == 1) {
+			const values = [];
+			for (let i = 0; i < 24; i++) {
+				values.push({
+					hour: String(i).padStart(2, '0'),
+					value: Math.random() < 0.4 ? Number((Math.random() * 10).toFixed(1)) : 0
+				});
+			}
+
+			data['datos_json'] = {
+				content: {
+					features: [{
+						properties: {
+							days: [
+								{},
+								{ variables: [{ values: values }] }
+							]
+						}
+					}]
+				}
+			};
+		}
+
+		window.precipitacionData = data['datos_json'];
+		if (window.chartData && window.chartData[id_municipio]) {
 			renderChartWithBothDatasets(id_municipio);
-		})
-		.catch(error => {
-			console.warn('Could not fetch MeteoGalicia data:', error);
-			window.meteosixPrecipitacionData = null;
-		});
+		}
+	} catch (error) {
+		console.warn('Could not fetch MeteoGalicia data:', error);
+		window.precipitacionData = null;
+	}
 }
 
 function extractMeteosixPrecipitacion(meteosixData, labels) {
@@ -715,7 +328,38 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 	// Build a map from hour string ("06") -> precipitation value, then align with AEMET labels
 	const hourMap = {};
 
+	const buildHourMap = (values) => {
+		const map = {};
+		values.forEach(item => {
+			// support { hour: "06", value: X } or { time: "...T06:00:00Z", value: X }
+			let h = null;
+			if (item.hour !== undefined) {
+				h = String(item.hour).padStart(2, '0');
+			} else if (item.time !== undefined) {
+				h = String(new Date(item.time).getHours()).padStart(2, '0');
+			}
+			if (h !== null) {
+				map[h] = (map[h] || 0) + (Number(item.value) || 0);
+			}
+		});
+		return map;
+	};
+
+	const mapByHour = (map) => labels.map(label => {
+		const key = String(label).padStart(2, '0');
+		return map[key] !== undefined ? map[key] : 0;
+	});
+
 	try {
+		if (Array.isArray(meteosixData) && meteosixData.length > 0) {
+			return mapByHour(buildHourMap(meteosixData));
+		}
+
+		const selectedValues = meteosixData?.content?.features?.[0]?.properties?.days?.[1]?.variables?.[0]?.values;
+		if (Array.isArray(selectedValues) && selectedValues.length > 0) {
+			return mapByHour(buildHourMap(selectedValues));
+		}
+
 		if (meteosixData && meteosixData.results && meteosixData.results.length > 0) {
 			const result = meteosixData.results[0];
 			if (result.variables && result.variables.length > 0) {
@@ -723,7 +367,7 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 				if (precipVar.data && precipVar.data.length > 0) {
 					precipVar.data.forEach(item => {
 						// item.time is ISO string like "2026-03-25T06:00:00Z"
-						const hourStr = String(new Date(item.time).getUTCHours()).padStart(2, '0');
+						const hourStr = String(new Date(item.time).getHours()).padStart(2, '0');
 						hourMap[hourStr] = (hourMap[hourStr] || 0) + (Number(item.value) || 0);
 					});
 				}
@@ -736,7 +380,7 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 	// Return values aligned with AEMET labels
 	return labels.map(label => {
 		const key = String(label).padStart(2, '0');
-		return hourMap[key] !== undefined ? hourMap[key] : null;
+		return hourMap[key] !== undefined ? hourMap[key] : 0;
 	});
 }
 
@@ -744,6 +388,17 @@ async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio
 	var datos_array = [];
 	const now = new Date();
 	current_hour = now.getHours()
+
+	// Inject random test precipitation data
+	if (precipitacion_aemet_test == 1) {
+		const periodos = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
+		data[0]["prediccion"]["dia"].forEach(dia => {
+			dia["precipitacion"] = periodos.map(p => ({
+				periodo: p,
+				value: (Math.random() < 0.4 ? (Math.random() * 10).toFixed(1) : "0")
+			}));
+		});
+	}
 
 	var datos_array_dia = data[0]["prediccion"]["dia"];
 	var arrayLength = datos_array_dia.length;
@@ -819,23 +474,27 @@ function renderChart(id_municipio) {
 
 	// Extract MeteoGalicia data if available
 	let data_meteosix = null;
-	if (window.meteosixPrecipitacionData) {
-		data_meteosix = extractMeteosixPrecipitacion(window.meteosixPrecipitacionData, labels);
+
+	if (window.precipitacionData) {
+		data_meteosix = extractMeteosixPrecipitacion(window.precipitacionData, labels);
 	}
-	console.log('Extracted MeteoGalicia data for ' + id_municipio + ': ', data_meteosix);
-	console.log('AEMET data for ' + id_municipio + ': ', data_aemet);
-
-	const hasMeteosix = data_meteosix !== null && data_meteosix.some(v => v !== null && v !== undefined);
-
-	// Compute effective max across both datasets before deciding to render
-	let effectiveMax = chartInfo.max;
-	if (hasMeteosix) {
-		const mesoMax = Math.max(...data_meteosix.map(v => v || 0));
-		if (mesoMax > effectiveMax) effectiveMax = mesoMax;
-		chartInfo.max = effectiveMax;
+	if (precipitacion_debug) {
+		console.log('MeteoGalicia data for ' + id_municipio + ': ', data_meteosix);
+		console.log('AEMET data for ' + id_municipio + ': ', data_aemet);
 	}
 
-	if (effectiveMax > 0) {
+	const hasAemet = data_aemet !== null && data_aemet.some(v => v !== null && v !== undefined && Number(v) > 0);
+	const hasMeteosix = data_meteosix !== null && data_meteosix.some(v => v !== null && v !== undefined && Number(v) > 0);
+
+	// Compute effective max across whichever datasets have data
+	let effectiveMax = 0;
+	if (hasAemet) effectiveMax = Math.max(effectiveMax, ...data_aemet.map(v => Number(v) || 0));
+	if (hasMeteosix) effectiveMax = Math.max(effectiveMax, ...data_meteosix.map(v => Number(v) || 0));
+	chartInfo.max = effectiveMax;
+
+
+	if (effectiveMax > 0 || hasAemet || hasMeteosix) {
+
 		const canvas = document.getElementById(chartInfo.canvas_id);
 		if (!canvas) return;
 
@@ -851,19 +510,21 @@ function renderChart(id_municipio) {
 		}
 
 		var myContext = canvas.getContext('2d');
+		var datasets = [];
 
-		var datasets = [
-			{
+		// Show AEMET if it has data
+		if (hasAemet) {
+			datasets.push({
 				label: 'AEMET',
 				backgroundColor: "rgba(30, 100, 220, 0.75)",
 				borderColor: "rgba(30, 100, 220, 1)",
 				borderWidth: 1,
 				data: data_aemet,
 				order: 1
-			}
-		];
+			});
+		}
 
-		// Always add MeteoGalicia dataset when available, even with zeros, for side-by-side comparison
+		// Show MeteoGalicia if it has data
 		if (hasMeteosix) {
 			datasets.push({
 				label: 'MeteoGalicia',
@@ -888,7 +549,7 @@ function renderChart(id_municipio) {
 						text: 'Precipitación (mm/hora)'
 					},
 					legend: {
-						display: hasMeteosix,
+						display: datasets.length > 1,
 						position: 'bottom',
 						labels: {
 							boxWidth: 10,
@@ -924,6 +585,9 @@ function renderChart(id_municipio) {
 		const row = document.getElementById(chartInfo.row_id);
 		if (row) {
 			row.remove();
+			if (precipitacion_debug) {
+				console.warn('No precipitation data to display for ' + id_municipio + ', hiding chart.');
+			}
 		}
 	}
 }
