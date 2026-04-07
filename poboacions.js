@@ -165,7 +165,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey + "&nocache=" + ms
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey;
 	url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio;
-	console.log('Get precipitacion AEMET: ' + url);
+	console.log('Get precipitacion AEMET: ' +proxyHost+ url);
 	fetch(proxyHost + url)
 		.then(response => response.json())
 		.then(data => getPrevisionPrecipitacionMunicipio(data, element, id_municipio))
@@ -264,7 +264,6 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	const formatLocalDateTime = (d) => {
 		const pad = n => String(n).padStart(2, '0');
 		const r =`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-		console.log('Formatted local date time for MeteoGalicia API:', r,d);
 		return r;
 	};
 	const startTime = formatLocalDateTime(now);
@@ -287,7 +286,6 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	try {
 		const response = await fetch(proxiedMeteogaliciaUrl);
 		const data = await response.json();
-		console.log('MeteoGalicia API response status for ' + id_municipio + ': ' , data['datos_json']);
 
 		if (data && 'statusCode' in data && data.statusCode == 500) {
 			console.warn('MeteoGalicia API error for ' + id_municipio + ': ' + (data.error || 'Unknown error'));
