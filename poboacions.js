@@ -263,7 +263,9 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	const now = new Date();
 	const formatLocalDateTime = (d) => {
 		const pad = n => String(n).padStart(2, '0');
-		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+		const r =`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+		console.log('Formatted local date time for MeteoGalicia API:', r,d);
+		return r;
 	};
 	const startTime = formatLocalDateTime(now);
 	const enddate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -272,16 +274,20 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	// curl "https://servizos.meteogalicia.gal/apiv5/findPlaces?location=ordes&API_KEY=2jBydgUAK6Op9eVTGmOW2De2Z0q1S3FKKe56bpuv7nd0S79jx1r9400A2sFoHF6a"
 	if (!(id_municipio in id_map)) {
 		console.warn('No MeteoGalicia ID for municipio ' + id_municipio);
+		window.precipitacionDataByMunicipio = window.precipitacionDataByMunicipio || {};
+		window.precipitacionDataByMunicipio[id_municipio] = null;
 		window.precipitacionData = null;
 		return;
 	}
 
-	const meteogaliciaUrl = `https://servizos.meteogalicia.gal/apiv5/getNumericForecastInfo?locationIds=${id_map[id_municipio]}%26variables=precipitation_amount%26startTime=${startTime}%26endTime=${endTime}`;
-	console.log('Get precipitacion MeteoGalicia: ' + meteogaliciaUrl, id_municipio);
+	const meteogaliciaUrl = `https://servizos.meteogalicia.gal/apiv5/getNumericForecastInfo?locationIds=${id_map[id_municipio]}&variables=precipitation_amount&startTime=${startTime}&endTime=${endTime}`;
+	const proxiedMeteogaliciaUrl = proxyHostMeteosix + encodeURIComponent(meteogaliciaUrl);
+	console.log('Get precipitacion MeteoGalicia: ' + proxiedMeteogaliciaUrl, id_municipio);
 
 	try {
-		const response = await fetch(proxyHostMeteosix + meteogaliciaUrl);
+		const response = await fetch(proxiedMeteogaliciaUrl);
 		const data = await response.json();
+		console.log('MeteoGalicia API response status for ' + id_municipio + ': ' , data['datos_json']);
 
 		if (data && 'statusCode' in data && data.statusCode == 500) {
 			console.warn('MeteoGalicia API error for ' + id_municipio + ': ' + (data.error || 'Unknown error'));
@@ -313,12 +319,30 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 			};
 		}
 
-		window.precipitacionData = data['datos_json'];
+		let meteosixPayload = data?.datos_json ?? data;
+		if (typeof meteosixPayload === 'string') {
+			try {
+				meteosixPayload = JSON.parse(meteosixPayload);
+			} catch (e) {
+				console.warn('Could not parse MeteoGalicia datos_json string for ' + id_municipio);
+			}
+		}
+
+		// Some proxy variants can still wrap payload one more level.
+		if (meteosixPayload && meteosixPayload.datos_json) {
+			meteosixPayload = meteosixPayload.datos_json;
+		}
+
+		window.precipitacionDataByMunicipio = window.precipitacionDataByMunicipio || {};
+		window.precipitacionDataByMunicipio[id_municipio] = meteosixPayload;
+		window.precipitacionData = meteosixPayload;
 		if (window.chartData && window.chartData[id_municipio]) {
 			renderChartWithBothDatasets(id_municipio);
 		}
 	} catch (error) {
 		console.warn('Could not fetch MeteoGalicia data:', error);
+		window.precipitacionDataByMunicipio = window.precipitacionDataByMunicipio || {};
+		window.precipitacionDataByMunicipio[id_municipio] = null;
 		window.precipitacionData = null;
 	}
 }
@@ -328,16 +352,48 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 	// Build a map from hour string ("06") -> precipitation value, then align with AEMET labels
 	const hourMap = {};
 
+	const normalizeHourLabel = (raw) => {
+		if (raw === undefined || raw === null) return null;
+		const s = String(raw).trim();
+		// Supports labels like "16", "16-17", "16-18", "1600", etc.
+		const m = s.match(/(\d{1,2})/);
+		if (!m) return null;
+		const h = Number(m[1]);
+		if (Number.isNaN(h) || h < 0 || h > 23) return null;
+		return String(h).padStart(2, '0');
+	};
+
+	const getHourFromItem = (item) => {
+		if (item.hour !== undefined) {
+			return normalizeHourLabel(item.hour);
+		}
+
+		const candidateTime = item.timeInstant ?? item.time ?? item.date ?? item.datetime;
+		if (candidateTime !== undefined) {
+			const t = String(candidateTime);
+			const directHourMatch = t.match(/T(\d{2}):(\d{2})/);
+			if (directHourMatch) {
+				return directHourMatch[1];
+			}
+
+			const d = new Date(candidateTime);
+			if (!Number.isNaN(d.getTime())) {
+				return String(d.getHours()).padStart(2, '0');
+			}
+		}
+
+		if (item.periodo !== undefined) {
+			return normalizeHourLabel(item.periodo);
+		}
+
+		return null;
+	};
+
 	const buildHourMap = (values) => {
 		const map = {};
 		values.forEach(item => {
-			// support { hour: "06", value: X } or { time: "...T06:00:00Z", value: X }
-			let h = null;
-			if (item.hour !== undefined) {
-				h = String(item.hour).padStart(2, '0');
-			} else if (item.time !== undefined) {
-				h = String(new Date(item.time).getHours()).padStart(2, '0');
-			}
+			// support {hour}, {time}, {timeInstant}, {periodo}
+			const h = getHourFromItem(item);
 			if (h !== null) {
 				map[h] = (map[h] || 0) + (Number(item.value) || 0);
 			}
@@ -346,7 +402,8 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 	};
 
 	const mapByHour = (map) => labels.map(label => {
-		const key = String(label).padStart(2, '0');
+		const key = normalizeHourLabel(label);
+		if (key === null) return 0;
 		return map[key] !== undefined ? map[key] : 0;
 	});
 
@@ -355,9 +412,26 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 			return mapByHour(buildHourMap(meteosixData));
 		}
 
-		const selectedValues = meteosixData?.content?.features?.[0]?.properties?.days?.[1]?.variables?.[0]?.values;
-		if (Array.isArray(selectedValues) && selectedValues.length > 0) {
-			return mapByHour(buildHourMap(selectedValues));
+		const features = meteosixData?.content?.features;
+		if (Array.isArray(features) && features.length > 0) {
+			const allValues = [];
+			features.forEach(feature => {
+				const days = feature?.properties?.days;
+				if (!Array.isArray(days)) return;
+				days.forEach(day => {
+					const variables = day?.variables;
+					if (!Array.isArray(variables)) return;
+					const precipVar = variables.find(v => v?.name === 'precipitation_amount') || variables[0];
+					const values = precipVar?.values;
+					if (Array.isArray(values)) {
+						allValues.push(...values);
+					}
+				});
+			});
+
+			if (allValues.length > 0) {
+				return mapByHour(buildHourMap(allValues));
+			}
 		}
 
 		if (meteosixData && meteosixData.results && meteosixData.results.length > 0) {
@@ -379,7 +453,8 @@ function extractMeteosixPrecipitacion(meteosixData, labels) {
 
 	// Return values aligned with AEMET labels
 	return labels.map(label => {
-		const key = String(label).padStart(2, '0');
+		const key = normalizeHourLabel(label);
+		if (key === null) return 0;
 		return hourMap[key] !== undefined ? hourMap[key] : 0;
 	});
 }
@@ -475,8 +550,9 @@ function renderChart(id_municipio) {
 	// Extract MeteoGalicia data if available
 	let data_meteosix = null;
 
-	if (window.precipitacionData) {
-		data_meteosix = extractMeteosixPrecipitacion(window.precipitacionData, labels);
+	const meteosixForMunicipio = window.precipitacionDataByMunicipio?.[id_municipio] ?? window.precipitacionData;
+	if (meteosixForMunicipio) {
+		data_meteosix = extractMeteosixPrecipitacion(meteosixForMunicipio, labels);
 	}
 	if (precipitacion_debug) {
 		console.log('MeteoGalicia data for ' + id_municipio + ': ', data_meteosix);
