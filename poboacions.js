@@ -165,7 +165,7 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey + "&nocache=" + ms
 	//url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio + '/?api_key=' + apiKey;
 	url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/' + id_municipio;
-	console.log('Get precipitacion AEMET: ' +proxyHost+ url);
+	console.log('Get precipitacion AEMET: ' + proxyHost + url);
 	fetch(proxyHost + url)
 		.then(response => response.json())
 		.then(data => getPrevisionPrecipitacionMunicipio(data, element, id_municipio))
@@ -263,7 +263,7 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	const now = new Date();
 	const formatLocalDateTime = (d) => {
 		const pad = n => String(n).padStart(2, '0');
-		const r =`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+		const r = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 		return r;
 	};
 	const startTime = formatLocalDateTime(now);
@@ -537,6 +537,8 @@ async function createPrevisionPrecipitacionMunicipio(data, element, id_municipio
 	renderChart(id_municipio);
 }
 
+
+
 function renderChart(id_municipio) {
 	if (!window.chartData || !window.chartData[id_municipio]) return;
 
@@ -610,6 +612,54 @@ function renderChart(id_municipio) {
 			});
 		}
 
+
+		const backgroundBands = {
+			id: 'backgroundBands',
+			beforeDraw(chart) {
+				const { ctx, chartArea, scales } = chart;
+				const x = scales.x;
+
+				if (!x || !chartArea) return;
+
+				const ticks = x.ticks;
+
+				ctx.save();
+
+				for (let i = 0; i < ticks.length; i++) {
+
+					// 👉 every 2 ticks
+					if (i % 2 !== 0) continue;
+
+					// current tick pixel
+					const xCurrent = x.getPixelForTick(i);
+
+					// next tick pixel (or extrapolate for last)
+					const xNext = i < ticks.length - 1
+						? x.getPixelForTick(i + 1)
+						: xCurrent + (xCurrent - x.getPixelForTick(i - 1));
+
+					// previous tick pixel (or extrapolate for first)
+					const xPrev = i > 0
+						? x.getPixelForTick(i - 1)
+						: xCurrent - (x.getPixelForTick(1) - xCurrent);
+
+					// 👉 boundaries at midpoints
+					const xStart = (xPrev + xCurrent) / 2;
+					const xEnd = (xCurrent + xNext) / 2;
+
+					ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+					ctx.fillRect(
+						xStart,
+						chartArea.top,
+						xEnd - xStart,
+						chartArea.bottom - chartArea.top
+					);
+				}
+
+				ctx.restore();
+			}
+		};
+
 		var myChart = new Chart(myContext, {
 			type: 'bar',
 			data: {
@@ -628,9 +678,9 @@ function renderChart(id_municipio) {
 						labels: {
 							boxWidth: 10,
 							boxHeight: 10,
-							padding: 8,
+							padding: 2,
 							font: {
-								size: 10
+								size: 9
 							}
 						}
 					},
@@ -649,9 +699,29 @@ function renderChart(id_municipio) {
 							display: true,
 							text: 'mm'
 						}
+					},
+
+
+					x: {
+						type: 'category',
+						grid: {
+							color: 'rgba(0,0,0,0.1)',
+							tickLength: 0,
+						},
+						ticks: {
+							autoSkip: false,
+							callback: function (value, index) {
+								return index % 2 === 0 ? this.getLabelForValue(value) : '';
+							}
+						},
+
 					}
+
+
+
 				}
-			}
+			},
+			plugins: [backgroundBands]
 		});
 
 		window.chartInstances[id_municipio] = myChart;
