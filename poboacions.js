@@ -1,3 +1,8 @@
+
+const precipitacion_metosix_test = 0; // Set to 1 to inject random test data for MeteoGalicia precipitation
+const precipitacion_aemet_test = 0; // Set to 1 to inject random test data for AEMET precipitation
+const precipitacion_debug = 0; // Set to 1 to enable debug logs for precipitation data
+
 function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0) {
 	const ms = Date.now();
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey + "&nocache=" + ms
@@ -252,10 +257,6 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 		$('#divmunicipio' + id_municipio).html('Error obtendo precipitacións');
 	}
 }
-
-const precipitacion_metosix_test = 0; // Set to 1 to inject random test data for MeteoGalicia precipitation
-const precipitacion_aemet_test = 0; // Set to 1 to inject random test data for AEMET precipitation
-const precipitacion_debug = 0; // Set to 1 to enable debug logs for precipitation data
 
 async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	// MeteoGalicia API endpoint for precipitation data
@@ -587,11 +588,16 @@ function renderChart(id_municipio) {
 
 		var myContext = canvas.getContext('2d');
 		var datasets = [];
+		const isAemetTestData = precipitacion_aemet_test === 1;
+		const isMeteosixTestData = precipitacion_metosix_test === 1;
+		const hasTestData = isAemetTestData || isMeteosixTestData;
+		const titleSource = hasAemet && !hasMeteosix ? 'AEMET' : (!hasAemet && hasMeteosix ? 'MeteoGalicia' : null);
+		const titleText = titleSource ? `Precipitación ${titleSource} (mm/hora)` : 'Precipitación (mm/hora)';
 
 		// Show AEMET if it has data
 		if (hasAemet) {
 			datasets.push({
-				label: 'AEMET',
+				label: isAemetTestData ? 'AEMET (TEST)' : 'AEMET',
 				backgroundColor: "rgba(30, 100, 220, 0.75)",
 				borderColor: "rgba(30, 100, 220, 1)",
 				borderWidth: 1,
@@ -603,7 +609,7 @@ function renderChart(id_municipio) {
 		// Show MeteoGalicia if it has data
 		if (hasMeteosix) {
 			datasets.push({
-				label: 'MeteoGalicia',
+				label: isMeteosixTestData ? 'MeteoGalicia (TEST)' : 'MeteoGalicia',
 				backgroundColor: "rgba(230, 120, 0, 0.75)",
 				borderColor: "rgba(230, 120, 0, 1)",
 				borderWidth: 1,
@@ -647,7 +653,7 @@ function renderChart(id_municipio) {
 					const xStart = (xPrev + xCurrent) / 2;
 					const xEnd = (xCurrent + xNext) / 2;
 
-					ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+					ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
 					ctx.fillRect(
 						xStart,
 						chartArea.top,
@@ -670,7 +676,7 @@ function renderChart(id_municipio) {
 				plugins: {
 					title: {
 						display: true,
-						text: 'Precipitación (mm/hora)'
+						text: titleText
 					},
 					legend: {
 						display: datasets.length > 1,
@@ -686,6 +692,10 @@ function renderChart(id_municipio) {
 					},
 					tooltip: {
 						callbacks: {
+							title: (items) => {
+								const raw = items?.[0]?.label;
+								return raw !== undefined && raw !== null ? `${raw} h` : '';
+							},
 							label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) : 'N/D'} mm`
 						}
 					}
@@ -710,6 +720,8 @@ function renderChart(id_municipio) {
 						},
 						ticks: {
 							autoSkip: false,
+							align: 'start',
+							labelOffset: 4,
 							callback: function (value, index) {
 								return index % 2 === 0 ? this.getLabelForValue(value) : '';
 							}
