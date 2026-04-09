@@ -134,16 +134,17 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 		//console.log(datos["fecha"],cont,maxItems,current_hour)
 	}
 
-	tabla += '<tr  id="trmunicipio' + id_municipio + '"><td colspan=4>';
-	tabla += '<div id="divmunicipio' + id_municipio + '"><canvas hidden id="municipio' + id_municipio + '"></canvas></div>';
-	tabla += '</td ></tr >';
-
 	var dt = new Date(data[0]["elaborado"]);
 	var fecha_prediccion = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
 
 	tabla += '<tr "><td colspan=4>';
 	tabla += '<a href="http://www.aemet.es" target="copyright">AEMET</a>: ' + dt.toLocaleDateString("es-ES", fecha_prediccion);
 	tabla += '</td ></tr >';
+
+	tabla += '<tr  id="trmunicipio' + id_municipio + '"><td colspan=4>';
+	tabla += '<div id="divmunicipio' + id_municipio + '"><canvas hidden id="municipio' + id_municipio + '"></canvas></div>';
+	tabla += '</td ></tr >';
+
 
 	tabla += "</table>";
 
