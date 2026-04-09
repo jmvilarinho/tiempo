@@ -253,8 +253,8 @@ function getPrevisionPrecipitacionMunicipio(data, element, id_municipio) {
 	}
 }
 
-const precipitacion_metosix_test = 1; // Set to 1 to inject random test data for MeteoGalicia precipitation
-const precipitacion_aemet_test = 1; // Set to 1 to inject random test data for AEMET precipitation
+const precipitacion_metosix_test = 0; // Set to 1 to inject random test data for MeteoGalicia precipitation
+const precipitacion_aemet_test = 0; // Set to 1 to inject random test data for AEMET precipitation
 const precipitacion_debug = 0; // Set to 1 to enable debug logs for precipitation data
 
 async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
