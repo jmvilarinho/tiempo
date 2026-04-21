@@ -13,8 +13,8 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Ordes-alternative">
-				<a href='https://www.camaramar.com/webcam/playa-de-Ordes' target=camaramar>
-					<p>Sabón</p>
+				<a href='https://www.camaramar.com/---' target=camaramar>
+					<p>----</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Ordes-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -35,7 +35,6 @@
 </script>
 
 <center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -61,7 +60,6 @@
 </script>
 
 <center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -86,7 +84,6 @@
 </script>
 
 <center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -110,3 +107,32 @@
 	getTemperatura('Cebreiro-temperatura', 42.707862, -7.042951);
 	showVideo(url, 'Cebreiro')
 </script>
+
+<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<div id="Noia-alternative">
+				<a href='https://www.camaramar.com/---' target=camaramar>
+					<p>---</p>
+				</a>
+			</div>
+			<div style="visibility: hidden" id="Noia-unavailable"><img width="100" src=img/unavailable.png>
+			</div>
+			<video controls id="Noia">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div id='Noia-temperatura'></div>
+			<div id='Noia-prevision'></div>
+		</div>
+	</div>
+</section>
+<script>
+	var alternativeuri = 'https://www.jdserver.es/abarquina/CamMet.jpg';
+	getPrevisionMunicipio(15057, 'Noia-prevision', 2195, 42.786134, -8.888821);
+	getTemperatura('Noia-temperatura', 42.786134, -8.888821);
+	showOnlyAlternative('Noia', 'Noia', alternativeuri);
+</script>
+
