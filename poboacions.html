@@ -9,6 +9,7 @@
 		15030:71933, // A Coruña
 		27045:59157, // O Cebreiro
 		15057:71936, // Noia
+		37274:0, // Salamanca (sin Meteogalicia)
 	}
 </script>
 
@@ -139,4 +140,30 @@
 	showOnlyAlternative('Noia', 'A Barquiña - Noia', alternativeuri);
 	//showOnlyAlternative('Noia', 'Portosín - Porto do Son', 'https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Portosin/miniUltima.jpg');
 </script>
+
+<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<a href='https://www.abbahoteles.com/en/abba-fonseca-hotel/webcam' target=camaramar>
+				<p>Hotel Fonseca - Salamanca</p>
+			</a>
+			<div style="visibility: hidden" id="Salamanca-unavailable"><img width="100" src=img/unavailable.png>
+			</div>
+			<video controls id="Salamanca">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div id='Salamanca-temperatura'></div>
+			<div id='Salamanca-prevision'></div>
+		</div>
+	</div>
+</section>
+<script>
+	var url = 'https://video.abbahoteles.com/es/8/master.m3u8';
+	getPrevisionMunicipio(37274 , 'Salamanca-prevision', 0, 40.9603, -5.6639);
+	getTemperatura('Salamanca-temperatura', 40.9603, -5.6639);
+	showVideo(url, 'Salamanca');
+</script>
+
 
