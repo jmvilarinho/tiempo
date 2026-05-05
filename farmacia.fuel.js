@@ -153,8 +153,8 @@ const CCAA_CODES = {
 	"Illes Balears": "04",
 	"Canarias": "05",
 	"Cantabria": "06",
-	"Castilla y León": "07",
-	"Castilla-La Mancha": "08",
+	"Castilla y León": "08",
+	"Castilla-La Mancha": "07",
 	"Cataluña": "09",
 	"Comunidad Valenciana": "10",
 	"Extremadura": "11",
@@ -237,6 +237,7 @@ async function getCCAACode(lat, lon) {
 	const data = await res.json();
 	const raw = data.address.state;
 	const comunidad = mapToComunidad(raw);
+	console.log(`Reverse geocoding: ${lat},${lon} -> ${raw} -> ${comunidad}`);
 	return comunidad ? [comunidad, CCAA_CODES[comunidad]] : [comunidad, null];
 }
 
