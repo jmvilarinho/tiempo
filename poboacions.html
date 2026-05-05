@@ -145,9 +145,11 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
+			<div id="Salamanca-alternative">
 			<a href='https://www.abbahoteles.com/en/abba-fonseca-hotel/webcam' target=camaramar>
 				<p>Hotel Fonseca - Salamanca</p>
 			</a>
+			</div>
 			<div style="visibility: hidden" id="Salamanca-unavailable"><img width="100" src=img/unavailable.png>
 			</div>
 			<video controls id="Salamanca">
@@ -160,10 +162,10 @@
 	</div>
 </section>
 <script>
-	var url = 'https://video.abbahoteles.com/es/8/master.m3u8';
+	var alternativeuri = 'https://etraffic.dgt.es/camarasEtraffic/160022.jpg';
 	getPrevisionMunicipio(37274 , 'Salamanca-prevision', 0, 40.9603, -5.6639);
 	getTemperatura('Salamanca-temperatura', 40.9603, -5.6639);
-	showVideo(url, 'Salamanca');
+	showOnlyAlternative('Salamanca', 'DGT A-62 km 230,85 - Salamanca', alternativeuri);
 </script>
 
 
