@@ -153,23 +153,46 @@
 			<a href='https://www.abbahoteles.com/en/abba-fonseca-hotel/webcam' target=camaramar>
 				<p>Hotel Fonseca - Salamanca</p>
 			</a>
+			<iframe
+				id="Salamanca-iframe"
+				src="https://video.abbahoteles.com/es/8/master.m3u8?autoplay=1"
+				style="width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; margin: 16px auto 0;"
+				loading="lazy"
+				allow="autoplay; fullscreen"
+				allowfullscreen>
+			</iframe>
 			</div>
 			<div style="visibility: hidden" id="Salamanca-unavailable"><img width="100" src=img/unavailable.png>
 			</div>
-			<video controls id="Salamanca">
-				<source />
-				<p>Your browser does not support H.264/MP4.</p>
-			</video>
 			<div id='Salamanca-temperatura'></div>
 			<div id='Salamanca-prevision'></div>
 		</div>
 	</div>
 </section>
 <script>
+	var url = 'https://get-rfgf-c4yzqigeeq-no.a.run.app/video.m3u8?remoteurl=https://video.abbahoteles.com/es/8/master.m3u8';
 	var alternativeuri = 'https://etraffic.dgt.es/camarasEtraffic/160022.jpg';
+	var salamancaIframe = document.getElementById('Salamanca-iframe');
 	getPrevisionMunicipio(37274 , 'Salamanca-prevision', 0, 40.9603, -5.6639);
 	getTemperatura('Salamanca-temperatura', 40.9603, -5.6639);
-	showOnlyAlternative('Salamanca', 'Castellanos de Moriscos - Salamanca', alternativeuri);
+	//showVideo(url,'Salamanca', 'Castellanos de Moriscos - Salamanca', alternativeuri);
+	salamancaIframe.style.width = getAncho();
+
+	function playSalamancaIframeVideo() {
+		try {
+			var iframeDocument = salamancaIframe.contentWindow.document;
+			var iframeVideo = iframeDocument.querySelector('video');
+			if (iframeVideo) {
+				iframeVideo.muted = true;
+				iframeVideo.play().catch(function () {});
+			}
+		} catch (error) {
+			console.log('Unable to control Salamanca iframe video:', error);
+		}
+	}
+
+	salamancaIframe.addEventListener('load', playSalamancaIframeVideo);
+
 </script>
 
 
