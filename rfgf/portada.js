@@ -129,9 +129,11 @@ async function showVideo(url) {
 function show_portada_equipo(data, cod_equipo, rfef = false) {
 	lineas = 0;
 	$('#results').append('<br>');
-	mostrado = false;
+
+	total_lineas = data.competiciones_equipo.length;
 
 	jQuery.each(data.competiciones_equipo, function (index, item) {
+		mostrado = false;
 		lineas += 1;
 		if (lineas > 1)
 			$('#results').append('<br><hr>');
@@ -147,7 +149,11 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		} else {
 			tvdiv = '';
 		}
-		$('#results').append(data.nombre_equipo + ' - <b>' + item.competicion + '</b> ' + tvdiv + '<br>');
+		competicion = '<b>' + item.competicion + '</b>';
+		if ('grupo' in item && item.grupo != '') {
+			competicion += ' (' + item.grupo.toLowerCase()+ ')';
+		}
+		$('#results').append(data.nombre_equipo + '<br>' + competicion + ' ' + tvdiv + '<br>');
 		if (!version_reducida) {
 			var boton_plantilla = $('<input/>').attr({
 				type: "button",
@@ -187,9 +193,21 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 			}
 			previous = item2;
 		});
+
+		if (!mostrado && lineas < total_lineas) {
+			total = item.partidos.length;
+			if (
+				(item.partidos[total-1].goles_casa != '' && item.partidos[total-1].goles_fuera != '')
+				 ||
+				( item.partidos[total-1].equipo_casa == 'Descansa' || item.partidos[total-1].equipo_fuera == 'Descansa')
+			) {
+				$('#results').append('<br><b>Competición rematada</b>');
+			}
+		}
 	});
 
 	updateWidth(...tables_id);
+	console.log(lineas+"*************************************************");
 
 	if (lineas == 0) {
 		var arrayLength = equipos.length;

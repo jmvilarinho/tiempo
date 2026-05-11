@@ -242,7 +242,7 @@ function updateWidth(...tableIds) {
 		const $el = $("#" + id);
 		if ($el.length) {
 			maxWidth = Math.max(maxWidth, $el.width());
-			console.log(`Width of #${id}: ${$el.width()}px`);
+			//console.log(`Width of #${id}: ${$el.width()}px`);
 		}
 	});
 
@@ -253,7 +253,7 @@ function updateWidth(...tableIds) {
 		if ($el.length) {
 			$el.css("width", maxWidth + "px");
 			//document.getElementById(id).style.tableLayout = "fixed";
-			console.log(`Updated width of #${id} to: ${maxWidth}px`);
+			//console.log(`Updated width of #${id} to: ${maxWidth}px`);
 		}
 	});
 }
@@ -556,7 +556,6 @@ function getCookie(name) {
 
 function getCookieArray(cname) {
 	var cookieValue = getCookie(cname);
-
 	return cookieValue ? JSON.parse(cookieValue) : [];
 }
 
