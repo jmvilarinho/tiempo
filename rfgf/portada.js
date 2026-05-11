@@ -163,7 +163,15 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		previous = undefined;
 		tables_id = [];
 		var equipo_partidos = item.partidos.filter(function(p) {
-			return p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo;
+			// First try by codequipo
+			if (p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo) return true;
+			// If codequipo not populated, try by team name
+			if ((!p.codequipo_casa || !p.codequipo_fuera) && data.nombre_equipo) {
+				var teamName = data.nombre_equipo.toUpperCase().trim();
+				if (p.equipo_casa && p.equipo_casa.toUpperCase().indexOf(teamName) >= 0) return true;
+				if (p.equipo_fuera && p.equipo_fuera.toUpperCase().indexOf(teamName) >= 0) return true;
+			}
+			return false;
 		});
 		jQuery.each(equipo_partidos, function (index, item2) {
 			cont += 1
