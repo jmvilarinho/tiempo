@@ -34,7 +34,10 @@ async function load_xornadas(cod_equipo, addHistory = true, rfef = false, codgru
 				$('#results').html('');
 				add_back();
 				show_xornadas(data.data, cod_equipo, codgrupo, rfef);
-				if ('src_url' in data['data']) {
+
+				if ('src_info' in data['data']) {
+					$('#ref_msg').html('<p style="font-size:12px;"><a href="' + data['data']['src_info'] + '" target="copyright" rel="noopener">Información obtida de fontes oficiais</a></p>');
+				} else if ('src_url' in data['data']) {
 					$('#ref_msg').html('<p style="font-size:12px;"><a href="' + data['data']['src_url'] + '" target="copyright" rel="noopener">Información obtida de fontes oficiais</a></p>');
 				}
 				add_back();

@@ -32,7 +32,9 @@ async function load_portada(cod_equipo, addHistory = true, rfef = false, codgrup
 				//console.log(data);
 				show_error(data);
 				$('#results').html('');
-				if ('src_url' in data['data']) {
+				if ('src_info' in data['data']) {
+					$('#ref_msg').html('<p style="font-size:12px;"><a href="' + data['data']['src_info'] + '" target="copyright" rel="noopener">Información obtida de fontes oficiais</a></p>');
+				} else if ('src_url' in data['data']) {
 					$('#ref_msg').html('<p style="font-size:12px;"><a href="' + data['data']['src_url'] + '" target="copyright" rel="noopener">Información obtida de fontes oficiais</a></p>');
 				}
 				add_back();
@@ -162,18 +164,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		cont = 0;
 		previous = undefined;
 		tables_id = [];
-		var equipo_partidos = item.partidos.filter(function(p) {
-			// First try by codequipo
-			if (p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo) return true;
-			// If codequipo not populated, try by team name
-			if ((!p.codequipo_casa || !p.codequipo_fuera) && data.nombre_equipo) {
-				var teamName = data.nombre_equipo.toUpperCase().trim();
-				if (p.equipo_casa && p.equipo_casa.toUpperCase().indexOf(teamName) >= 0) return true;
-				if (p.equipo_fuera && p.equipo_fuera.toUpperCase().indexOf(teamName) >= 0) return true;
-			}
-			return false;
-		});
-		jQuery.each(equipo_partidos, function (index, item2) {
+		jQuery.each(item.partidos, function (index, item2) {
 			cont += 1
 			var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
 			var dt = new Date(item2.fecha.replace(pattern, '$3-$2-$1 12:00'));
