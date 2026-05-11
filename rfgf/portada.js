@@ -162,7 +162,13 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		cont = 0;
 		previous = undefined;
 		tables_id = [];
-		jQuery.each(item.partidos, function (index, item2) {
+		var equipo_partidos = item.partidos.filter(function(p) {
+			return p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo;
+		});
+		if (equipo_partidos.length == 0) {
+			equipo_partidos = item.partidos;
+		}
+		jQuery.each(equipo_partidos, function (index, item2) {
 			cont += 1
 			var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
 			var dt = new Date(item2.fecha.replace(pattern, '$3-$2-$1 12:00'));
