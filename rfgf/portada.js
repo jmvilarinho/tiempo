@@ -162,8 +162,12 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		cont = 0;
 		previous = undefined;
 		tables_id = [];
+		var teamName = data.nombre_equipo ? data.nombre_equipo.toUpperCase().trim() : '';
 		var equipo_partidos = item.partidos.filter(function(p) {
-			return p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo;
+			if (p.codequipo_casa == cod_equipo || p.codequipo_fuera == cod_equipo) return true;
+			if (teamName && p.equipo_casa && p.equipo_casa.toUpperCase().trim() == teamName) return true;
+			if (teamName && p.equipo_fuera && p.equipo_fuera.toUpperCase().trim() == teamName) return true;
+			return false;
 		});
 		if (equipo_partidos.length == 0) {
 			equipo_partidos = item.partidos;
