@@ -6,6 +6,8 @@ async function load_favoritos(addHistory = true) {
 	if (addHistory)
 		history.pushState(null, "", '#favoritos');
 
+	sanitizeEquiposCookies();
+
 	favoritos = getCookieArray('favoritosItems');
 	if (favoritos.length <= 0) {
 		favoritos = favoritos_default;

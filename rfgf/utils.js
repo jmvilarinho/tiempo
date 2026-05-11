@@ -556,7 +556,64 @@ function getCookie(name) {
 
 function getCookieArray(cname) {
 	var cookieValue = getCookie(cname);
+
 	return cookieValue ? JSON.parse(cookieValue) : [];
+}
+
+function getEquiposValidCodes() {
+	var validCodes = new Set();
+
+	if (typeof equipos === 'undefined' || equipos === null) {
+		return validCodes;
+	}
+
+	if (Array.isArray(equipos['i'])) {
+		for (var i = 0; i < equipos['i'].length; i++) {
+			var item = equipos['i'][i];
+			if (item && typeof item.codigo !== 'undefined') {
+				validCodes.add(String(item.codigo));
+			} else if (item && typeof item.id !== 'undefined') {
+				validCodes.add(String(item.id));
+			}
+		}
+	}
+
+	if (Array.isArray(equipos)) {
+		for (var j = 0; j < equipos.length; j++) {
+			if (typeof equipos[j].id !== 'undefined') {
+				validCodes.add(String(equipos[j].id));
+			} else if (typeof equipos[j].codigo !== 'undefined') {
+				validCodes.add(String(equipos[j].codigo));
+			}
+		}
+	}
+
+	return validCodes;
+}
+
+function pruneCookieItemsByEquipos(cookieName) {
+	var selectedItems = getCookieArray(cookieName);
+	if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
+		return;
+	}
+
+	var validCodes = getEquiposValidCodes();
+	if (validCodes.size === 0) {
+		return;
+	}
+
+	var filteredItems = selectedItems.filter(function (codigo) {
+		return validCodes.has(String(codigo));
+	});
+
+	if (filteredItems.length !== selectedItems.length) {
+		setCookie(cookieName, JSON.stringify(filteredItems), 365);
+	}
+}
+
+function sanitizeEquiposCookies() {
+	pruneCookieItemsByEquipos('calendarioItems');
+	pruneCookieItemsByEquipos('favoritosItems');
 }
 
 function eraseCookie(name) {
