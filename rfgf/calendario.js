@@ -18,6 +18,8 @@ async function load_calendario(addHistory = true) {
 	if (addHistory)
 		history.pushState(null, "", '#calendario');
 
+	sanitizeEquiposCookies();
+
 	calendario = getCookieArray('calendarioItems');
 	if (calendario.length <= 0) {
 		calendario = calendario_default;
