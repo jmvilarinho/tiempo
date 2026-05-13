@@ -157,6 +157,36 @@ function aplanaTexto(texto) {
 }
 
 // --------------------------------------------------------------------------------------------------
+// Builds the URL of the latest archived webcam image on
+// meteo-estaticos.xunta.gal for a given camera (e.g. "Aguete2").
+// The archive publishes one image every 5 minutes, named:
+//   <Cam>_YYYYMMDD_HHMM.jpg
+// Times are in Europe/Madrid local time. We round down to the
+// nearest 5-min slot and step back `offsetMinutes` to make sure
+// the file has already been published.
+function getUltimaXuntaCam(camName, offsetMinutes = 10) {
+	return `https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/${camName}/ultima.jpg`;
+
+	//no necesario
+	const parts = new Intl.DateTimeFormat('en-GB', {
+		timeZone: 'Europe/Madrid',
+		year: 'numeric', month: '2-digit', day: '2-digit',
+		hour: '2-digit', minute: '2-digit', hour12: false
+	}).formatToParts(new Date()).reduce((o, p) => (o[p.type] = p.value, o), {});
+
+	let d = new Date(Date.UTC(
+		+parts.year, +parts.month - 1, +parts.day,
+		+parts.hour, +parts.minute
+	));
+	d = new Date(d.getTime() - offsetMinutes * 60000);
+	d.setUTCMinutes(Math.floor(d.getUTCMinutes() / 5) * 5);
+
+	const pad = n => String(n).padStart(2, '0');
+	const ymd = `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+	const hm = `${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}`;
+	return `https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/${camName}/000_dias/${camName}_${ymd}_${hm}.jpg`;
+}
+
 async function validURL(url) {
 	result = await fetch(url, {
 	})

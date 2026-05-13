@@ -58,10 +58,12 @@
 	</div>
 </section>
 <script>
-	var url = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
+	//var url = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
+	//var url = "https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Aguete2/ultima.jpg";
+	var url = getUltimaXuntaCam('Aguete2');
 	//var url = 'https://wow.camaramar.com/VODgrabaciones/meteo_Aguete2.mp4/playlist.m3u8';
 	var url2 = 'https://wow.camaramar.com/camaramar/48_menduina.stream/playlist.m3u8';
-	var alternativeuri = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
+	var alternativeuri = url;
 	getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
 	getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
 	showVideo(url, 'Lapaman', 'Aguete (Ría de Pontevedra)', alternativeuri)
@@ -90,7 +92,7 @@
 </section>
 <script>
 	var url = 'https://wow.camaramar.com/camaramar/9_caraminal.stream/playlist.m3u8';
-	var alternativeuri = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Coron/ultima.jpg';
+	var alternativeuri = getUltimaXuntaCam('Coron');
 	getPrevision(1506702, 'Cabio-prevision', 25, 42.586036, -8.932807);
 	getTemperatura('Cabio-temperatura', 42.586036, -8.932807);
 	showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
@@ -171,7 +173,7 @@
 </section>
 <script>
 	var url = 'https://wow.camaramar.com/camaramar/sabon.stream/playlist.m3u8';
-	var alternativeuri = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Langosteira/ultima.jpg';
+	var alternativeuri = getUltimaXuntaCam('Langosteira');
 	getPrevision(1500501, 'Sabon-prevision', 70, 43.329833, -8.505300);
 	getTemperatura('Sabon-temperatura', 43.329833, -8.505300);
 	showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)

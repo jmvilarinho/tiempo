@@ -6,11 +6,11 @@ async function load_portada(cod_equipo, addHistory = true, rfef = false, codgrup
 		history.pushState(null, "", '#portada/' + cod_equipo);
 
 	var url = remote_url + "?type=getequipo&codequipo=" + cod_equipo;
-	codgrupo = getEquipoGrupo(cod_equipo,codgrupo)
+	codgrupo = getEquipoGrupo(cod_equipo, codgrupo)
 	if (codgrupo) {
 		url += "&codgrupo=" + codgrupo;
 	}
-	codcompeticion = getEquipoCompeticion(cod_equipo,codcompeticion)
+	codcompeticion = getEquipoCompeticion(cod_equipo, codcompeticion)
 	if (codcompeticion) {
 		url += "&codcompeticion=" + codcompeticion;
 	}
@@ -149,11 +149,11 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		} else {
 			tvdiv = '';
 		}
-		competicion = '<b>' + item.competicion + '</b>';
+		competicion = '<br><b>' + item.competicion + '</b>';
 		if ('grupo' in item && item.grupo != '') {
-			competicion += ' (' + item.grupo.toLowerCase()+ ')';
+			competicion += ' (' + item.grupo.toLowerCase() + ')';
 		}
-		$('#results').append(data.nombre_equipo + '<br>' + competicion + ' ' + tvdiv + '<br>');
+		$('#results').append(data.nombre_equipo + competicion +  tvdiv + '<br>');
 		if (!version_reducida) {
 			var boton_plantilla = $('<input/>').attr({
 				type: "button",
@@ -164,7 +164,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 			});
 			$('#results').append(boton_plantilla);
 		}
-		crea_botons('portada', cod_equipo, item.cod_grupo, item.cod_competicion,rfef);
+		crea_botons('portada', cod_equipo, item.cod_grupo, item.cod_competicion, rfef);
 
 		ultima = item.ultima_jornada_jugada;
 		cont = 0;
@@ -181,13 +181,13 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 					$('#results').append('<hr>');
 				}
 				mostrado = true;
-				show_portada_data('Xornada actual (#' + item2.nombre_jornada + ')', 'main_table_1_'+cont, item2, item.cod_competicion, item.cod_grupo, data.nombre_equipo, cod_equipo, rfef);
-				tables_id.push('main_table_1_'+cont);
+				show_portada_data('Xornada actual (#' + item2.nombre_jornada + ')', 'main_table_1_' + cont, item2, item.cod_competicion, item.cod_grupo, data.nombre_equipo, cod_equipo, rfef);
+				tables_id.push('main_table_1_' + cont);
 
 				if (previous) {
 					$('#results').append('<br>');
-					show_portada_data('Xornada anterior (#' + previous.nombre_jornada + ')', 'main_table_2_'+cont, previous, undefined, undefined, undefined, cod_equipo, rfef);
-					tables_id.push('main_table_2_'+cont);
+					show_portada_data('Xornada anterior (#' + previous.nombre_jornada + ')', 'main_table_2_' + cont, previous, undefined, undefined, undefined, cod_equipo, rfef);
+					tables_id.push('main_table_2_' + cont);
 				}
 				//return false;
 			}
@@ -197,9 +197,10 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		if (!mostrado && lineas < total_lineas) {
 			total = item.partidos.length;
 			if (
-				(item.partidos[total-1].goles_casa != '' && item.partidos[total-1].goles_fuera != '')
-				 ||
-				( item.partidos[total-1].equipo_casa == 'Descansa' || item.partidos[total-1].equipo_fuera == 'Descansa')
+				(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
+				||
+				((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
+					(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
 			) {
 				$('#results').append('<br><b>Competición rematada</b>');
 			}
@@ -207,7 +208,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 	});
 
 	updateWidth(...tables_id);
-	console.log(lineas+"*************************************************");
+	console.log(lineas + "*************************************************");
 
 	if (lineas == 0) {
 		var arrayLength = equipos.length;

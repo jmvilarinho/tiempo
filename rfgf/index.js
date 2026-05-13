@@ -60,7 +60,12 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 			$('#results').append('<br><hr>');
 
 		setCookie('nombre_equipo', data.nombre_equipo, 30)
-		$('#results').append(data.nombre_equipo + ' - <b>' + itemCompeticion.competicion + '</b><br>');
+
+		competicion = '<br><b>' + itemCompeticion.competicion + '</b>';
+		if ('grupo' in itemCompeticion && itemCompeticion.grupo != '') {
+			competicion += ' (' + itemCompeticion.grupo.toLowerCase() + ')';
+		}
+		$('#results').append(data.nombre_equipo + competicion + '<br>');
 		crea_botons('xornadas', cod_equipo, itemCompeticion.cod_grupo, itemCompeticion.cod_competicion, rfef);
 
 		$('#results').append('<table class="partidos" >');
