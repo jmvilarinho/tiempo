@@ -85,6 +85,16 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 			background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
 			cont += 1
 
+		if ( itemCompeticion.cod_grupo == 23289373 && itemCompeticion.cod_competicion == 23289372 && item.equipo_casa == 'C.F.S. Finura de Ibérico la Bañeza' && item.equipo_fuera == 'Jogafan Ordes F.S.'){
+			console.log("**********************************************************");
+			console.log("Fix resultado incorrecto detectado: " + item.equipo_casa + " vs " + item.equipo_fuera);
+			console.log("Fix resultado, original: " + item.goles_casa + " - " + item.goles_fuera);
+			item.goles_casa = "5";
+			item.goles_fuera = "3";
+			console.log("Fix resultado, nuevo: " + item.goles_casa + " - " + item.goles_fuera);
+			console.log("**********************************************************");
+		}
+
 			if (item.hora) {
 				hora = ' - ' + item.hora;
 				hora2 = hora;
