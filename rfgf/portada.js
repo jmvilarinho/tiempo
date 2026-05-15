@@ -153,7 +153,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		if ('grupo' in item && item.grupo != '') {
 			competicion += ' (' + item.grupo.toLowerCase() + ')';
 		}
-		$('#results').append(data.nombre_equipo + competicion +  tvdiv + '<br>');
+		$('#results').append(data.nombre_equipo + competicion + tvdiv + '<br>');
 		if (!version_reducida) {
 			var boton_plantilla = $('<input/>').attr({
 				type: "button",
@@ -194,17 +194,23 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 			previous = item2;
 		});
 
-		if (!mostrado && lineas < total_lineas) {
-			total = item.partidos.length;
-			if (
-				(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
-				||
-				((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
-					(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
-			) {
-				$('#results').append('<br><b>Competición rematada</b>');
+		try {
+			if (!mostrado && lineas < total_lineas) {
+				total = item.partidos.length;
+				if (
+					(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
+					||
+					((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
+						(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
+				) {
+					$('#results').append('<br><b>Competición rematada</b>');
+				}
 			}
+
+		} catch (e) {
+			console.log(e);
 		}
+
 	});
 
 	updateWidth(...tables_id);
@@ -315,7 +321,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		data3 = '';
 	}
 
-	if (item.goles_casa == "" && item.goles_fuera == "") {
+	if ('goles_casa' in item && 'goles_fuera' in item && item.goles_casa == "" && item.goles_fuera == "") {
 		span = 3;
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
@@ -429,7 +435,9 @@ function show_comparativa(data, nombre_equipo) {
 				fuera = item.equipo_fuera
 
 			color_resultado = background;
-			if (item.goles_casa != "" && item.goles_fuera != "") {
+			if ('goles_casa' in item && 'goles_fuera' in item && item.goles_casa != "" && item.goles_fuera != "") {
+				goles_casa = item.goles_casa;
+				goles_fuera = item.goles_fuera;
 				if (item.equipo_casa == nombre_equipo) {
 					if (Number(item.goles_casa) > Number(item.goles_fuera))
 						color_resultado = "#04B431";
@@ -445,12 +453,15 @@ function show_comparativa(data, nombre_equipo) {
 					else
 						color_resultado = "#D7DF01";
 				}
+			} else {
+				goles_casa = '';
+				goles_fuera = '';
 			}
 
 			historico += '<tr>'
 				+ '<td align="center" bgcolor="' + background + '" class="table_noborder_simple">' + item.temporada + ',&nbsp;</td>'
 				+ '<td bgcolor="' + background + '" class="table_noborder_simple" align="right">' + casa + '</td>'
-				+ '<td bgcolor="' + color_resultado + '" class="table_noborder_simple" align="center" >&nbsp;&nbsp;' + item.goles_casa + '&nbsp;&nbsp;-&nbsp;&nbsp;' + item.goles_fuera + '&nbsp;&nbsp;</td>'
+				+ '<td bgcolor="' + color_resultado + '" class="table_noborder_simple" align="center" >&nbsp;&nbsp;' + goles_casa + '&nbsp;&nbsp;-&nbsp;&nbsp;' + goles_fuera + '&nbsp;&nbsp;</td>'
 				+ '<td bgcolor="' + background + '" class="table_noborder_simple">' + fuera + '</td>'
 				+ '</tr>';
 		});
