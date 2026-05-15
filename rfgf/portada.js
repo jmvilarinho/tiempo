@@ -189,7 +189,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 					show_portada_data('Xornada anterior (#' + previous.nombre_jornada + ')', 'main_table_2_' + cont, previous, undefined, undefined, undefined, cod_equipo, rfef);
 					tables_id.push('main_table_2_' + cont);
 				}
-				//return false;
+				//return false or break is not working inside jQuery.each, so we use a flag;
 			}
 			previous = item2;
 		});
