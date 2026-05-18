@@ -194,12 +194,14 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 			dia_str = item.fecha.replace(/-/g, "/") + ' ???';
 		}
 
-		if (item.campo != '') {
+		if ( 'campo' in item && item.campo.trim() != '' && !item.campo.includes('Pendiente') ) {
 			//campo = '<a href="https://waze.com/ul?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
 			//campo = '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
 			campo = "<a href=\"#\" onclick=\"openMapsSearch(event,'" + campoEscape + "')\">" + item.campo + '</a> <img src="../img/dot.png" height="15px">';
+		} else {
+			campo =item.campo;
 		}
 	}
 

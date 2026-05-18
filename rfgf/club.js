@@ -179,7 +179,11 @@ function show_partidos_club(title, item, id, local) {
 		dia_str = item.fecha.replace(/-/g, "/") + hora;
 	}
 
-	campo = '<a href="javascript:load_campo(\'' + item.codigo_campo + '\')">' + item.campo + '</a>';
+	if ( 'campo' in item && item.campo.trim() != '' && !item.campo.includes('Pendiente') ) {
+		campo = '<a href="javascript:load_campo(\'' + item.codigo_campo + '\')">' + item.campo + '</a>';
+	} else {
+		campo = '';
+	}
 
 	if (item.equipo_local.trim() != '') {
 		casa = '<a href="javascript:load_portada(\'' + item.codigo_equipo_local + '\')">' + item.equipo_local + '</a>';
