@@ -203,7 +203,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 					((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
 						(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
 				) {
-					$('#results').append('<br><b>Competición rematada</b>');
+					$('#results').append('<br><p>Competición rematada</p>');
 				}
 			}
 

@@ -68,114 +68,120 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 		$('#results').append(data.nombre_equipo + competicion + '<br>');
 		crea_botons('xornadas', cod_equipo, itemCompeticion.cod_grupo, itemCompeticion.cod_competicion, rfef);
 
-		$('#results').append('<table class="partidos" >');
-		$('#results').append('<tr>'
-			+ '<th>Data</th>'
-			+ '<th align="right"></th>'
-			+ '<th align="center">Resultado</th>'
-			+ '<th align="left"></th>'
-			+ '<th>Data</th>'
-			+ '<th>Campo</th>'
-			+ '</tr>');
+		if (itemCompeticion.partidos.length > 0) {
 
-		cont = 0;
-		jQuery.each(itemCompeticion.partidos, function (index, item) {
-			var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
-			var dt = new Date(item.fecha.replace(pattern, '$3-$2-$1 12:00'));
-			background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
-			cont += 1
-
-		if ( itemCompeticion.cod_grupo == 23289373 && itemCompeticion.cod_competicion == 23289372 && item.equipo_casa == 'C.F.S. Finura de Ibérico la Bañeza' && item.equipo_fuera == 'Jogafan Ordes F.S.'){
-			console.log("**********************************************************");
-			console.log("Fix resultado incorrecto detectado: " + item.equipo_casa + " vs " + item.equipo_fuera);
-			console.log("Fix resultado, original: " + item.goles_casa + " - " + item.goles_fuera);
-			item.goles_casa = "5";
-			item.goles_fuera = "3";
-			console.log("Fix resultado, nuevo: " + item.goles_casa + " - " + item.goles_fuera);
-			console.log("**********************************************************");
-		}
-
-			if (item.hora) {
-				hora = ' - ' + item.hora;
-				hora2 = hora;
-				if (item.equipo_casa != 'Descansa')
-					hora2 += ' (' + dia_semana(item.fecha) + ')';
-			} else {
-				hora = '';
-				hora2 = hora;
-			}
-
-
-			if (item.codequipo_casa == cod_equipo || item.equipo_casa == 'Descansa') {
-				casa = item.equipo_casa;
-				campo = item.campo;
-			} else {
-				if (item.codequipo_casa != '')
-					casa = '<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_casa + '</a>';
-				else
-					casa = item.equipo_casa;
-				if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa != '')
-					casa += '&nbsp;(' + item.posicion_equipo_casa + 'º)';
-				//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
-				//campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
-				campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
-				campo = " <a href=\"#\" onclick=\"openWazeSearch(event,'" + campoEscape + "')\" >"+ item.campo + '</a> <img src="../img/waze.png" height="15px">';
-
-
-			}
-
-			if (item.equipo_casa != 'Descansa') {
-				if (item.escudo_equipo_casa != '')
-					casa += '&nbsp;<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_widget">';
-			}
-
-
-			if (item.codequipo_fuera == cod_equipo || item.equipo_fuera == 'Descansa') {
-				fuera = item.equipo_fuera;
-			} else {
-				fuera = '';
-				if (item.equipo_fuera != cod_equipo && item.posicion_equipo_fuera != '')
-					fuera += '(' + item.posicion_equipo_fuera + 'º)&nbsp;';
-				if (item.codequipo_fuera != '')
-					fuera += '<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_fuera + '</a>';
-				else
-					fuera += item.equipo_fuera;
-			}
-			if (item.equipo_fuera != 'Descansa') {
-				if (item.escudo_equipo_fuera != '')
-					fuera = '<img src="https://www.futgal.es' + item.escudo_equipo_fuera + '" align="absmiddle" class="escudo_widget">&nbsp;' + fuera;
-			}
-
-			if (item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa')
-				campo = '';
-
-			color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, item.goles_casa, item.goles_fuera);
-
-			if (item.partido_en_juego == '1')
-				xogo = '<br>(en xogo)';
-			else
-				xogo = '';
-
-			if (item.goles_casa != '' && item.goles_fuera != '') {
-				goles_html = item.goles_casa + ' - ' + item.goles_fuera + xogo;
-				if (item.codacta != '') {
-					goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')" title="Acta">' + goles_html + '</a>';
-				}
-			} else {
-				goles_html = ' ';
-			}
-
-
+			$('#results').append('<table class="partidos" >');
 			$('#results').append('<tr>'
-				+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora + '</td>'
-				+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
-				+ '<td style="background-color:' + color_resultado + ';" align="center" >' + goles_html + '</td>'
-				+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
-				+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora2 + '</td>'
-				+ '<td style="background-color:' + background + ';" >' + (item.campo != '' ? campo : '') + '</td>'
+				+ '<th>Data</th>'
+				+ '<th align="right"></th>'
+				+ '<th align="center">Resultado</th>'
+				+ '<th align="left"></th>'
+				+ '<th>Data</th>'
+				+ '<th>Campo</th>'
 				+ '</tr>');
-		});
-		$('#results').append('</table>');
+
+			cont = 0;
+			jQuery.each(itemCompeticion.partidos, function (index, item) {
+				var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
+				var dt = new Date(item.fecha.replace(pattern, '$3-$2-$1 12:00'));
+				background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
+				cont += 1
+
+				if (itemCompeticion.cod_grupo == 23289373 && itemCompeticion.cod_competicion == 23289372 && item.equipo_casa == 'C.F.S. Finura de Ibérico la Bañeza' && item.equipo_fuera == 'Jogafan Ordes F.S.') {
+					console.log("**********************************************************");
+					console.log("Fix resultado incorrecto detectado: " + item.equipo_casa + " vs " + item.equipo_fuera);
+					console.log("Fix resultado, original: " + item.goles_casa + " - " + item.goles_fuera);
+					item.goles_casa = "5";
+					item.goles_fuera = "3";
+					console.log("Fix resultado, nuevo: " + item.goles_casa + " - " + item.goles_fuera);
+					console.log("**********************************************************");
+				}
+
+				if (item.hora) {
+					hora = ' - ' + item.hora;
+					hora2 = hora;
+					if (item.equipo_casa != 'Descansa')
+						hora2 += ' (' + dia_semana(item.fecha) + ')';
+				} else {
+					hora = '';
+					hora2 = hora;
+				}
+
+
+				if (item.codequipo_casa == cod_equipo || item.equipo_casa == 'Descansa') {
+					casa = item.equipo_casa;
+					campo = item.campo;
+				} else {
+					if (item.codequipo_casa != '')
+						casa = '<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_casa + '</a>';
+					else
+						casa = item.equipo_casa;
+					if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa != '')
+						casa += '&nbsp;(' + item.posicion_equipo_casa + 'º)';
+					//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
+					//campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
+					campoEscape = String(item.campo).replace(/"/g, '').replace(/'/g, '');
+					campo = " <a href=\"#\" onclick=\"openWazeSearch(event,'" + campoEscape + "')\" >" + item.campo + '</a> <img src="../img/waze.png" height="15px">';
+
+
+				}
+
+				if (item.equipo_casa != 'Descansa') {
+					if (item.escudo_equipo_casa != '')
+						casa += '&nbsp;<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_widget">';
+				}
+
+
+				if (item.codequipo_fuera == cod_equipo || item.equipo_fuera == 'Descansa') {
+					fuera = item.equipo_fuera;
+				} else {
+					fuera = '';
+					if (item.equipo_fuera != cod_equipo && item.posicion_equipo_fuera != '')
+						fuera += '(' + item.posicion_equipo_fuera + 'º)&nbsp;';
+					if (item.codequipo_fuera != '')
+						fuera += '<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_fuera + '</a>';
+					else
+						fuera += item.equipo_fuera;
+				}
+				if (item.equipo_fuera != 'Descansa') {
+					if (item.escudo_equipo_fuera != '')
+						fuera = '<img src="https://www.futgal.es' + item.escudo_equipo_fuera + '" align="absmiddle" class="escudo_widget">&nbsp;' + fuera;
+				}
+
+				if (item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa')
+					campo = '';
+
+				color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, item.goles_casa, item.goles_fuera);
+
+				if (item.partido_en_juego == '1')
+					xogo = '<br>(en xogo)';
+				else
+					xogo = '';
+
+				if (item.goles_casa != '' && item.goles_fuera != '') {
+					goles_html = item.goles_casa + ' - ' + item.goles_fuera + xogo;
+					if (item.codacta != '') {
+						goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')" title="Acta">' + goles_html + '</a>';
+					}
+				} else {
+					goles_html = ' ';
+				}
+
+
+				$('#results').append('<tr>'
+					+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora + '</td>'
+					+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
+					+ '<td style="background-color:' + color_resultado + ';" align="center" >' + goles_html + '</td>'
+					+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
+					+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora2 + '</td>'
+					+ '<td style="background-color:' + background + ';" >' + (item.campo != '' ? campo : '') + '</td>'
+					+ '</tr>');
+			});
+			$('#results').append('</table>');
+
+		} else {
+			$('#results').append('<br><p>Non se atoparon xornadas.</p><br>');
+		}
 
 	});
 
@@ -296,7 +302,7 @@ function show_clasificacion(data, cod_grupo, cod_equipo, rfef = false) {
 		else
 			puntos = item.puntos;
 
-		equipo = '<a href="javascript:load_portada(\'' + item.codequipo  + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion +  '\')">' + item.nombre + '</a>';
+		equipo = '<a href="javascript:load_portada(\'' + item.codequipo + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion + '\')">' + item.nombre + '</a>';
 		equipo = '<img src="https://www.futgal.es' + item.url_img + '" align="absmiddle" class="escudo_widget">&nbsp;' + equipo
 
 		diff = item.goles_a_favor - item.goles_en_contra;
@@ -398,7 +404,7 @@ function show_goleadores(data, cod_grupo, cod_equipo) {
 
 		$('#results').append('<tr>');
 
-		equipo = '<a href="javascript:load_portada(\'' + item.codigo_equipo  + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion + + '\')">' + item.nombre_equipo + '</a>';
+		equipo = '<a href="javascript:load_portada(\'' + item.codigo_equipo + '\',true,' + rfef + ',\'' + cod_grupo + '\',\'' + data.codigo_competicion + + '\')">' + item.nombre_equipo + '</a>';
 		equipo = '<img src="https://www.futgal.es' + item.escudo_equipo + '" align="absmiddle" class="escudo_widget">&nbsp;' + equipo
 
 		$('#results').append(
