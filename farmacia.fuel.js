@@ -268,7 +268,7 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 
 	try {
 		[comunidad, code] = await getCCAACode(lat, lon);
-		url = `https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/${code}/4`;
+		url = `${FUEL_PRICES_HOST}/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/${code}/4`;
 	} catch (error) {
 		url = FUEL_PRICES_API_URL;
 		comunidad = "Galicia";
@@ -390,26 +390,9 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 					const row = document.createElement("tr");
 					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal (" + comunidad + ")</a> " + data.Fecha + "</td>";
 					tbody.appendChild(row);
-
 				}
 
-				table.appendChild(tbody);
-				if (id_municipio != -1) {
-					const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
-					if (!existingDiv) {
-						const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-						const tableMunicipio = document.getElementById('tablaMunicipio-' + id_municipio);
-						const targetTbody = tableMunicipio ? tableMunicipio.querySelector('tbody') : null;
-						if (targetTbody) {
-							targetTbody.insertAdjacentHTML('afterbegin', newRow);
-						}
-					}
-					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
-				}
-				else {
-					document.getElementById("combustible_ubicacion").appendChild(table);
-				}
-
+				showGasolinera(id_municipio, tbody, table);
 
 			}, err => {
 				console.log("Cannot get location: " + err.message);
@@ -420,34 +403,31 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 		.catch(error => {
 			if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
 			console.log('Error obtendo precios gasolina: ' + error.message);
+			const row = document.createElement("tr");
+			row.innerHTML = `<td ${td_style} colspan="2">Error obtendo precios: ${error.message}	</td>`;
 
-
-				const row = document.createElement("tr");
-					row.innerHTML = `<td ${td_style} colspan="2">Error obteniendo precios gasolina: ${error.message}</td>`;
-
-					tbody.appendChild(row);
-
-				table.appendChild(tbody);
-				if (id_municipio != -1) {
-					const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
-					if (!existingDiv) {
-						const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
-						const tableMunicipio = document.getElementById('tablaMunicipio-' + id_municipio);
-						const targetTbody = tableMunicipio ? tableMunicipio.querySelector('tbody') : null;
-						if (targetTbody) {
-							targetTbody.insertAdjacentHTML('afterbegin', newRow);
-						}
-					}
-					document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
-				}
-				else {
-					document.getElementById("combustible_ubicacion").appendChild(table);
-				}
-
-
+			tbody.appendChild(row);
+			showGasolinera(id_municipio, tbody, table);
 		});
-
-
 }
 
 
+function showGasolinera(id_municipio, tbody, table) {
+
+	table.appendChild(tbody);
+	if (id_municipio != -1) {
+		const existingDiv = document.getElementById("divGasolinera-" + id_municipio);
+		if (!existingDiv) {
+			const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divGasolinera-" + id_municipio + "\"></div></td></tr>";
+			const tableMunicipio = document.getElementById('tablaMunicipio-' + id_municipio);
+			const targetTbody = tableMunicipio ? tableMunicipio.querySelector('tbody') : null;
+			if (targetTbody) {
+				targetTbody.insertAdjacentHTML('afterbegin', newRow);
+			}
+		}
+		document.getElementById("divGasolinera-" + id_municipio).appendChild(table);
+	}
+	else {
+		document.getElementById("combustible_ubicacion").appendChild(table);
+	}
+}

@@ -423,7 +423,10 @@ function geoFindMe(divName) {
 const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=aemet&url=";
 const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
 const proxyHostMeteosix = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=meteosix&url=";
-const FUEL_PRICES_API_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
+
+//const URL_MINISTERIO = "https://sedeaplicaciones.minetur.gob.es";
+const FUEL_PRICES_HOST = "https://energia.serviciosmin.gob.es";
+const FUEL_PRICES_API_URL = FUEL_PRICES_HOST + "/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
 
 
 function getPrevision(id, element, idmareas = 0, lat = 0, lon = 0) {
@@ -534,7 +537,7 @@ async function createPrevision(data, element, idmareas, id_playa, lat = 0, lon =
 	tabla += "<tr><th colspan=4>";
 
 	if (lat != 0 && lon != 0) {
-		tabla += "<img id=\"iconoGasolinera-" + id_playa + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('"+data[0]["nombre"]+"'," + id_playa + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_playa + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('" + data[0]["nombre"] + "'," + id_playa + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		tabla += "&nbsp;&nbsp;";
 	}
 
