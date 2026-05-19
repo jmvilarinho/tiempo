@@ -425,7 +425,8 @@ const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.e
 const proxyHostMeteosix = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=meteosix&url=";
 
 //const URL_MINISTERIO = "https://sedeaplicaciones.minetur.gob.es";
-const FUEL_PRICES_HOST = "https://energia.serviciosmin.gob.es";
+//const FUEL_PRICES_HOST = "https://energia.serviciosmin.gob.es";
+const FUEL_PRICES_HOST = "https://sedeaplicaciones.minetur.gob.es";
 const FUEL_PRICES_API_URL = FUEL_PRICES_HOST + "/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAAProducto/12/4";
 
 
