@@ -32,8 +32,7 @@
 	</div>
 </section>
 <script>
-	//var alternativeuri = 'https://infocar.dgt.es/etraffic/data/camaras/1294.jpg';
-	var alternativeuri = 'https://etraffic.dgt.es/camarasEtraffic/1294.jpg';
+	var alternativeuri = 'https://infocar.dgt.es/etraffic/data/camaras/1294.jpg';
 	getPrevisionMunicipio(15059, 'Ordes-prevision', 2197, 43.076238, -8.407791);
 	getTemperatura('Ordes-temperatura', 43.076238, -8.407791);
 	showOnlyAlternative('Ordes', 'AP9 - Ordes', alternativeuri);
@@ -112,6 +111,36 @@
 	getTemperatura('Cebreiro-temperatura', 42.707862, -7.042951);
 	showVideo(url, 'Cebreiro')
 </script>
+
+
+<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<a href='https://www.skylinewebcams.com/es/webcam/portugal/lisboa/almada/costa-da-caparica-praia-de-santo-antonio-beach.html' target=camaramar>
+				<p>Praia de Santo António - Costa da Caparica</p>
+			</a>
+			<iframe
+				id="Caparica-iframe"
+				src="https://www.youtube.com/embed/oDbKeeojgyk?autoplay=1&mute=1"
+				style="width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; margin: 16px auto 0;"
+				loading="lazy"
+				allow="autoplay; encrypted-media; fullscreen"
+				allowfullscreen>
+			</iframe>
+			<div id='Caparica-temperatura'></div>
+			<div id='Caparica-prevision'></div>
+		</div>
+	</div>
+</section>
+<script>
+	var caparicaIframe = document.getElementById('Caparica-iframe');
+	getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa da Caparica',38.640788, -9.236447);
+	getTemperatura('Caparica-temperatura', 38.640788, -9.236447);
+	caparicaIframe.style.width = getAncho();
+</script>
+
+
 
 <!--
 

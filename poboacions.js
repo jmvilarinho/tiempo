@@ -769,3 +769,124 @@ function getPrintDateHour(dateInput) {
 
 	return "null"
 }
+
+// ============================================================
+// IPMA (Instituto Português do Mar e da Atmosfera) - Portugal
+// ============================================================
+
+const IPMA_WEATHER_TO_AEMET_ICON = {
+	1: '11', 2: '12', 3: '13', 4: '16', 5: '14',
+	6: '25', 7: '23', 8: '27', 9: '25', 10: '23',
+	11: '27', 12: '24', 13: '23', 14: '27', 15: '23',
+	16: '43', 17: '44', 18: '33', 19: '51', 20: '52',
+	21: '34', 22: '11', 23: '54', 24: '17', 25: '13',
+	26: '44', 27: '16', 28: '33', 29: '35', 30: '35'
+};
+
+const IPMA_WEATHER_DESCRIPTIONS = {
+	0: 'Sen información', 1: 'Ceo despexado', 2: 'Pouco nuboso',
+	3: 'Intervalos nubosos', 4: 'Moi nuboso ou cuberto', 5: 'Nubes altas',
+	6: 'Chuvascos/chuvia', 7: 'Chuvascos febles', 8: 'Chuvascos fortes',
+	9: 'Chuvia/chuvascos', 10: 'Chuvia feble', 11: 'Chuvia forte',
+	12: 'Períodos de chuvia', 13: 'Períodos de chuvia feble', 14: 'Períodos de chuvia forte',
+	15: 'Chuvisca', 16: 'Brétema', 17: 'Néboa', 18: 'Neve',
+	19: 'Trebóns', 20: 'Chuvascos e trebóns', 21: 'Sarabia', 22: 'Xeada',
+	23: 'Chuvia e trebóns', 24: 'Nubes convectivas', 25: 'Períodos moi nubosos',
+	26: 'Néboa', 27: 'Nuboso', 28: 'Chuvascos de neve',
+	29: 'Chuvia e neve', 30: 'Chuvia e neve'
+};
+
+const IPMA_WIND_DESCRIPTIONS = { 1: 'Feble', 2: 'Moderado', 3: 'Forte', 4: 'Moi forte' };
+
+function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0) {
+	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
+	console.log('Get prevision IPMA: ' + url);
+	fetch(url)
+		.then(response => response.json())
+		.then(data => createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon))
+		.catch(error => {
+			console.error('Error IPMA:', error);
+			noPrevision(element, 0, error.message);
+		});
+}
+
+function ipmaRow(forecast, label) {
+	const id = Number(forecast.idWeatherType);
+	const icon = IPMA_WEATHER_TO_AEMET_ICON[id] || '11';
+	const desc = IPMA_WEATHER_DESCRIPTIONS[id] || '';
+	const wind = IPMA_WIND_DESCRIPTIONS[Number(forecast.classWindSpeed)] || '';
+	const prob = Number(forecast.precipitaProb);
+
+	let row = '';
+	if (label) {
+		row += '<tr><th colspan=4>' + label + '</th></tr>';
+	}
+	row += '<tr>'
+		+ '<th>Temp. Min.</th><td>' + forecast.tMin + '&deg;</td>'
+		+ '<th>Temp. Max.</th><td>' + forecast.tMax + '&deg;</td>'
+		+ '</tr>';
+
+	let rowspan = 1;
+	let ventoLine = '';
+	let precipLine = '';
+	if (wind) {
+		rowspan += 1;
+		ventoLine = '<tr><th>Vento</th><td style="text-align:left;" colspan=2>' + wind + ' (' + forecast.predWindDir + ')</td></tr>';
+	}
+	if (prob > 0) {
+		rowspan += 1;
+		const text = prob >= 100 ? 'Seguro que chove' : prob + '% probab. de choiva';
+		precipLine = '<tr><th>Precip.</th><td style="text-align:left;" colspan=2>' + text + '</td></tr>';
+	}
+	row += '<tr>'
+		+ '<th rowspan=' + rowspan + '><img src="img/' + icon + '_g.png" height="50px"></th>'
+		+ '<th>Ceo</th><td style="text-align:left;" colspan=2>' + desc + '</td>'
+		+ '</tr>'
+		+ ventoLine
+		+ precipLine;
+	return row;
+}
+
+function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon) {
+	if (!data || !data.data || data.data.length === 0) {
+		noPrevision(element, 0, 'Sen datos IPMA');
+		return;
+	}
+
+	const displayName = nombre || ('IPMA ' + globalIdLocal);
+	const idKey = 'ipma-' + globalIdLocal;
+
+	let tabla = '<table id="tablaMunicipio-' + idKey + '" class="center">';
+	tabla += '<tr><th colspan=4>';
+	if (lat != 0 && lon != 0) {
+		tabla += '<img id="iconoGasolinera-' + idKey + '" src="img/gasolinera.png" alt="Preços combustível" height="16px" onclick="loadGasolineraPT(\'' + displayName + '\',\'' + idKey + '\',' + lat + ',' + lon + ')" style="cursor:pointer;" title="Preços combustível">';
+		tabla += '&nbsp;&nbsp;';
+	}
+	tabla += '<a href="https://www.ipma.pt/pt/index.html" target="_new" rel="noopener">'
+		+ 'Prevision para ' + displayName + '</a>';
+	tabla += '</th></tr>';
+
+	const now = new Date();
+	const todayStr = now.getFullYear() + '-' + padTo2Digits(now.getMonth() + 1) + '-' + padTo2Digits(now.getDate());
+	const todayIdx = data.data.findIndex(d => d.forecastDate === todayStr);
+	const startIdx = todayIdx >= 0 ? todayIdx : 0;
+
+	if (data.data[startIdx]) {
+		tabla += ipmaRow(data.data[startIdx], null);
+	}
+	if (data.data[startIdx + 1]) {
+		tabla += ipmaRow(data.data[startIdx + 1], getPrintDateHour(data.data[startIdx + 1].forecastDate));
+	}
+
+	const dt = new Date(data.dataUpdate);
+	const fechaFmt = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false };
+	tabla += '<tr><td colspan=4><a href="https://www.ipma.pt" target="copyright">IPMA</a>: '
+		+ dt.toLocaleDateString('es-ES', fechaFmt) + '</td></tr>';
+	tabla += '</table>';
+
+	const keyDiv = document.createElement('div');
+	keyDiv.innerHTML = tabla;
+	keyDiv.style.textAlign = 'center';
+	const mainDiv = document.getElementById(element);
+	if (mainDiv) mainDiv.appendChild(keyDiv);
+}
