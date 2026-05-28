@@ -798,12 +798,12 @@ const IPMA_WEATHER_DESCRIPTIONS = {
 
 const IPMA_WIND_DESCRIPTIONS = { 1: 'Feble', 2: 'Moderado', 3: 'Forte', 4: 'Moi forte' };
 
-function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0) {
+function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null) {
 	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
 	console.log('Get prevision IPMA: ' + url);
 	fetch(url)
 		.then(response => response.json())
-		.then(data => createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon))
+		.then(data => createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, urllink))
 		.catch(error => {
 			console.error('Error IPMA:', error);
 			noPrevision(element, 0, error.message);
@@ -847,7 +847,7 @@ function ipmaRow(forecast, label) {
 	return row;
 }
 
-function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon) {
+function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url) {
 	if (!data || !data.data || data.data.length === 0) {
 		noPrevision(element, 0, 'Sen datos IPMA');
 		return;
@@ -862,7 +862,12 @@ function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon) {
 		tabla += '<img id="iconoGasolinera-' + idKey + '" src="img/gasolinera.png" alt="Preços combustível" height="16px" onclick="loadGasolineraPT(\'' + displayName + '\',\'' + idKey + '\',' + lat + ',' + lon + ')" style="cursor:pointer;" title="Preços combustível">';
 		tabla += '&nbsp;&nbsp;';
 	}
-	tabla += '<a href="https://www.ipma.pt/pt/index.html" target="_new" rel="noopener">'
+
+	if (url == null) {
+		url = 'https://www.ipma.pt/pt/index.html';
+	}
+
+	tabla += '<a href="' + url + '" target="_new" rel="noopener">'
 		+ 'Prevision para ' + displayName + '</a>';
 	tabla += '</th></tr>';
 

@@ -118,6 +118,7 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
+		<!--
 			<a href='https://www.skylinewebcams.com/es/webcam/portugal/lisboa/almada/costa-da-caparica-praia-de-santo-antonio-beach.html' target=camaramar>
 				<p>Praia de Santo António - Costa da Caparica</p>
 			</a>
@@ -129,18 +130,27 @@
 				allow="autoplay; encrypted-media; fullscreen"
 				allowfullscreen>
 			</iframe>
+		-->
+			<a href='https://beachcam.meo.pt/livecams/costa-da-caparica-praia-nova/' target=camaramar><p>Costa de Caparica - Praia Nova</p></a>
+			<div style="visibility: hidden" id="Caparica-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Caparica">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+
 			<div id='Caparica-temperatura'></div>
 			<div id='Caparica-prevision'></div>
 		</div>
 	</div>
 </section>
 <script>
-	var caparicaIframe = document.getElementById('Caparica-iframe');
-	getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa da Caparica',38.640788, -9.236447);
+	//var caparicaIframe = document.getElementById('Caparica-iframe');
+	//caparicaIframe.style.width = getAncho();
+	getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa de Caparica',38.640788, -9.236447,'https://www.ipma.pt/pt/otempo/prev.localidade.hora/index.jsp#Set%C3%BAbal&Praia%20da%20Costa%20da%20Caparica');
 	getTemperatura('Caparica-temperatura', 38.640788, -9.236447);
-	caparicaIframe.style.width = getAncho();
+	var url = 'https://video-auth1.iol.pt/beachcam/bccaparicanovapraia/playlist.m3u8';
+	showVideo(url, 'Caparica')
 </script>
-
 
 
 <!--
