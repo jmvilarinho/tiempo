@@ -27,7 +27,7 @@
 		gtag('js', new Date());
 		gtag('config', 'G-PMCWDDX565');
 
-		meteogalcia_url = 'https://www.meteogalicia.gal/web/predicion/galicia/0'
+		//meteogalcia_url = 'https://www.meteogalicia.gal/web/predicion/galicia/0'
 		meteogalcia_url = 'https://www.meteogalicia.gal/web/predicion/portada'
 	</script>
 </head>
@@ -95,9 +95,7 @@
 	<script>
 		var pagina = getCookie('pagina');
 		CambiaVistaUpdate(pagina);
-	</script>
 
-	<script>
 		$.post(
 			'https://z8efejrgz8.execute-api.eu-west-1.amazonaws.com//',
 			function (data) {

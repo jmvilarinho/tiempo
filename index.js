@@ -50,6 +50,9 @@ function CambiaVistaUpdate(pagina) {
 		pagina = 'praias'
 	}
 
+
+	new Promise(resolve => geoFindMe("yourTemperature"));
+
 	contenido = pagina + '.html'
 	console.log('Cargando página: ' + contenido)
 	setCookie('pagina', pagina, 30);
@@ -100,7 +103,6 @@ function CambiaVistaUpdate(pagina) {
 	});
 	$('#OtherPage').append(boton_rfgf);
 
-	geoFindMe("yourTemperature");
 };
 
 function includeHTML(file) {
@@ -351,10 +353,14 @@ function getLocalTime(time) {
 function getTemperatura(id, latitude, longitude, texto = "Temperatura actual", waze = true, fuel = false) {
 	const ms = Date.now();
 	const url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&current=temperature_2m,wind_speed_10m"
-	console.log('Get temperatura: ' + url)
+	console.log('Get temperatura: ' + url);
 	fetch(url)
 		.then(response => response.json())
-		.then(data => getTemperaturanDatos(data, id, latitude, longitude, texto, waze, fuel));
+		.then(data => getTemperaturanDatos(data, id, latitude, longitude, texto, waze, fuel))
+		.catch(error => {
+			console.error('Error:', error);
+			return false;
+		});
 }
 
 function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = true, fuel = false) {
@@ -393,6 +399,7 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 		+ "Temperatura actual por Open-Meteo: "
 		+ temp
 		+ "</a></p>";
+
 }
 
 
@@ -400,9 +407,8 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 function geoFindMe(divName) {
 
 	function success(position) {
-		const latitude = position.coords.latitude;
-		const longitude = position.coords.longitude;
-
+		var latitude = position.coords.latitude;
+		var longitude = position.coords.longitude;
 		getTemperatura(divName, latitude, longitude, "Temperatura na túa ubicación", false, true)
 	}
 
@@ -415,6 +421,14 @@ function geoFindMe(divName) {
 	} else {
 		status.textContent = "Locating…";
 		navigator.geolocation.getCurrentPosition(success, error);
+	}
+
+	if (status.textContent !=""){
+		const keyDiv = document.createElement('div');
+		keyDiv.innerHTML = "Non se puido obter a túa ubicación";
+		const mainDiv = document.getElementById(divName);
+		mainDiv.innerHTML = "";
+		mainDiv.appendChild(keyDiv);
 	}
 }
 
