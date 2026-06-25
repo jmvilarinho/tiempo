@@ -808,6 +808,14 @@ const IPMA_WEATHER_DESCRIPTIONS = {
 
 const IPMA_WIND_DESCRIPTIONS = { 1: 'Feble', 2: 'Moderado', 3: 'Forte', 4: 'Moi forte' };
 
+// IPMA usa notación inglesa (W = oeste); as imaxes img/wind-*.png usan notación
+// galega (O = oeste, C = calma). Mapeo IPMA -> nome da imaxe.
+const IPMA_WIND_DIR_TO_ICON = {
+	'N': 'N', 'NE': 'NE', 'E': 'E', 'SE': 'SE',
+	'S': 'S', 'SW': 'SO', 'W': 'O', 'NW': 'NO',
+	'C': 'C', '': 'C'
+};
+
 function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null) {
 	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
 	console.log('Get prevision IPMA: ' + url);
@@ -841,7 +849,9 @@ function ipmaRow(forecast, label) {
 	let precipLine = '';
 	if (wind) {
 		rowspan += 1;
-		ventoLine = '<tr><th>Vento</th><td style="text-align:left;" colspan=2>' + wind + ' (' + forecast.predWindDir + ')</td></tr>';
+		const dirIcon = IPMA_WIND_DIR_TO_ICON[String(forecast.predWindDir || '').toUpperCase()];
+		const dirImg = dirIcon ? ' <img style="vertical-align:middle" height=20px src="img/wind-' + dirIcon + '.png">' : '';
+		ventoLine = '<tr><th>Vento</th><td style="text-align:left;vertical-align:middle;" colspan=2>' + wind + dirImg + '</td></tr>';
 	}
 	if (prob > 0) {
 		rowspan += 1;
