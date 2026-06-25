@@ -285,8 +285,12 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 	const proxiedMeteogaliciaUrl = proxyHostMeteosix + encodeURIComponent(meteogaliciaUrl);
 	console.log('Get precipitacion MeteoGalicia: ' + proxiedMeteogaliciaUrl, id_municipio);
 
+	// Timeout de 10 s: se MeteoGalicia tarda máis, abortamos e pintamos só con AEMET.
+	const controller = new AbortController();
+	const timeoutId = setTimeout(function () { controller.abort(); }, 10000);
+
 	try {
-		const response = await fetch(proxiedMeteogaliciaUrl);
+		const response = await fetch(proxiedMeteogaliciaUrl, { signal: controller.signal });
 		const data = await response.json();
 
 		if (data && 'statusCode' in data && data.statusCode == 500) {
@@ -340,10 +344,16 @@ async function getMeteosixPrecipitacion(id_municipio, lat, lon, element) {
 			renderChartWithBothDatasets(id_municipio);
 		}
 	} catch (error) {
-		console.warn('Could not fetch MeteoGalicia data:', error);
+		if (error && error.name === 'AbortError') {
+			console.warn('MeteoGalicia timeout (10s) para ' + id_municipio + ', úsase só AEMET');
+		} else {
+			console.warn('Could not fetch MeteoGalicia data:', error);
+		}
 		window.precipitacionDataByMunicipio = window.precipitacionDataByMunicipio || {};
 		window.precipitacionDataByMunicipio[id_municipio] = null;
 		window.precipitacionData = null;
+	} finally {
+		clearTimeout(timeoutId);
 	}
 }
 
