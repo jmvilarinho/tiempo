@@ -3,7 +3,7 @@ const precipitacion_metosix_test = 0; // Set to 1 to inject random test data for
 const precipitacion_aemet_test = 0; // Set to 1 to inject random test data for AEMET precipitation
 const precipitacion_debug = 0; // Set to 1 to enable debug logs for precipitation data
 
-function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0) {
+function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0, id_cofpo = 0) {
 	const ms = Date.now();
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey + "&nocache=" + ms
 	//var url = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/' + id + '/?api_key=' + apiKey;
@@ -20,7 +20,7 @@ function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0) {
 			}
 			return JSON.parse(body);
 		})
-		.then(data => getPrevisionDatosMunicipio(data, element, id, id_cofc, lat, lon))
+		.then(data => getPrevisionDatosMunicipio(data, element, id, id_cofc, lat, lon, id_cofpo))
 		.catch(error => {
 			console.error('Error:', error.message);
 			noPrevision(element, 0, error.message);
@@ -28,7 +28,7 @@ function getPrevisionMunicipio(id, element, id_cofc = 0, lat = 0, lon = 0) {
 		});
 }
 
-function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0) {
+function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0, id_cofpo = 0) {
 
 	if (data['estado'] == 200) {
 		if ('error' in data && data['error'] != "") {
@@ -40,7 +40,7 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, la
 		}
 		if ("datos_json" in data) {
 			console.log("Datos completos para " + id_municipio);
-			createPrevisionMunicipio(data['datos_json'], element, id_municipio, id_cofc, lat, lon);
+			createPrevisionMunicipio(data['datos_json'], element, id_municipio, id_cofc, lat, lon, id_cofpo);
 		} else {
 
 			console.log('Get prevision: ' + data['datos'])
@@ -54,13 +54,13 @@ function getPrevisionDatosMunicipio(data, element, id_municipio, id_cofc = 0, la
 				.then(function (buffer) {
 					const decoder = new TextDecoder('iso-8859-1');
 					const text = decoder.decode(buffer);
-					createPrevisionMunicipio(JSON.parse(text), element, id_municipio, id_cofc, lat, lon);
+					createPrevisionMunicipio(JSON.parse(text), element, id_municipio, id_cofc, lat, lon, id_cofpo);
 				});
 		}
 	}
 }
 
-async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0) {
+async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0, lat = 0, lon = 0, id_cofpo = 0) {
 	const now = new Date();
 	current_hour = now.getHours();
 
@@ -77,6 +77,10 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	if (id_cofc != 0) {
 		tabla += "&nbsp;&nbsp;";
 		tabla += "<img id=\"iconoFarmacia-" + id_cofc + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmacia(" + id_municipio + "," + id_cofc + ")\" style=\"cursor: pointer;\" title=\"Cofc.es - Farmacia de guardia\" >"; tabla += "&nbsp;&nbsp;";
+	}
+	if (id_cofpo != 0) {
+		tabla += "&nbsp;&nbsp;";
+		tabla += "<img id=\"iconoFarmaciaCofpo-" + id_cofpo + "\" src=\"img/farmacia.png\" alt=\"Farmacia\" height=\"15px\"/ onclick=\"loadFarmaciaCofpo(" + id_municipio + "," + id_cofpo + ")\" style=\"cursor: pointer;\" title=\"Cofpo.org - Farmacia de guardia\" >"; tabla += "&nbsp;&nbsp;";
 	}
 	tabla += "</th></tr>";
 

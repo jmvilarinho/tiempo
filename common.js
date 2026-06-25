@@ -1,3 +1,48 @@
+/* =========================
+   GEO HELPERS (compartidos por farmacia.cofc.js, farmacia.cofpo.js, fuelprices.js)
+========================= */
+
+// Haversine formula to compute distance in km
+function distance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const toRad = deg => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getSafeLocation() {
+    try {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                // Geolocation not supported
+                resolve({ latitude: 0, longitude: 0 });
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    // Permission denied or other error
+                    console.warn("Geolocation error:", error.message);
+                    resolve({ latitude: 0, longitude: 0 });
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        });
+
+    } catch (error) {
+        console.warn("Error getting location: ", error.message);
+        return Promise.resolve({ latitude: 0, longitude: 0 });
+    }
+}
+
 function detectPlatform() {
     return {
         isAndroid: /Android/i.test(navigator.userAgent),

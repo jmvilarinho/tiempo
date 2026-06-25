@@ -1,93 +1,11 @@
-
-function loadFarmacia(id_municipio, id_cofc) {
-	$('#iconoFarmacia-' + id_cofc).css('display', 'none');
-	fetch(proxyHostFarmacia + 'https://www.cofc.es/farmacia/index')
-		.then(response => {
-			if (!response.ok) {
-				$('#iconoFarmacia-' + id_cofc).show()
-				throw new Error('Network response was not ok');
-			}
-			return response.json();
-		})
-		.then(data => {
-			var data = data["datos_json"];
-			// --- filter by idPoblacion ---
-			const result = data.filter(item => item.idPoblacion === id_cofc);
-
-			if (result.length === 0) {
-				html = "<p>No hay farmacias en esta población.</p>";
-			} else {
-				html = "<strong><a href=\"https://www.cofc.es/farmacia/index\"  target=\"_new\" rel=\"noopener\">Farmacia/s de guardia</a></strong><br>";
-
-				// Sort by distance from current position
-				getSafeLocation().then((pos) => {
-					const currentLat = pos.latitude;
-					const currentLon = pos.longitude;
-
-					// Calculate distance for each pharmacy
-					result.forEach(f => {
-						const latitem = parseFloat(f.latitud);
-						const lonitem = parseFloat(f.longitud);
-
-						if (currentLat !== 0 && currentLon !== 0) {
-							f._distance = distance(currentLat, currentLon, latitem, lonitem);
-							console.log(`Distance to ${f.nombre}: ${f._distance.toFixed(2)} km`);
-						} else {
-							f._distance = Infinity;
-						}
-					});
-
-					// Sort by distance
-					result.sort((a, b) => a._distance - b._distance);
-
-					cont = 0;
-					result.forEach(f => {
-						html += "<hr>";
-						let distanceInfo = "";
-						if (f._distance !== Infinity) {
-							distanceInfo = `<br><small>(${f._distance.toFixed(2)} km desde tu ubicación)</small>`;
-						}
-						html += `
-							<a href="#" onclick="openMaps(event,${f.latitud},${f.longitud})">
-							<strong>${f.nombre}</a></strong>&nbsp;<img src='img/dot.png' height='15px'><br>
-							Dirección: ${f.direccion}<br>
-							Horario: ${f.horario}<br>
-							Guardia: ${f.nombreGuardiaTipoTurno}<br>
-							Teléfono: <a href='tel:${f.telefono}'>${f.telefono}</a><br>
-							Población: ${f.nombrePoblacion}
-							${distanceInfo}
-						`;
-						cont += 1;
-					});
-					html += "";
-
-					const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
-					if (farmaciaDiv) {
-						farmaciaDiv.innerHTML = html;
-					}
-				});
-
-				const existingDiv = document.getElementById("divFarmacia-" + id_cofc);
-				if (!existingDiv) {
-					const newRow = "<tr><td colspan=4 style=\"text-align: left;\"><div id=\"divFarmacia-" + id_cofc + "\"></div></td></tr>";
-					const table = document.getElementById('tablaMunicipio-' + id_municipio);
-					const targetTbody = table ? table.querySelector('tbody') : null;
-					if (targetTbody) {
-						targetTbody.insertAdjacentHTML('afterbegin', newRow);
-					}
-				}
-				const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
-				if (farmaciaDiv) {
-					farmaciaDiv.innerHTML = html;
-				}
-			}
-		})
-		.catch(error => {
-			$('#iconoFarmacia-' + id_cofc).show()
-			alert('Error fetching content: ' + error.message);
-		});
-}
-
+﻿
+// Prezos de combustible (gasóleo A) cerca dunha ubicación.
+//  - España: ministerio (FUEL_PRICES_* en index.js), filtrado por CCAA.
+//  - Portugal: DGEG (precoscombustiveis.dgeg.gov.pt), filtrado por distrito.
+// A CCAA/distrito resólvese por xeocodificación inversa (Nominatim/OpenStreetMap).
+//
+// Helpers xeográficos compartidos (distance, getSafeLocation) están en common.js;
+// as farmacias de guardia están en farmacia.cofc.js / farmacia.cofpo.js.
 
 function getField(item, keys) {
 	for (const key of keys) {
@@ -98,52 +16,43 @@ function getField(item, keys) {
 	return "";
 }
 
-// Haversine formula to compute distance in km
-function distance(lat1, lon1, lat2, lon2) {
-	const R = 6371; // km
-	const toRad = deg => deg * Math.PI / 180;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
-	const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-	return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-
 // Convert price string to float
 function parsePrice(priceStr) {
 	if (!priceStr) return Infinity;
 	return parseFloat(priceStr.replace(',', '.'));
 }
 
-function getSafeLocation() {
+// Cache de respostas de prezos no navegador (sessionStorage). Os botóns +/- 5 km só
+// cambian o filtro de distancia (faise no cliente), polo que a resposta da API é a
+// mesma URL; ao recargar reutilízase o JSON xa descargado en vez de volver pedilo.
+const FUEL_CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
+
+async function fetchFuelJson(url) {
+	const cacheKey = 'fuelcache:' + url;
 	try {
-		return new Promise((resolve) => {
-			if (!navigator.geolocation) {
-				// Geolocation not supported
-				resolve({ latitude: 0, longitude: 0 });
-				return;
+		const cached = sessionStorage.getItem(cacheKey);
+		if (cached) {
+			const parsed = JSON.parse(cached);
+			if (parsed && (Date.now() - parsed.t) < FUEL_CACHE_TTL_MS) {
+				console.log('Fuel cache hit: ' + url);
+				return parsed.data;
 			}
-
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					resolve({
-						latitude: position.coords.latitude,
-						longitude: position.coords.longitude
-					});
-				},
-				(error) => {
-					// Permission denied or other error
-					console.warn("Geolocation error:", error.message);
-					resolve({ latitude: 0, longitude: 0 });
-				},
-				{ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-			);
-		});
-
-	} catch (error) {
-		console.warn("Error getting location: ", error.message);
-		return Promise.resolve({ latitude: 0, longitude: 0 });
+		}
+	} catch (e) {
+		// sessionStorage non dispoñible ou JSON corrupto: ignórase e séguese co fetch.
 	}
+
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error('Network response was not ok');
+	}
+	const data = await response.json();
+	try {
+		sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data: data }));
+	} catch (e) {
+		// Cota superada ou modo privado: ignórase, simplemente non se cachea.
+	}
+	return data;
 }
 
 const CCAA_CODES = {
@@ -330,14 +239,7 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 	if (id_municipio != -1) tbody.innerHTML += "<tr><td " + td_style + " colspan='2'><hr></td></tr>";
 
 	console.log('Get gasolinera data: ' + url);
-	fetch(url)
-		.then(response => {
-			if (!response.ok) {
-				if (id_municipio != -1) $('#iconoGasolinera-' + id_municipio).show()
-				throw new Error('Network response was not ok');
-			}
-			return response.json();
-		})
+	fetchFuelJson(url)
 		.then(data => {
 			//console.log('Gasolinera data: ', data);
 			const list = data.ListaEESSPrecio || [];
@@ -553,12 +455,7 @@ async function loadGasolineraPT(text, id_municipio, lat, lon, fuel_distancia_max
 
 	console.log('Get gasolinera PT data: ' + url);
 	try {
-		const response = await fetch(url);
-		if (!response.ok) {
-			if (!isInline) $('#iconoGasolinera-' + id_municipio).show();
-			throw new Error('Network response was not ok');
-		}
-		const data = await response.json();
+		const data = await fetchFuelJson(url);
 		const list = data.resultado || [];
 
 		const pos = await getSafeLocation();

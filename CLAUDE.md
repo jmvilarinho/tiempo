@@ -55,7 +55,11 @@ When changing data sources, update these constants rather than scattering URLs.
 
 ### Root app structure
 
-- `index.html` loads `common.js`, `index.js`, `farmacia.fuel.js`, `poboacions.js`.
+- `index.html` loads `common.js`, `index.js`, `farmacia.cofc.js`, `fuelprices.js`,
+  `farmacia.cofpo.js`, `poboacions.js`. On-call pharmacies are split by provincial college:
+  `farmacia.cofc.js` (cofc.es, A Coruña, via `proxyHostFarmacia`) and `farmacia.cofpo.js`
+  (cofpo.org, Pontevedra, direct CORS). Fuel prices (ES + PT) live in `fuelprices.js`.
+  The shared geo helpers `distance` (Haversine) and `getSafeLocation` are in `common.js`.
 - The view toggles between two fragments, `praias.html` and `poboacions.html`, loaded into
   `#DivContent` via jQuery `$.load()`. `CambiaVistaUpdate(pagina)` in `index.js` drives this
   and persists the choice in the `pagina` cookie. The `RFGF` button navigates to `rfgf/`.
