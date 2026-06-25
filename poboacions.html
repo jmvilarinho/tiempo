@@ -9,10 +9,19 @@
 		15030:71933, // A Coruña
 		27045:59157, // O Cebreiro
 		15057:71936, // Noia
+		15073:50017, // Ribeira (Santa Uxía de Ribeira)
 		37274:0, // Salamanca (sin Meteogalicia)
 	}
-</script>
 
+	// Lista de poboacións dispoñibles. Para engadir unha nova, engade unha
+	// entrada aquí (key único, name para o checkbox, html da sección e init()
+	// coa carga de previsión/temperatura/webcam). A selección gárdase na cookie
+	// 'poboacionsItems' e renderízase con render_poboacions() (poboacions.js).
+	poboacions_list = [
+		{
+			key: 'Ordes',
+			name: 'Ordes',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -30,16 +39,19 @@
 			<div id='Ordes-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var alternativeuri = 'https://infocar.dgt.es/etraffic/data/camaras/1294.jpg';
-	alternativeuri = 'https://etraffic.dgt.es/camarasEtraffic/1294.jpg';
-	getPrevisionMunicipio(15059, 'Ordes-prevision', 2197, 43.076238, -8.407791);
-	getTemperatura('Ordes-temperatura', 43.076238, -8.407791);
-	showOnlyAlternative('Ordes', 'AP9 - Ordes', alternativeuri);
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+</section>`,
+			init: function () {
+				var alternativeuri = 'https://infocar.dgt.es/etraffic/data/camaras/1294.jpg';
+				alternativeuri = 'https://etraffic.dgt.es/camarasEtraffic/1294.jpg';
+				getPrevisionMunicipio(15059, 'Ordes-prevision', 2197, 43.076238, -8.407791);
+				getTemperatura('Ordes-temperatura', 43.076238, -8.407791);
+				showOnlyAlternative('Ordes', 'AP9 - Ordes', alternativeuri);
+			}
+		},
+		{
+			key: 'Obradoiro',
+			name: 'Santiago de Compostela',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -56,15 +68,18 @@
 			<div id='Obradoiro-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://www.crtvg.es:1554/hls/obradoiro/index.m3u8';
-	getPrevisionMunicipio(15078, 'Obradoiro-prevision',2216, 42.880464, -8.545735);
-	getTemperatura('Obradoiro-temperatura', 42.880464, -8.545735);
-	showVideo(url, 'Obradoiro')
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+</section>`,
+			init: function () {
+				var url = 'https://www.crtvg.es:1554/hls/obradoiro/index.m3u8';
+				getPrevisionMunicipio(15078, 'Obradoiro-prevision', 2216, 42.880464, -8.545735);
+				getTemperatura('Obradoiro-temperatura', 42.880464, -8.545735);
+				showVideo(url, 'Obradoiro')
+			}
+		},
+		{
+			key: 'Riazor',
+			name: 'A Coruña',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -80,41 +95,18 @@
 			<div id='Riazor-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://www.crtvg.es:1554/hls/coruna/index.m3u8';
-	getPrevisionMunicipio(15030, 'Riazor-prevision',2137, 43.370865, -8.395928);
-	getTemperatura('Riazor-temperatura', 43.370865, -8.395928);
-	showVideo(url, 'Riazor')
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-<section style="text-align:center;">
-	<div class="rt-container">
-		<div class="col-rt-12">
-			<a href='https://www.g24.gal/-/o-cebreiro' target=camaramar>
-				<p>O Cebreiro</p>
-			</a>
-			<div style="visibility: hidden" id="Cebreiro-unavailable"><img width="100" src=img/unavailable.png>
-			</div>
-			<video controls id="Cebreiro">
-				<source />
-				<p>Your browser does not support H.264/MP4.</p>
-			</video>
-			<div id='Cebreiro-temperatura'></div>
-			<div id='Cebreiro-prevision'></div>
-		</div>
-	</div>
-</section>
-<script>
-	var url = 'https://www.crtvg.es:1555/hls/cebreiro/index.m3u8';
-	getPrevisionMunicipio(27045, 'Cebreiro-prevision', 0, 42.707862, -7.042951);
-	getTemperatura('Cebreiro-temperatura', 42.707862, -7.042951);
-	showVideo(url, 'Cebreiro')
-</script>
-
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+</section>`,
+			init: function () {
+				var url = 'https://www.crtvg.es:1554/hls/coruna/index.m3u8';
+				getPrevisionMunicipio(15030, 'Riazor-prevision', 2137, 43.370865, -8.395928);
+				getTemperatura('Riazor-temperatura', 43.370865, -8.395928);
+				showVideo(url, 'Riazor')
+			}
+		},
+		{
+			key: 'Marin',
+			name: 'Marín / Pontevedra',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -132,59 +124,48 @@
 			<div id='Marin-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = "https://www.crtvg.es:1556/hls/pontevedra/index.m3u8";
-	var alternativeuri = 'https://www.g24.gal/prog24/ARQUIVO/CAMARAS_WEB/pontevedra.jpg';
-	getPrevisionMunicipio(36026, 'Marin-prevision',0, 42.391667, -8.700278);
-	getTemperatura('Marin-temperatura', 42.391667, -8.700278);
-	showVideo(url, 'Marin', alternativeuri);
-</script>
-
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
+</section>`,
+			init: function () {
+				var url = "https://www.crtvg.es:1556/hls/pontevedra/index.m3u8";
+				var alternativeuri = 'https://www.g24.gal/prog24/ARQUIVO/CAMARAS_WEB/pontevedra.jpg';
+				getPrevisionMunicipio(36026, 'Marin-prevision', 0, 42.391667, -8.700278);
+				getTemperatura('Marin-temperatura', 42.391667, -8.700278);
+				showVideo(url, 'Marin', alternativeuri);
+			}
+		},
+		{
+			key: 'Ribeira',
+			name: 'Ribeira',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-		<!--
-			<a href='https://www.skylinewebcams.com/es/webcam/portugal/lisboa/almada/costa-da-caparica-praia-de-santo-antonio-beach.html' target=camaramar>
-				<p>Praia de Santo António - Costa da Caparica</p>
-			</a>
-			<iframe
-				id="Caparica-iframe"
-				src="https://www.youtube.com/embed/oDbKeeojgyk?autoplay=1&mute=1"
-				style="width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; margin: 16px auto 0;"
-				loading="lazy"
-				allow="autoplay; encrypted-media; fullscreen"
-				allowfullscreen>
-			</iframe>
-		-->
-			<a href='https://beachcam.meo.pt/livecams/costa-da-caparica-praia-nova/' target=camaramar><p>Costa de Caparica - Praia Nova</p></a>
-			<div style="visibility: hidden" id="Caparica-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Caparica">
+			<div id="Ribeira-alternative">
+				<a href='https://www.meteogalicia.gal/observacion/webcams/webcamsIndex.action' target=camaramar>
+					<p>Corrubedo - Ribeira</p>
+				</a>
+			</div>
+			<div style="visibility: hidden" id="Ribeira-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Ribeira">
 				<source />
 				<p>Your browser does not support H.264/MP4.</p>
 			</video>
-
-			<div id='Caparica-temperatura'></div>
-			<div id='Caparica-prevision'></div>
+			<div id='Ribeira-temperatura'></div>
+			<div id='Ribeira-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	//var caparicaIframe = document.getElementById('Caparica-iframe');
-	//caparicaIframe.style.width = getAncho();
-	getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa de Caparica',38.640788, -9.236447,'https://www.ipma.pt/pt/otempo/prev.localidade.hora/index.jsp#Set%C3%BAbal&Praia%20da%20Costa%20da%20Caparica');
-	getTemperatura('Caparica-temperatura', 38.640788, -9.236447);
-	var url = 'https://video-auth1.iol.pt/beachcam/bccaparicanovapraia/playlist.m3u8';
-	showVideo(url, 'Caparica')
-</script>
-
-
-<!--
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var alternativeuri = getUltimaXuntaCam('Corrubedo');
+				getPrevisionMunicipio(15073, 'Ribeira-prevision', 2211, 42.556400, -8.992000);
+				getTemperatura('Ribeira-temperatura', 42.556400, -8.992000);
+				showOnlyAlternative('Ribeira', 'Corrubedo - Ribeira', alternativeuri);
+			}
+		},
+		{
+			key: 'Noia',
+			name: 'Noia',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -203,16 +184,82 @@
 			<div id='Noia-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var alternativeuri = 'https://www.jdserver.es/abarquina/CamMet.jpg';
-	getPrevisionMunicipio(15057, 'Noia-prevision', 2195, 42.786134, -8.888821);
-	getTemperatura('Noia-temperatura', 42.786134, -8.888821);
-	showOnlyAlternative('Noia', 'A Barquiña - Noia', alternativeuri);
-	//showOnlyAlternative('Noia', 'Portosín - Porto do Son', 'https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Portosin/miniUltima.jpg');
+</section>`,
+			init: function () {
+				var alternativeuri = 'https://www.jdserver.es/abarquina/CamMet.jpg';
+				getPrevisionMunicipio(15057, 'Noia-prevision', 2195, 42.786134, -8.888821);
+				getTemperatura('Noia-temperatura', 42.786134, -8.888821);
+				showOnlyAlternative('Noia', 'A Barquiña - Noia', alternativeuri);
+				//showOnlyAlternative('Noia', 'Portosín - Porto do Son', 'https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Portosin/miniUltima.jpg');
+			}
+		},
+		{
+			key: 'Cebreiro',
+			name: 'O Cebreiro',
+			html: `
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<a href='https://www.g24.gal/-/o-cebreiro' target=camaramar>
+				<p>O Cebreiro</p>
+			</a>
+			<div style="visibility: hidden" id="Cebreiro-unavailable"><img width="100" src=img/unavailable.png>
+			</div>
+			<video controls id="Cebreiro">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div id='Cebreiro-temperatura'></div>
+			<div id='Cebreiro-prevision'></div>
+		</div>
+	</div>
+</section>`,
+			init: function () {
+				var url = 'https://www.crtvg.es:1555/hls/cebreiro/index.m3u8';
+				getPrevisionMunicipio(27045, 'Cebreiro-prevision', 0, 42.707862, -7.042951);
+				getTemperatura('Cebreiro-temperatura', 42.707862, -7.042951);
+				showVideo(url, 'Cebreiro')
+			}
+		},
+		{
+			key: 'Caparica',
+			name: 'Costa de Caparica',
+			html: `
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<a href='https://beachcam.meo.pt/livecams/costa-da-caparica-praia-nova/' target=camaramar><p>Costa de Caparica - Praia Nova</p></a>
+			<div style="visibility: hidden" id="Caparica-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Caparica">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div id='Caparica-temperatura'></div>
+			<div id='Caparica-prevision'></div>
+		</div>
+	</div>
+</section>`,
+			init: function () {
+				getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa de Caparica', 38.640788, -9.236447, 'https://www.ipma.pt/pt/otempo/prev.localidade.hora/index.jsp#Set%C3%BAbal&Praia%20da%20Costa%20da%20Caparica');
+				getTemperatura('Caparica-temperatura', 38.640788, -9.236447);
+				var url = 'https://video-auth1.iol.pt/beachcam/bccaparicanovapraia/playlist.m3u8';
+				showVideo(url, 'Caparica')
+			}
+		},
+	];
+
+	// Poboacións mostradas por defecto (a primeira vez, sen cookie).
+	poboacions_default = poboacions_list.map(function (p) { return p.key; });
 </script>
 
--->
+<div id="poboacions_content"></div>
+<br><hr>
+<div id="poboacions_selector"></div>
+
+<script>
+	render_poboacions();
+</script>
+
 
 <!--
 <center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
@@ -264,5 +311,3 @@
 </script>
 
 -->
-
-

@@ -1,7 +1,18 @@
 <script>
-	total_elementos = 8;
-</script>
+	// total_elementos é axustado por render_praias() segundo as praias
+	// seleccionadas (úsao goto() para o scroll a #hash).
+	total_elementos = 0;
 
+	// Lista de praias dispoñibles. Para engadir unha nova, engade unha entrada
+	// aquí (key único, name para o checkbox, html da sección e init() coa carga
+	// de previsión/temperatura/webcam). previsions = nº de chamadas a getPrevision
+	// (por defecto 1) para o contador total_elementos. A selección gárdase na
+	// cookie 'praiasItems' e renderízase con render_praias() (poboacions.js).
+	praias_list = [
+		{
+			key: 'Razo',
+			name: 'Razo',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -19,16 +30,18 @@
 			<div id='Razo-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://wow.camaramar.com/camaramar/5_razo.stream/playlist.m3u8';
-	getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
-	getTemperatura('Razo-temperatura', 43.290787, -8.701617);
-	showVideo(url, 'Razo')
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/5_razo.stream/playlist.m3u8';
+				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
+				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
+				showVideo(url, 'Razo')
+			}
+		},
+		{
+			key: 'Aguete',
+			name: 'Lapamán (Marín)',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -56,22 +69,24 @@
 			<div id='Lapaman-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	//var url = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
-	//var url = "https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Aguete2/ultima.jpg";
-	var url = getUltimaXuntaCam('Aguete2');
-	//var url = 'https://wow.camaramar.com/VODgrabaciones/meteo_Aguete2.mp4/playlist.m3u8';
-	var url2 = 'https://wow.camaramar.com/camaramar/48_menduina.stream/playlist.m3u8';
-	var alternativeuri = url;
-	getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
-	getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
-	showVideo(url, 'Lapaman', 'Aguete (Ría de Pontevedra)', alternativeuri)
-	showVideo(url2, 'Menduina', 'Menduina (Ría de Aldan)', alternativeuri)
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				//var url = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
+				//var url = "https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Aguete2/ultima.jpg";
+				var url = getUltimaXuntaCam('Aguete2');
+				//var url = 'https://wow.camaramar.com/VODgrabaciones/meteo_Aguete2.mp4/playlist.m3u8';
+				var url2 = 'https://wow.camaramar.com/camaramar/48_menduina.stream/playlist.m3u8';
+				var alternativeuri = url;
+				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
+				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
+				showVideo(url, 'Lapaman', 'Aguete (Ría de Pontevedra)', alternativeuri)
+				showVideo(url2, 'Menduina', 'Menduina (Ría de Aldan)', alternativeuri)
+			}
+		},
+		{
+			key: 'Pobra',
+			name: 'Cabío',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -89,17 +104,19 @@
 			<div id='Cabio-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://wow.camaramar.com/camaramar/9_caraminal.stream/playlist.m3u8';
-	var alternativeuri = getUltimaXuntaCam('Coron');
-	getPrevision(1506702, 'Cabio-prevision', 25, 42.586036, -8.932807);
-	getTemperatura('Cabio-temperatura', 42.586036, -8.932807);
-	showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/9_caraminal.stream/playlist.m3u8';
+				var alternativeuri = getUltimaXuntaCam('Coron');
+				getPrevision(1506702, 'Cabio-prevision', 25, 42.586036, -8.932807);
+				getTemperatura('Cabio-temperatura', 42.586036, -8.932807);
+				showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
+			}
+		},
+		{
+			key: 'Coroso',
+			name: 'Coroso (Ribeira)',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -115,16 +132,18 @@
 			<div id='Coroso-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://wow.camaramar.com/camaramar/31_coroso.stream/playlist.m3u8';
-	getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
-	getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
-	showVideo(url, 'Coroso')
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/31_coroso.stream/playlist.m3u8';
+				getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
+				getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
+				showVideo(url, 'Coroso')
+			}
+		},
+		{
+			key: 'Perbes',
+			name: 'Miño',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -142,17 +161,18 @@
 			<div id='Mino-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://wow.camaramar.com/camaramar/61_perbes.stream/playlist.m3u8';
-	getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
-	getTemperatura('Mino-temperatura', 43.357382, -8.211300);
-	showVideo(url, 'Mino')
-</script>
-
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/61_perbes.stream/playlist.m3u8';
+				getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
+				getTemperatura('Mino-temperatura', 43.357382, -8.211300);
+				showVideo(url, 'Mino')
+			}
+		},
+		{
+			key: 'Sabon',
+			name: 'Barrañán',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -170,17 +190,19 @@
 			<div id='Sabon-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://wow.camaramar.com/camaramar/sabon.stream/playlist.m3u8';
-	var alternativeuri = getUltimaXuntaCam('Langosteira');
-	getPrevision(1500501, 'Sabon-prevision', 70, 43.329833, -8.505300);
-	getTemperatura('Sabon-temperatura', 43.329833, -8.505300);
-	showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/sabon.stream/playlist.m3u8';
+				var alternativeuri = getUltimaXuntaCam('Langosteira');
+				getPrevision(1500501, 'Sabon-prevision', 70, 43.329833, -8.505300);
+				getTemperatura('Sabon-temperatura', 43.329833, -8.505300);
+				showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)
+			}
+		},
+		{
+			key: 'Sanxenxo',
+			name: 'Sanxenxo',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -197,16 +219,18 @@
 			<div id='Sanxenxo-prevision'></div>
 		</div>
 	</div>
-</section>
-<script>
-	var url = 'https://www.crtvg.es:1556/hls/sanxenxo/index.m3u8';
-	getPrevision(3605117, 'Sanxenxo-prevision', 27, 42.401320, -8.812949);
-	getTemperatura('Sanxenxo-temperatura', 42.401320, -8.812949);
-	showVideo(url, 'Sanxenxo')
-</script>
-
-<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>
-
+</section>`,
+			init: function () {
+				var url = 'https://www.crtvg.es:1556/hls/sanxenxo/index.m3u8';
+				getPrevision(3605117, 'Sanxenxo-prevision', 27, 42.401320, -8.812949);
+				getTemperatura('Sanxenxo-temperatura', 42.401320, -8.812949);
+				showVideo(url, 'Sanxenxo')
+			}
+		},
+		{
+			key: 'Lanzada',
+			name: 'A Lanzada',
+			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
@@ -222,12 +246,56 @@
 			<div id='Lanzada-prevision'></div>
 		</div>
 	</div>
-</section>
+</section>`,
+			init: function () {
+				var url = 'https://wow.camaramar.com/camaramar/68_lanzada.stream/playlist.m3u8';
+				getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
+				getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
+				showVideo(url, 'Lanzada')
+			}
+		},
+	];
+
+	// Praias mostradas por defecto (a primeira vez, sen cookie).
+	praias_default = praias_list.map(function (p) { return p.key; });
+</script>
+
+<div id="praias_content"></div>
+<br><hr>
+<div id="praias_selector"></div>
+
 <script>
-	var url = 'https://wow.camaramar.com/camaramar/68_lanzada.stream/playlist.m3u8';
-	getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
-	getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
-	showVideo(url, 'Lanzada')
+	render_praias();
+</script>
+
+<script>
+	function sleep(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+	async function goto(id) {
+		var x = 0;
+		while (x < 60000) {
+			if (total_elementos <= 0)
+				break
+			// sleep 300 ms
+			console.log(id + " -> " + total_elementos);
+			await sleep(500);
+			x += 500;
+		}
+		console.log("Goto " + id);
+		var el = document.getElementById(id);
+		if (el) {
+			el.scrollIntoView();
+			location.href = id;
+		}
+	}
+
+	url = window.location.href;
+	const myArray = url.split("#");
+	if (myArray.length >= 2) {
+		const id = '#' + myArray[1];
+		goto(id);
+	}
 </script>
 
 <!-- <section style="text-align:center;">
@@ -252,30 +320,3 @@
 	getTemperatura('Rodeira-temperatura', 42.261714, -8.770230);
 	getPrevision(3600803, 'Rodeira-prevision', 29);
 </script> -->
-
-<script>
-	function sleep(ms) {
-		return new Promise(resolve => setTimeout(resolve, ms));
-	}
-	async function goto(id) {
-		var x = 0;
-		while (x < 60000) {
-			if (total_elementos <= 0)
-				break
-			// sleep 300 ms
-			console.log(id + " -> " + total_elementos);
-			await sleep(500);
-			x += 500;
-		}
-		console.log("Goto " + id);
-		document.getElementById(id).scrollIntoView();
-		location.href = id;
-	}
-
-	url = window.location.href;
-	const myArray = url.split("#");
-	if (myArray.length >= 2) {
-		const id = '#' + myArray[1];
-		goto(id);
-	}
-</script>

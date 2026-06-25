@@ -895,3 +895,151 @@ function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url
 	const mainDiv = document.getElementById(element);
 	if (mainDiv) mainDiv.appendChild(keyDiv);
 }
+
+// ============================================================
+// Selector de checkboxes (estilo favoritos do RFGF) reutilizable.
+// Cada páxina (poboacions.html, praias.html) define a súa lista de entradas
+// { key, name, html, init() } e chama ao seu wrapper (render_poboacions /
+// render_praias). A selección persístese nunha cookie e só se cargan (init)
+// as entradas seleccionadas.
+// ============================================================
+
+function getCookieArray(cname) {
+	var cookieValue = getCookie(cname);
+	try {
+		return cookieValue ? JSON.parse(cookieValue) : [];
+	} catch (e) {
+		return [];
+	}
+}
+
+function setArrayCookie(name, checkbox) {
+	var selectedItems = getCookieArray(name);
+	if (checkbox.checked) {
+		if (selectedItems.indexOf(checkbox.value) < 0) {
+			selectedItems.push(checkbox.value);
+		}
+	} else {
+		var index = selectedItems.indexOf(checkbox.value);
+		if (index > -1) {
+			selectedItems.splice(index, 1);
+		}
+	}
+	setCookie(name, JSON.stringify(selectedItems), 365);
+}
+
+function getSelectedKeys(cookieName, list, defaultKeys) {
+	var selected = getCookieArray(cookieName);
+	if (!Array.isArray(selected) || selected.length === 0) {
+		selected = (defaultKeys && defaultKeys.length)
+			? defaultKeys.slice()
+			: list.map(function (p) { return p.key; });
+	}
+	// Mantén só keys que sigan existindo na lista.
+	var validKeys = list.map(function (p) { return p.key; });
+	return selected.filter(function (k) { return validKeys.indexOf(k) >= 0; });
+}
+
+// opts: { list, defaultKeys, cookieName, selectorId, contentId, title, toggleFn, beforeInit }
+function renderSelector(opts) {
+	var list = opts.list;
+	if (typeof list === 'undefined' || !list) {
+		return;
+	}
+
+	var selected = getSelectedKeys(opts.cookieName, list, opts.defaultKeys);
+	setCookie(opts.cookieName, JSON.stringify(selected), 365);
+
+	// --- selector de checkboxes ---
+	var sel = '<div style="text-align:center; margin:8px 0;"><b>' + opts.title + '</b><br>';
+	for (var i = 0; i < list.length; i++) {
+		var p = list[i];
+		var checked = selected.indexOf(p.key) >= 0 ? 'checked' : '';
+		sel += '<label style="display:inline-block; margin:2px 10px; white-space:nowrap;">'
+			+ '<input type="checkbox" ' + checked + ' value="' + p.key + '" onclick="' + opts.toggleFn + '(this)"> '
+			+ p.name + '</label>';
+	}
+	sel += '</div>';
+	var selDiv = document.getElementById(opts.selectorId);
+	if (selDiv) {
+		selDiv.innerHTML = sel;
+	}
+
+	// --- contido: só as entradas seleccionadas (na orde da lista) ---
+	var content = document.getElementById(opts.contentId);
+	if (!content) {
+		return;
+	}
+	content.innerHTML = '';
+
+	var selectedEntries = list.filter(function (p) { return selected.indexOf(p.key) >= 0; });
+
+	// Hook previo á inicialización (ex: axustar total_elementos en praias).
+	if (typeof opts.beforeInit === 'function') {
+		opts.beforeInit(selectedEntries);
+	}
+
+	var separador = '<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>';
+	for (var i = 0; i < selectedEntries.length; i++) {
+		var p = selectedEntries[i];
+		if (i > 0) {
+			content.insertAdjacentHTML('beforeend', separador);
+		}
+		content.insertAdjacentHTML('beforeend', p.html);
+		try {
+			p.init();
+		} catch (e) {
+			console.error('Error inicializando ' + p.key + ':', e);
+		}
+	}
+
+	if (selectedEntries.length === 0) {
+		content.innerHTML = '<p style="text-align:center;">(Selecciona algunha opción)</p>';
+	}
+}
+
+// ---- Poboacións ----
+function render_poboacions() {
+	renderSelector({
+		list: (typeof poboacions_list !== 'undefined') ? poboacions_list : null,
+		defaultKeys: (typeof poboacions_default !== 'undefined') ? poboacions_default : null,
+		cookieName: 'poboacionsItems',
+		selectorId: 'poboacions_selector',
+		contentId: 'poboacions_content',
+		title: 'Poboacións',
+		toggleFn: 'toggle_poboacion'
+	});
+}
+
+function toggle_poboacion(checkbox) {
+	setArrayCookie('poboacionsItems', checkbox);
+	render_poboacions();
+}
+
+// ---- Praias ----
+function render_praias() {
+	renderSelector({
+		list: (typeof praias_list !== 'undefined') ? praias_list : null,
+		defaultKeys: (typeof praias_default !== 'undefined') ? praias_default : null,
+		cookieName: 'praiasItems',
+		selectorId: 'praias_selector',
+		contentId: 'praias_content',
+		title: 'Praias',
+		toggleFn: 'toggle_praia',
+		beforeInit: function (selectedEntries) {
+			// total_elementos controla o scroll a #hash (goto en praias.html):
+			// conta as previsións que se van cargar nas praias seleccionadas.
+			var total = 0;
+			for (var i = 0; i < selectedEntries.length; i++) {
+				var n = selectedEntries[i].previsions;
+				total += (typeof n === 'number') ? n : 1;
+			}
+			total_elementos = total;
+		}
+	});
+}
+
+function toggle_praia(checkbox) {
+	setArrayCookie('praiasItems', checkbox);
+	render_praias();
+}
