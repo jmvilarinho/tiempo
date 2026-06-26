@@ -46,7 +46,15 @@ through AWS Lambda / API Gateway proxies. These URLs are hardcoded constants:
 - Root app weather proxies — `proxyHost` (AEMET), `proxyHostFarmacia`, `proxyHostMeteosix`
   defined in `index.js`. Usage: `fetch(proxyHost + upstreamUrl)`.
 - Fuel prices come straight from `sedeaplicaciones.minetur.gob.es` (`FUEL_PRICES_*` in
-  `index.js`), tides from `ideihm.covam.es`, current temperature from `api.open-meteo.com`.
+  `index.js`), Spanish tides from `ideihm.covam.es`, current temperature from `api.open-meteo.com`.
+- Portugal beaches (e.g. Costa de Caparica) call IPMA directly (`api.ipma.pt`, CORS-enabled,
+  no proxy) for the forecast. IPMA exposes no water temperature nor tides, and the Spanish IHM
+  tide API does not cover Portugal, so those (plus feels-like) come from Open-Meteo: the forecast
+  API (`api.open-meteo.com`) for daily apparent temperature and the Marine API
+  (`marine-api.open-meteo.com`) for sea-surface temperature and `sea_level_height_msl` (hourly
+  sea level, from which high/low tides are derived). Both Open-Meteo APIs are keyless + CORS.
+  Official tide tables (WorldTides) and IPMA's `oceanography` sea-state dataset were deliberately
+  not used (paid / proxied via a nearby station); the Open-Meteo tide is approximate (see below).
 - RFGF app — a single `remote_url` API Gateway endpoint (set in `rfgf/index.html`) called as
   `remote_url + "?type=<action>&..."`, returning JSON with a common envelope handled by
   `show_error(data)` in `rfgf/utils.js` (`is_ok`, `source`, `timestamp`, `data`).
@@ -63,6 +71,13 @@ When changing data sources, update these constants rather than scattering URLs.
 - The view toggles between two fragments, `praias.html` and `poboacions.html`, loaded into
   `#DivContent` via jQuery `$.load()`. `CambiaVistaUpdate(pagina)` in `index.js` drives this
   and persists the choice in the `pagina` cookie. The `RFGF` button navigates to `rfgf/`.
+- Each fragment defines an array of entries — `praias_list` (`praias.html`) and
+  `poboacions_list` (`poboacions.html`) — each `{ key, name, html, init() }` (plus optional
+  `previsions` count; `previsions: 0` skips the `#hash`-scroll counter, used for IPMA beaches
+  that don't call `getPrevision`). `renderSelector` (in `poboacions.js`) builds a checkbox
+  selector, persists the selection in the `praiasItems` / `poboacionsItems` cookie, and only
+  runs `init()` for selected entries. To add a beach/town, add an entry to that array — it is
+  the single source of truth, like the RFGF `equipos` array.
 - `index.js` holds the bulk of weather logic: forecast rendering (`getPrevision` →
   `createPrevision`), tides (`getMareas`), geolocated current temperature
   (`geoFindMe` → `getTemperatura`), HLS webcam playback (`showVideo`, using `hls.light.min.js`).
@@ -70,6 +85,15 @@ When changing data sources, update these constants rather than scattering URLs.
   platform detection in `detectPlatform`).
 - AEMET forecast JSON is fetched as ISO-8859-1 and decoded manually (see `getPrevisionDatos`).
 - Weather icons live in `img/` named by AEMET sky-state codes (e.g. `img/11_g.png`).
+- Portugal beaches are rendered by `getPrevisionIPMA` / `createPrevisionIPMA` / `ipmaRow` in
+  `poboacions.js`; IPMA sky-state codes are mapped to the AEMET icon names via
+  `IPMA_WEATHER_TO_AEMET_ICON`. Open-Meteo extras for these beaches: `getOpenMeteoDiario`
+  (daily water-temp + feels-like rows, threaded into `ipmaRow` as `extras`) and `getMareasCaparica`
+  (tides, in `index.js`). Tide times are computed from hourly `sea_level_height_msl` by finding
+  curve extrema with parabolic interpolation, then shifted by the empirical constant
+  `MAREAS_CAPARICA_OFFSET_MIN` (~25 min, tune in `index.js`) because the hourly/offshore model
+  runs ahead of official tables; the tide source attribution renders in the `#data_mareas_pt`
+  footer div (Spanish IHM tides use `#data_mareas`).
 
 ### RFGF app structure (single-page, hash-routed)
 
