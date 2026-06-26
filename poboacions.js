@@ -820,19 +820,69 @@ const IPMA_WIND_DIR_TO_ICON = {
 	'C': 'C', '': 'C'
 };
 
-function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null) {
-	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
-	console.log('Get prevision IPMA: ' + url);
-	fetch(url)
-		.then(response => response.json())
-		.then(data => createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, urllink))
-		.catch(error => {
-			console.error('Error IPMA:', error);
-			noPrevision(element, 0, error.message);
-		});
+// Valores diarios de Open-Meteo (mesmo provedor que a temperatura actual) para
+// engadir á táboa IPMA: sensación térmica (aire) e temperatura da auga (mariña).
+// Devolve { 'YYYY-MM-DD': {aguaMin, aguaMax, sensMin, sensMax} }, alineado coa
+// forecastDate de IPMA.
+async function getOpenMeteoDiario(lat, lon) {
+	const result = {};
+	if (!lat || !lon) {
+		return result;
+	}
+	const urlAire = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&daily=apparent_temperature_max,apparent_temperature_min&timezone=auto&forecast_days=3';
+	const urlAuga = 'https://marine-api.open-meteo.com/v1/marine?latitude=' + lat + '&longitude=' + lon + '&daily=sea_surface_temperature_max,sea_surface_temperature_min&timezone=auto&forecast_days=3';
+	try {
+		const [aire, auga] = await Promise.all([
+			fetch(urlAire).then(function (r) { return r.json(); }).catch(function () { return null; }),
+			fetch(urlAuga).then(function (r) { return r.json(); }).catch(function () { return null; })
+		]);
+		if (aire && aire.daily && Array.isArray(aire.daily.time)) {
+			aire.daily.time.forEach(function (d, i) {
+				result[d] = result[d] || {};
+				result[d].sensMin = aire.daily.apparent_temperature_min[i];
+				result[d].sensMax = aire.daily.apparent_temperature_max[i];
+			});
+		}
+		if (auga && auga.daily && Array.isArray(auga.daily.time)) {
+			auga.daily.time.forEach(function (d, i) {
+				result[d] = result[d] || {};
+				result[d].aguaMin = auga.daily.sea_surface_temperature_min[i];
+				result[d].aguaMax = auga.daily.sea_surface_temperature_max[i];
+			});
+		}
+	} catch (e) {
+		console.warn('Error Open-Meteo diario:', e);
+	}
+	return result;
 }
 
-function ipmaRow(forecast, label) {
+// Formatea un rango de temperatura redondeado: "18°-19°", "18°" se coinciden,
+// ou null se non hai datos.
+function fmtTempRango(min, max) {
+	const a = (min === null || min === undefined) ? null : Math.round(min);
+	const b = (max === null || max === undefined) ? null : Math.round(max);
+	if (a === null && b === null) return null;
+	if (a === null) return b + '&deg;';
+	if (b === null) return a + '&deg;';
+	return (a === b) ? (a + '&deg;') : (a + '&deg;-' + b + '&deg;');
+}
+
+async function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null, augaSensacion = false, conMareas = false) {
+	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
+	console.log('Get prevision IPMA: ' + url);
+	try {
+		const extras = augaSensacion ? await getOpenMeteoDiario(lat, lon) : null;
+		const mareas = conMareas ? await getMareasCaparica(lat, lon) : '';
+		const response = await fetch(url);
+		const data = await response.json();
+		createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, urllink, extras, mareas);
+	} catch (error) {
+		console.error('Error IPMA:', error);
+		noPrevision(element, 0, error.message);
+	}
+}
+
+function ipmaRow(forecast, label, extras = null) {
 	const id = Number(forecast.idWeatherType);
 	const icon = IPMA_WEATHER_TO_AEMET_ICON[id] || '11';
 	const desc = IPMA_WEATHER_DESCRIPTIONS[id] || '';
@@ -847,6 +897,20 @@ function ipmaRow(forecast, label) {
 		+ '<th>Temp. Min.</th><td>' + forecast.tMin + '&deg;</td>'
 		+ '<th>Temp. Max.</th><td>' + forecast.tMax + '&deg;</td>'
 		+ '</tr>';
+
+	// Fila opcional baixo a temperatura: temperatura da auga e sensación térmica
+	// (Open-Meteo), para o día desta forecastDate.
+	const ex = extras ? extras[forecast.forecastDate] : null;
+	if (ex) {
+		const auga = fmtTempRango(ex.aguaMin, ex.aguaMax);
+		const sens = fmtTempRango(ex.sensMin, ex.sensMax);
+		if (auga || sens) {
+			row += '<tr>'
+				+ '<th>Auga</th><td>' + (auga || '-') + '</td>'
+				+ '<th>Sensación</th><td>' + (sens || '-') + '</td>'
+				+ '</tr>';
+		}
+	}
 
 	let rowspan = 1;
 	let ventoLine = '';
@@ -871,7 +935,7 @@ function ipmaRow(forecast, label) {
 	return row;
 }
 
-function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url) {
+function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url, extras = null, mareas = '') {
 	if (!data || !data.data || data.data.length === 0) {
 		noPrevision(element, 0, 'Sen datos IPMA');
 		return;
@@ -901,10 +965,21 @@ function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url
 	const startIdx = todayIdx >= 0 ? todayIdx : 0;
 
 	if (data.data[startIdx]) {
-		tabla += ipmaRow(data.data[startIdx], null);
+		tabla += ipmaRow(data.data[startIdx], null, extras);
 	}
 	if (data.data[startIdx + 1]) {
-		tabla += ipmaRow(data.data[startIdx + 1], getPrintDateHour(data.data[startIdx + 1].forecastDate));
+		tabla += ipmaRow(data.data[startIdx + 1], getPrintDateHour(data.data[startIdx + 1].forecastDate), extras);
+	}
+
+	// Mareas (Open-Meteo) na táboa, igual ca as praias de AEMET (getMareas).
+	// A referencia da fonte vai ao pé de páxina (#data_mareas_pt), non na táboa.
+	if (mareas) {
+		tabla += '<tr><td colspan=4>' + mareas + '</td></tr>';
+		const footerMareas = document.getElementById('data_mareas_pt');
+		if (footerMareas) {
+			const refData = new Date().toLocaleString('es-ES', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Lisbon' });
+			footerMareas.innerHTML = '<p style="font-size:12px;"><a href="https://open-meteo.com/" target="copyright">Mareas de Portugal proporcionadas por Open-Meteo, ' + refData + '</a></p>';
+		}
 	}
 
 	const dt = new Date(data.dataUpdate);

@@ -305,6 +305,78 @@ function noMareas() {
 	return '(Sin información sobre mareas)'
 }
 
+// Mareas para praias de Portugal (p.ex. Costa de Caparica): o IHM español non
+// cobre Portugal e IPMA non dá mareas. Úsase o nivel do mar (sea_level_height_msl)
+// da API mariña de Open-Meteo e calcúlanse os extremos (preamar/baixamar) do día.
+// Resolución horaria => afínase o minuto con interpolación parabólica.
+// Devolve a cadea de mareas do día (ou '') para inserir na táboa de previsión,
+// igual que getMareas nas praias de AEMET.
+async function getMareasCaparica(latitude, longitude) {
+	const url = "https://marine-api.open-meteo.com/v1/marine?latitude=" + latitude + "&longitude=" + longitude
+		+ "&hourly=sea_level_height_msl&timezone=auto&past_days=1&forecast_days=2";
+	console.log('Mareas Caparica: ' + url);
+	try {
+		const response = await fetch(url);
+		const data = await response.json();
+		return mareasCaparicaTexto(data);
+	} catch (error) {
+		console.error('Error mareas Caparica:', error);
+		return '';
+	}
+}
+
+function mareasCaparicaTexto(data) {
+	const horas = (data && data.hourly) ? data.hourly.time : null;
+	const niveis = (data && data.hourly) ? data.hourly.sea_level_height_msl : null;
+	if (!Array.isArray(horas) || !Array.isArray(niveis) || horas.length < 3) {
+		return '';
+	}
+
+	// Data de hoxe en hora local de Caparica (timezone=auto => Europe/Lisbon).
+	// As horas de Open-Meteo veñen en hora local (sen sufixo de zona), así que
+	// trabállase coa parte de texto (wall-clock) sen conversións de zona.
+	const hoxe = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Lisbon' });
+
+	var mareas = '';
+	var cont = 0;
+	for (var i = 1; i < niveis.length - 1; i++) {
+		const y0 = niveis[i - 1], y1 = niveis[i], y2 = niveis[i + 1];
+		if (y0 === null || y1 === null || y2 === null) {
+			continue;
+		}
+		const esMax = (y1 >= y0 && y1 >= y2 && !(y1 === y0 && y1 === y2));
+		const esMin = (y1 <= y0 && y1 <= y2 && !(y1 === y0 && y1 === y2));
+		if (!esMax && !esMin) {
+			continue;
+		}
+		if (horas[i].substring(0, 10) !== hoxe) {
+			continue;
+		}
+
+		// Interpolación parabólica: minuto estimado do pico respecto á hora i.
+		const denom = (y0 - 2 * y1 + y2);
+		var offset = denom !== 0 ? 0.5 * (y0 - y2) / denom : 0;
+		if (offset > 0.5) { offset = 0.5; }
+		if (offset < -0.5) { offset = -0.5; }
+
+		const hh = parseInt(horas[i].substring(11, 13), 10);
+		const mm = parseInt(horas[i].substring(14, 16), 10);
+		var totalMin = hh * 60 + mm + Math.round(offset * 60);
+		if (totalMin < 0) { totalMin = 0; }
+		if (totalMin > 24 * 60 - 1) { totalMin = 24 * 60 - 1; }
+		const hhmm = padTo2Digits(Math.floor(totalMin / 60)) + ':' + padTo2Digits(totalMin % 60);
+
+		// Salto de liña tras 2 mareas, igual ca createList das praias de AEMET.
+		if (cont > 0) {
+			mareas += (cont === 2 ? '<br>' : ', ');
+		}
+		mareas += (esMax ? 'preamar' : 'baixamar') + ': ' + hhmm;
+		cont += 1;
+	}
+
+	return mareas;
+}
+
 function createList(data, element) {
 	var ubicacion = data["mareas"]["puerto"];
 	var fecha = getFechaES(data["mareas"]["fecha"]);
