@@ -305,12 +305,19 @@ function noMareas() {
 	return '(Sin información sobre mareas)'
 }
 
+// Corrección empírica (minutos) que se suma ás horas de marea calculadas con
+// Open-Meteo. O nivel do mar é horario e dun modelo nun punto de rejilla mar
+// adentro, o que adianta os extremos respecto ás táboas oficiais ~25 min.
+// É unha media: o desfase real varía algo por día (mareas vivas/mortas), así
+// que axústao aquí se observas un erro sistemático.
+const MAREAS_CAPARICA_OFFSET_MIN = 25;
+
 // Mareas para praias de Portugal (p.ex. Costa de Caparica): o IHM español non
 // cobre Portugal e IPMA non dá mareas. Úsase o nivel do mar (sea_level_height_msl)
 // da API mariña de Open-Meteo e calcúlanse os extremos (preamar/baixamar) do día.
-// Resolución horaria => afínase o minuto con interpolación parabólica.
-// Devolve a cadea de mareas do día (ou '') para inserir na táboa de previsión,
-// igual que getMareas nas praias de AEMET.
+// Resolución horaria => afínase o minuto con interpolación parabólica e aplícase
+// MAREAS_CAPARICA_OFFSET_MIN. Devolve a cadea de mareas do día (ou '') para
+// inserir na táboa de previsión, igual que getMareas nas praias de AEMET.
 async function getMareasCaparica(latitude, longitude) {
 	const url = "https://marine-api.open-meteo.com/v1/marine?latitude=" + latitude + "&longitude=" + longitude
 		+ "&hourly=sea_level_height_msl&timezone=auto&past_days=1&forecast_days=2";
@@ -361,7 +368,7 @@ function mareasCaparicaTexto(data) {
 
 		const hh = parseInt(horas[i].substring(11, 13), 10);
 		const mm = parseInt(horas[i].substring(14, 16), 10);
-		var totalMin = hh * 60 + mm + Math.round(offset * 60);
+		var totalMin = hh * 60 + mm + Math.round(offset * 60) + MAREAS_CAPARICA_OFFSET_MIN;
 		if (totalMin < 0) { totalMin = 0; }
 		if (totalMin > 24 * 60 - 1) { totalMin = 24 * 60 - 1; }
 		const hhmm = padTo2Digits(Math.floor(totalMin / 60)) + ':' + padTo2Digits(totalMin % 60);
