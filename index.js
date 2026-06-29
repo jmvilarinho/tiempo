@@ -1,9 +1,8 @@
-// Corrección empírica (minutos) que se suma ás horas de marea calculadas con
-// Open-Meteo. O nivel do mar é horario e dun modelo nun punto de rejilla mar
-// adentro, o que adianta os extremos respecto ás táboas oficiais ~25 min.
-// É unha media: o desfase real varía algo por día (mareas vivas/mortas), así
-// que axústao aquí se observas un erro sistemático.
-const MAREAS_CAPARICA_OFFSET_MIN = 28;
+// Correccións empíricas (minutos) para as horas de marea de Open-Meteo.
+// O modelo é horario e mar adentro, polo que adianta os extremos respecto
+// ás táboas oficiais. Preamar e baixamar teñen desfases distintos.
+const MAREAS_CAPARICA_OFFSET_PREAMAR_MIN = 68;
+const MAREAS_CAPARICA_OFFSET_BAIXAMAR_MIN = 56;
 
 function isValidColor(strColor) {
 	const s = new Option().style;
@@ -373,7 +372,8 @@ function mareasCaparicaTexto(data) {
 
 		const hh = parseInt(horas[i].substring(11, 13), 10);
 		const mm = parseInt(horas[i].substring(14, 16), 10);
-		var totalMin = hh * 60 + mm + Math.round(offset * 60) + MAREAS_CAPARICA_OFFSET_MIN;
+		const offsetCorr = esMax ? MAREAS_CAPARICA_OFFSET_PREAMAR_MIN : MAREAS_CAPARICA_OFFSET_BAIXAMAR_MIN;
+		var totalMin = hh * 60 + mm + Math.round(offset * 60) + offsetCorr;
 		if (totalMin < 0) { totalMin = 0; }
 		if (totalMin > 24 * 60 - 1) { totalMin = 24 * 60 - 1; }
 		const hhmm = padTo2Digits(Math.floor(totalMin / 60)) + ':' + padTo2Digits(totalMin % 60);
