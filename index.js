@@ -310,7 +310,7 @@ function noMareas() {
 // adentro, o que adianta os extremos respecto ás táboas oficiais ~25 min.
 // É unha media: o desfase real varía algo por día (mareas vivas/mortas), así
 // que axústao aquí se observas un erro sistemático.
-const MAREAS_CAPARICA_OFFSET_MIN = 25;
+const MAREAS_CAPARICA_OFFSET_MIN = 27;
 
 // Mareas para praias de Portugal (p.ex. Costa de Caparica): o IHM español non
 // cobre Portugal e IPMA non dá mareas. Úsase o nivel do mar (sea_level_height_msl)
@@ -346,6 +346,7 @@ function mareasCaparicaTexto(data) {
 
 	var mareas = '';
 	var cont = 0;
+	var lastTipo = null;
 	for (var i = 1; i < niveis.length - 1; i++) {
 		const y0 = niveis[i - 1], y1 = niveis[i], y2 = niveis[i + 1];
 		if (y0 === null || y1 === null || y2 === null) {
@@ -354,6 +355,11 @@ function mareasCaparicaTexto(data) {
 		const esMax = (y1 >= y0 && y1 >= y2 && !(y1 === y0 && y1 === y2));
 		const esMin = (y1 <= y0 && y1 <= y2 && !(y1 === y0 && y1 === y2));
 		if (!esMax && !esMin) {
+			continue;
+		}
+		// Evitar duplicados: as mareas deben alternar (preamar/baixamar)
+		const tipoActual = esMax ? 'preamar' : 'baixamar';
+		if (tipoActual === lastTipo) {
 			continue;
 		}
 		if (horas[i].substring(0, 10) !== hoxe) {
@@ -377,7 +383,8 @@ function mareasCaparicaTexto(data) {
 		if (cont > 0) {
 			mareas += (cont === 2 ? '<br>' : ', ');
 		}
-		mareas += (esMax ? 'preamar' : 'baixamar') + ': ' + hhmm;
+		mareas += tipoActual + ': ' + hhmm;
+		lastTipo = tipoActual;
 		cont += 1;
 	}
 
@@ -408,7 +415,7 @@ function createList(data, element) {
 	}
 
 	document.getElementById("data_mareas").innerHTML = "<p style='font-size:12px;'>"
-		+ '<a href="https://ideihm.covam.es/portal/presentacion-geoportal/" target="copyright">Información mareas proporcionada por IHM, ' + fecha + '</a></p>'
+		+ '<a href="https://ideihm.covam.es/portal/presentacion-geoportal/" target="copyright">Información mareas por IHM, ' + fecha + '</a></p>'
 		+ "</a></p>";
 
 	return mareas;

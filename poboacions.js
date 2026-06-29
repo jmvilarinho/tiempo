@@ -978,7 +978,7 @@ function createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, url
 		const footerMareas = document.getElementById('data_mareas_pt');
 		if (footerMareas) {
 			const refData = new Date().toLocaleString('es-ES', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Lisbon' });
-			footerMareas.innerHTML = '<p style="font-size:12px;"><a href="https://open-meteo.com/" target="copyright">Mareas de Portugal proporcionadas por Open-Meteo, ' + refData + '</a></p>';
+			footerMareas.innerHTML = '<p style="font-size:12px;"><a href="https://open-meteo.com/" target="copyright">Mareas de Portugal por Open-Meteo, ' + refData + '</a></p>';
 		}
 	}
 
