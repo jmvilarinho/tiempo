@@ -1,3 +1,9 @@
+// Corrección empírica (minutos) que se suma ás horas de marea calculadas con
+// Open-Meteo. O nivel do mar é horario e dun modelo nun punto de rejilla mar
+// adentro, o que adianta os extremos respecto ás táboas oficiais ~25 min.
+// É unha media: o desfase real varía algo por día (mareas vivas/mortas), así
+// que axústao aquí se observas un erro sistemático.
+const MAREAS_CAPARICA_OFFSET_MIN = 28;
 
 function isValidColor(strColor) {
 	const s = new Option().style;
@@ -304,13 +310,6 @@ async function getMareas(id, element = '') {
 function noMareas() {
 	return '(Sin información sobre mareas)'
 }
-
-// Corrección empírica (minutos) que se suma ás horas de marea calculadas con
-// Open-Meteo. O nivel do mar é horario e dun modelo nun punto de rejilla mar
-// adentro, o que adianta os extremos respecto ás táboas oficiais ~25 min.
-// É unha media: o desfase real varía algo por día (mareas vivas/mortas), así
-// que axústao aquí se observas un erro sistemático.
-const MAREAS_CAPARICA_OFFSET_MIN = 27;
 
 // Mareas para praias de Portugal (p.ex. Costa de Caparica): o IHM español non
 // cobre Portugal e IPMA non dá mareas. Úsase o nivel do mar (sea_level_height_msl)
