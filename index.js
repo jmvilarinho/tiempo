@@ -163,6 +163,35 @@ function aplanaTexto(texto) {
 		return texto.toLowerCase().replace(/ /g, "-").replace(/ñ/g, "n").replace(/á/g, "a").replace(/é/g, "e").replace(/í/g, "i").replace(/ó/g, "o").replace(/ú/g, "u").replace(/,/g, "")
 }
 
+// O proxy de AEMET devolve os campos literais (os que non veñen escapados no JSON, como
+// "nombre" e "provincia") con dobre codificación: bytes UTF-8 lidos como ISO-8859-1.
+// Asi, no JSON do proxy 'Marin' chega como "Mar\u00c3\u00adn" e 'Coruna' como "Coru\u00c3\u00b1a".
+// Isto desfai ese mojibake volvendo aos bytes orixinais e decodificándoos como UTF-8.
+// Só actúa cando se detecta a secuencia característica (Ã/Â seguido dun byte de
+// continuación) e cando os bytes resultantes son UTF-8 válido, polo que os textos que xa
+// veñen ben (a ruta que le 'datos' directamente en ISO-8859-1) quedan intactos.
+function corrixeCodificacion(texto) {
+	if (typeof texto !== 'string' || !/[\u00c2-\u00c3][\u0080-\u00bf]/.test(texto)) {
+		return texto;
+	}
+
+	const bytes = new Uint8Array(texto.length);
+	for (var i = 0; i < texto.length; i++) {
+		const code = texto.charCodeAt(i);
+		if (code > 0xff) {
+			return texto; // ten caracteres fóra de Latin-1: non é mojibake
+		}
+		bytes[i] = code;
+	}
+
+	try {
+		return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+	} catch (error) {
+		console.warn('Non se puido corrixir a codificación de: ' + texto);
+		return texto;
+	}
+}
+
 // --------------------------------------------------------------------------------------------------
 // Builds the URL of the latest archived webcam image on
 // meteo-estaticos.xunta.gal for a given camera (e.g. "Aguete2").
@@ -290,17 +319,34 @@ function showError(text, element, text2 = '') {
 
 // --------------------------------------------------------------------------------------------------
 
+// Data en formato YYYYMMDD, como pide o parámetro 'date' da API do IHM.
+function getDataIHM(date = new Date()) {
+	return '' + date.getFullYear() + padTo2Digits(date.getMonth() + 1) + padTo2Digits(date.getDate());
+}
+
+// Mareas oficiais do Instituto Hidrográfico de la Marina.
+// A chamada sen 'date' estaba devolvendo HTTP 500, así que se pide explicitamente
+// o día actual (date=YYYYMMDD), que é como invocan esta API outros clientes.
+// Parámetros do endpoint: request=gettide, id=<código do porto> (ou port=<nome>),
+// format=json|xml|txt|gra, e date=YYYYMMDD ou month=YYYYMM.
+const MAREAS_IHM_URL = "https://ideihm.covam.es/api-ihm/getmarea?request=gettide&format=json";
+
 async function getMareas(id, element = '') {
-	url = "https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=" + id + "&format=json"
+	url = MAREAS_IHM_URL + "&id=" + id + "&date=" + getDataIHM()
 	console.log('Mareas: ' + url)
 
 	let data = await fetch(url)
-		.then(response => response.json())
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('HTTP ' + response.status + ' en ' + url);
+			}
+			return response.json();
+		})
 		.then(data => {
 			return createList(data, element);
 		})
 		.catch(error => {
-			console.error('Error:', error);
+			console.error('Error mareas IHM:', error);
 			return noMareas();
 		});
 	return data;

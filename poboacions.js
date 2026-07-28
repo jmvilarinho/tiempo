@@ -64,15 +64,20 @@ async function createPrevisionMunicipio(data, element, id_municipio, id_cofc = 0
 	const now = new Date();
 	current_hour = now.getHours();
 
+	// O nome vén do proxy AEMET con dobre codificación (afecta a Marín e A Coruña, os
+	// únicos con acentos): corrixeCodificacion (index.js) desfai o mojibake. Sen isto
+	// tamén saía mal a ligazón a aemet.es, porque aplanaTexto non recoñece o mojibake.
+	const nombre = corrixeCodificacion(data[0]["nombre"]);
+
 	var tabla = "<table id=\"tablaMunicipio-" + id_municipio + "\" class=\"center\">";
 	tabla += "<tr><th colspan=4>";
 
 	if (lat != 0 && lon != 0) {
-		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('" + data[0]["nombre"] + "'," + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
+		tabla += "<img id=\"iconoGasolinera-" + id_municipio + "\" src=\"img/gasolinera.png\" alt=\"Precios combustible\" height=\"16px\"/ onclick=\"loadGasolinera('" + nombre + "'," + id_municipio + "," + lat + "," + lon + ")\" style=\"cursor: pointer;\" title=\"Precios combustible\" >";
 		tabla += "&nbsp;&nbsp;";
 	}
-	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(data[0]["nombre"]) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
-		+ "Prevision para " + data[0]["nombre"]
+	tabla += '<a href="https://www.aemet.es/es/eltiempo/prediccion/municipios/' + aplanaTexto(nombre) + '-id' + id_municipio + '#detallada" target="_new" rel="noopener" >'
+		+ "Prevision para " + nombre
 		+ "</a>";
 	if (id_cofc != 0) {
 		tabla += "&nbsp;&nbsp;";
