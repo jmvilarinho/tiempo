@@ -68,6 +68,13 @@ When changing data sources, update these constants rather than scattering URLs.
   `farmacia.cofc.js` (cofc.es, A Coruña, via `proxyHostFarmacia`) and `farmacia.cofpo.js`
   (cofpo.org, Pontevedra, direct CORS). Fuel prices (ES + PT) live in `fuelprices.js`.
   The shared geo helpers `distance` (Haversine) and `getSafeLocation` are in `common.js`.
+  `getSafeLocation()` is the single entry point for the current position: it tries a fast
+  low-accuracy fix first and then GPS with a long timeout (Android needs far more than a
+  few seconds), shares one in-flight request plus a 5-min position cache and a 1-min error
+  cache across all callers, and resolves to `{latitude: 0, longitude: 0, ok: false}` on
+  failure — never rejects. Never call `navigator.geolocation.getCurrentPosition` directly
+  (no timeout means the callbacks may never fire on Android); use `geoResetCache()` before
+  a user-triggered retry.
 - The view toggles between two fragments, `praias.html` and `poboacions.html`, loaded into
   `#DivContent` via jQuery `$.load()`. `CambiaVistaUpdate(pagina)` in `index.js` drives this
   and persists the choice in the `pagina` cookie. The `RFGF` button navigates to `rfgf/`.

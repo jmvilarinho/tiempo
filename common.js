@@ -12,35 +12,120 @@ function distance(lat1, lon1, lat2, lon2) {
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function getSafeLocation() {
-    try {
-        return new Promise((resolve) => {
-            if (!navigator.geolocation) {
-                // Geolocation not supported
-                resolve({ latitude: 0, longitude: 0 });
-                return;
-            }
+// Ubicación actual. En Android o fix de GPS pode tardar decenas de segundos (moito máis
+// dos 5s que se pedían antes), e navigator.geolocation.getCurrentPosition() sen timeout
+// pode non chamar nunca aos callbacks. Por iso:
+//   1) primeiro intento rápido de baixa precisión, aceptando unha posición cacheada,
+//   2) se falla (agás permiso denegado) reintento con GPS e timeout longo,
+//   3) o resultado gárdase e as peticións simultáneas compárten a mesma promesa, para non
+//      lanzar unha petición de GPS por cada widget (farmacias, gasolineiras, temperatura).
+const GEO_CACHE_MS = 5 * 60 * 1000;    // reutiliza un fix recente sen volver preguntar
+const GEO_FAST_TIMEOUT_MS = 8000;      // 1º intento: rede/wifi
+const GEO_GPS_TIMEOUT_MS = 30000;      // 2º intento: GPS (Android tarda en fixar)
+const GEO_ERROR_CACHE_MS = 60 * 1000;  // tras un fallo, non repetir a espera decontado
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    resolve({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    });
-                },
-                (error) => {
-                    // Permission denied or other error
-                    console.warn("Geolocation error:", error.message);
-                    resolve({ latitude: 0, longitude: 0 });
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
+let _geoLastPosition = null;           // { latitude, longitude, accuracy, receivedAt }
+let _geoLastError = null;              // { message, receivedAt }
+let _geoPending = null;                // petición en curso compartida
+
+function _geoRequest(options) {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            }),
+            reject,
+            options
+        );
+    });
+}
+
+async function _geoLocate() {
+    try {
+        return await _geoRequest({
+            enableHighAccuracy: false,
+            timeout: GEO_FAST_TIMEOUT_MS,
+            maximumAge: GEO_CACHE_MS
         });
+    } catch (error) {
+        // PERMISSION_DENIED (1): reintentar non serve de nada.
+        if (error && error.code === 1) throw error;
+        console.warn("Geolocation (rápida) fallou, probando con GPS:", error && error.message);
+    }
+
+    return await _geoRequest({
+        enableHighAccuracy: true,
+        timeout: GEO_GPS_TIMEOUT_MS,
+        maximumAge: 0
+    });
+}
+
+function getSafeLocation() {
+    // Os chamadores detectan o fallo con latitude === 0 && longitude === 0.
+    const failed = (message) => ({ latitude: 0, longitude: 0, ok: false, error: message });
+
+    try {
+        if (!navigator.geolocation) {
+            return Promise.resolve(failed("Xeolocalización non soportada"));
+        }
+
+        // Chrome en Android só permite xeolocalización en contexto seguro (https/localhost).
+        if (window.isSecureContext === false) {
+            console.warn("Geolocation require HTTPS");
+            return Promise.resolve(failed("A xeolocalización require HTTPS"));
+        }
+
+        if (_geoLastPosition && (Date.now() - _geoLastPosition.receivedAt) < GEO_CACHE_MS) {
+            return Promise.resolve({
+                latitude: _geoLastPosition.latitude,
+                longitude: _geoLastPosition.longitude,
+                accuracy: _geoLastPosition.accuracy,
+                ok: true
+            });
+        }
+
+        // Se acaba de fallar (p.ex. timeout de 30s de GPS), non facer esperar de novo
+        // a cada widget que pida a ubicación.
+        if (_geoLastError && (Date.now() - _geoLastError.receivedAt) < GEO_ERROR_CACHE_MS) {
+            return Promise.resolve(failed(_geoLastError.message));
+        }
+
+        if (!_geoPending) {
+            _geoPending = _geoLocate()
+                .then((pos) => {
+                    _geoLastError = null;
+                    _geoLastPosition = {
+                        latitude: pos.latitude,
+                        longitude: pos.longitude,
+                        accuracy: pos.accuracy,
+                        receivedAt: Date.now()
+                    };
+                    return { latitude: pos.latitude, longitude: pos.longitude, accuracy: pos.accuracy, ok: true };
+                })
+                .catch((error) => {
+                    console.warn("Geolocation error:", error && (error.message || error.code));
+                    const message = (error && error.message) ? error.message : "Erro de xeolocalización";
+                    _geoLastError = { message: message, receivedAt: Date.now() };
+                    return failed(message);
+                })
+                .finally(() => { _geoPending = null; });
+        }
+
+        return _geoPending;
 
     } catch (error) {
         console.warn("Error getting location: ", error.message);
-        return Promise.resolve({ latitude: 0, longitude: 0 });
+        return Promise.resolve(failed(error.message));
     }
+}
+
+// Esquece o fix (e o fallo) gardados para que a seguinte chamada pida a posición de novo
+// (úsase ao reintentar manualmente despois de conceder o permiso).
+function geoResetCache() {
+    _geoLastPosition = null;
+    _geoLastError = null;
 }
 
 function detectPlatform() {

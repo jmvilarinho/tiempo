@@ -56,7 +56,7 @@ function CambiaVistaUpdate(pagina) {
 	}
 
 
-	new Promise(resolve => geoFindMe("yourTemperature"));
+	geoFindMe("yourTemperature");
 
 	contenido = pagina + '.html'
 	console.log('Cargando página: ' + contenido)
@@ -489,32 +489,49 @@ function getTemperaturanDatos(data, element, latitude, longitude, texto, waze = 
 
 
 // --------------------------------------------------------------------------------------------------
+// Amosa a temperatura na ubicación actual. Usa getSafeLocation() (common.js), que fai
+// dous intentos (rede e logo GPS con timeout longo) e comparte o fix con farmacias e
+// gasolineiras. A versión anterior escribía nun elemento "status" que non existe: como
+// window.status é unha cadea, "status.textContent" quedaba en undefined e a comparación
+// final sempre era certa, polo que se pintaba o erro antes de rematar a xeolocalización.
 function geoFindMe(divName) {
+	if (!document.getElementById(divName)) return Promise.resolve(false);
 
-	function success(position) {
-		var latitude = position.coords.latitude;
-		var longitude = position.coords.longitude;
-		getTemperatura(divName, latitude, longitude, "Temperatura na túa ubicación", false, true)
+	mensaxeUbicacion(divName, "Obtendo a túa ubicación…");
+
+	return getSafeLocation().then((pos) => {
+		if (!pos.ok || (pos.latitude === 0 && pos.longitude === 0)) {
+			mensaxeUbicacion(divName, "Non se puido obter a túa ubicación", true);
+			return false;
+		}
+		getTemperatura(divName, pos.latitude, pos.longitude, "Temperatura na túa ubicación", false, true);
+		return true;
+	});
+}
+
+function mensaxeUbicacion(divName, texto, reintentar = false) {
+	const mainDiv = document.getElementById(divName);
+	if (!mainDiv) return;
+
+	var html = texto;
+	if (reintentar) {
+		html += " <a href=\"#\" onclick=\"return geoFindMeRetry(event,'" + divName + "')\">(reintentar)</a>";
 	}
 
-	function error() {
-		status.textContent = "Unable to retrieve your location";
-	}
+	const keyDiv = document.createElement('div');
+	keyDiv.innerHTML = html;
+	keyDiv.style.textAlign = "center";
+	mainDiv.innerHTML = "";
+	mainDiv.appendChild(keyDiv);
+}
 
-	if (!navigator.geolocation) {
-		status.textContent = "Geolocation is not supported by your browser";
-	} else {
-		status.textContent = "Locating…";
-		navigator.geolocation.getCurrentPosition(success, error);
-	}
-
-	if (status.textContent !=""){
-		const keyDiv = document.createElement('div');
-		keyDiv.innerHTML = "Non se puido obter a túa ubicación";
-		const mainDiv = document.getElementById(divName);
-		mainDiv.innerHTML = "";
-		mainDiv.appendChild(keyDiv);
-	}
+// Reintento manual: en Android o diálogo de permiso aparece de xeito máis fiable
+// cando a petición vén dun toque do usuario.
+function geoFindMeRetry(event, divName) {
+	if (event) event.preventDefault();
+	geoResetCache();
+	geoFindMe(divName);
+	return false;
 }
 
 // --------------------------------------------------------------------------------------------------
