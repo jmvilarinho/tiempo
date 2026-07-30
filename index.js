@@ -264,10 +264,17 @@ function showOnlyAlternative(videoid, alternative, alternativeurl) {
 	showAlternative(videoid, alternative, alternativeurl);
 }
 
-async function showVideo(url, videoid, alternative = '', alternativeurl = '') {
+async function showVideo(url, videoid, alternative = '', alternativeurl = '', fallbackurl = '') {
 	var video = document.getElementById(videoid);
 	var image = document.getElementById(videoid + "-unavailable");
-	exists = await validURL(url);
+	let urlToUse = url;
+
+	let exists = await validURL(url);
+	if (!exists && fallbackurl) {
+		urlToUse = fallbackurl;
+		exists = await validURL(fallbackurl);
+	}
+
 	if (!exists) {
 		image.style.visibility = "visible";
 		video.remove();
@@ -282,7 +289,7 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '') {
 			var hls = new Hls({
 				debug: false,
 			});
-			hls.loadSource(url);
+			hls.loadSource(urlToUse);
 			hls.attachMedia(video);
 			hls.on(Hls.Events.MEDIA_ATTACHED, function () {
 				video.muted = true;
@@ -293,12 +300,535 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '') {
 		// When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element through the `src` property.
 		// This is using the built-in support of the plain video element, without using hls.js.
 		else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-			video.src = url;
+			video.src = urlToUse;
 			video.addEventListener('canplay', function () {
 				video.play();
 			});
 		}
 		setAncho(video);
+	}
+}
+
+function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {
+	const img = document.getElementById(baseid + '-img');
+	const video = document.getElementById(baseid + '-video');
+	const title = document.getElementById(baseid + '-title');
+	const unavailable = document.getElementById(baseid + '-unavailable');
+
+	if (!img || !video || !title) {
+		console.error('Missing elements for alternateMediaSimple: ' + baseid);
+		return;
+	}
+
+	let showingImage = true;
+	let intervalId = null;
+	let hlsInstance = null;
+
+	const params = new URLSearchParams(window.location.search);
+	const width = params.get('w');
+
+	img.style.margin = '0 auto';
+	img.style.display = 'block';
+	video.style.margin = '0 auto';
+	video.style.display = 'block';
+
+	if (width) {
+		img.style.width = width + 'px';
+		img.style.maxWidth = width + 'px';
+		video.style.width = width + 'px';
+		video.style.maxWidth = width + 'px';
+	}
+
+	img.src = urlImage + '?nocache=' + Date.now();
+
+	if (unavailable) {
+		unavailable.style.display = 'none';
+	}
+
+	if (Hls.isSupported()) {
+		hlsInstance = new Hls({ debug: false });
+		hlsInstance.loadSource(urlVideo);
+		hlsInstance.attachMedia(video);
+	} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+		video.src = urlVideo;
+	}
+
+	function toggle() {
+		try {
+			if (showingImage) {
+				img.style.display = 'none';
+				video.style.display = 'block';
+				video.muted = true;
+				video.play().catch(e => console.log('Play error:', e));
+				title.textContent = labelVideo;
+				showingImage = false;
+			} else {
+				video.style.display = 'none';
+				img.style.display = 'block';
+				video.pause();
+				title.textContent = labelImage;
+				showingImage = true;
+			}
+		} catch (e) {
+			console.error('Error in toggle:', e);
+		}
+	}
+
+	function start() {
+		if (intervalId) {
+			clearInterval(intervalId);
+		}
+		intervalId = setInterval(() => {
+			toggle();
+		}, intervalSeconds * 1000);
+	}
+
+	start();
+}
+
+function showAlternatingOverlay(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {
+	let currentMedia = 'image';
+	let hlsInstance = null;
+	let intervalId = null;
+	let isPlaying = true;
+
+	const params = new URLSearchParams(window.location.search);
+	const width = params.get('w');
+
+	const img = document.getElementById(baseid + '-img');
+	const video = document.getElementById(baseid + '-video');
+	const titleDiv = document.getElementById(baseid + '-title');
+	const wrapper = document.getElementById(baseid + '-wrapper');
+
+	if (!img || !video || !wrapper) {
+		console.error('Missing required elements for: ' + baseid);
+		return;
+	}
+
+	function applyWidth() {
+		if (width) {
+			wrapper.style.width = width + 'px';
+			img.style.width = width + 'px';
+			video.style.width = width + 'px';
+		}
+	}
+
+	async function loadImage() {
+		console.log('Loading image: ' + labelImage);
+		const urlValid = await validURL(urlImage);
+		if (!urlValid) {
+			console.log('Image unavailable: ' + labelImage);
+			return false;
+		}
+		img.src = urlImage + '?nocache=' + Date.now();
+		return true;
+	}
+
+	async function loadVideo() {
+		console.log('Loading video: ' + labelVideo);
+		const urlValid = await validURL(urlVideo);
+		if (!urlValid) {
+			console.log('Video unavailable: ' + labelVideo);
+			return false;
+		}
+
+		if (Hls.isSupported()) {
+			if (hlsInstance) {
+				hlsInstance.destroy();
+			}
+			hlsInstance = new Hls({ debug: false });
+			hlsInstance.loadSource(urlVideo);
+			hlsInstance.attachMedia(video);
+		} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+			video.src = urlVideo;
+		}
+		return true;
+	}
+
+	function showImage() {
+		console.log('Showing image: ' + labelImage);
+		img.style.display = 'block';
+		video.style.display = 'none';
+		currentMedia = 'image';
+		if (titleDiv) titleDiv.textContent = labelImage;
+	}
+
+	function showVideo() {
+		console.log('Showing video: ' + labelVideo);
+		img.style.display = 'none';
+		video.style.display = 'block';
+		video.muted = true;
+		if (isPlaying) {
+			video.play().catch(err => console.log('Play error:', err));
+		}
+		currentMedia = 'video';
+		if (titleDiv) titleDiv.textContent = labelVideo;
+	}
+
+	function switchMedia() {
+		if (currentMedia === 'image') {
+			showVideo();
+		} else {
+			showImage();
+		}
+	}
+
+	async function init() {
+		console.log('Initializing alternating overlay: ' + baseid);
+		applyWidth();
+		await loadImage();
+		await loadVideo();
+		showImage();
+
+		intervalId = setInterval(() => {
+			if (isPlaying) {
+				switchMedia();
+			}
+		}, intervalSeconds * 1000);
+	}
+
+	function stop() {
+		isPlaying = false;
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+	}
+
+	init();
+
+	video.addEventListener('pause', stop);
+	video.addEventListener('play', () => {
+		isPlaying = true;
+		if (!intervalId) {
+			init();
+		}
+	});
+}
+
+function showAlternatingMediaSmooth(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 3) {
+	let currentMedia = 'image';
+	let hlsInstance = null;
+	let intervalId = null;
+	let isPlaying = true;
+	let isLoading = false;
+
+	const params = new URLSearchParams(window.location.search);
+	const width = params.get('w');
+
+	const img = document.getElementById(baseid + '-img');
+	const video = document.getElementById(baseid + '-video');
+	const titleDiv = document.getElementById(baseid + '-title');
+	const container = document.getElementById(baseid + '-container');
+
+	if (!img || !video || !container) {
+		console.error('Missing required elements for alternating media');
+		return;
+	}
+
+	function applyWidth() {
+		if (width) {
+			img.style.width = width + 'px';
+			img.style.maxWidth = width + 'px';
+			video.style.width = width + 'px';
+			video.style.maxWidth = width + 'px';
+			container.style.width = width + 'px';
+		}
+	}
+
+	async function showImage() {
+		if (isLoading) return;
+		isLoading = true;
+
+		console.log('Switching to image: ' + labelImage);
+
+		const urlValid = await validURL(urlImage);
+		if (!urlValid) {
+			console.log('Image unavailable: ' + labelImage);
+			isLoading = false;
+			return;
+		}
+
+		if (hlsInstance) {
+			hlsInstance.destroy();
+			hlsInstance = null;
+		}
+
+		img.src = urlImage + '?nocache=' + Date.now();
+		img.style.opacity = '1';
+		video.style.opacity = '0';
+		currentMedia = 'image';
+		updateTitle();
+		isLoading = false;
+	}
+
+	async function showVideoStream() {
+		if (isLoading) return;
+		isLoading = true;
+
+		console.log('Switching to video: ' + labelVideo);
+
+		const urlValid = await validURL(urlVideo);
+		if (!urlValid) {
+			console.log('Video unavailable: ' + labelVideo);
+			isLoading = false;
+			return;
+		}
+
+		if (Hls.isSupported()) {
+			if (hlsInstance) {
+				hlsInstance.destroy();
+			}
+			hlsInstance = new Hls({ debug: false });
+			hlsInstance.loadSource(urlVideo);
+			hlsInstance.attachMedia(video);
+
+			hlsInstance.once(Hls.Events.MEDIA_ATTACHED, function () {
+				console.log('HLS loaded for: ' + labelVideo);
+				video.muted = true;
+				img.style.opacity = '0';
+				video.style.opacity = '1';
+				if (isPlaying) {
+					video.play().catch(err => console.log('Play error:', err));
+				}
+				currentMedia = 'video';
+				updateTitle();
+				isLoading = false;
+			});
+		} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+			video.src = urlVideo;
+			video.muted = true;
+			img.style.opacity = '0';
+			video.style.opacity = '1';
+			if (isPlaying) {
+				video.play().catch(err => console.log('Play error:', err));
+			}
+			currentMedia = 'video';
+			updateTitle();
+			isLoading = false;
+		}
+	}
+
+	function updateTitle() {
+		if (titleDiv) {
+			titleDiv.textContent = currentMedia === 'image' ? labelImage : labelVideo;
+		}
+	}
+
+	function switchMedia() {
+		if (currentMedia === 'image') {
+			showVideoStream();
+		} else {
+			showImage();
+		}
+	}
+
+	function startAlternating() {
+		console.log('Starting alternating media');
+		isPlaying = true;
+		applyWidth();
+		showImage();
+
+		intervalId = setInterval(() => {
+			if (isPlaying && !isLoading) {
+				switchMedia();
+			}
+		}, intervalSeconds * 1000);
+	}
+
+	function stopAlternating() {
+		isPlaying = false;
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+	}
+
+	applyWidth();
+	startAlternating();
+
+	video.addEventListener('pause', stopAlternating);
+	video.addEventListener('play', () => {
+		isPlaying = true;
+		if (!intervalId) {
+			startAlternating();
+		}
+	});
+
+	img.addEventListener('pause', stopAlternating);
+	img.addEventListener('play', () => {
+		isPlaying = true;
+		if (!intervalId) {
+			startAlternating();
+		}
+	});
+}
+
+function showAlternatingMedia(videoid, url1, type1, label1, url2, type2, label2, intervalSeconds = 3) {
+	let currentStream = 0;
+	const urls = [url1, url2];
+	const types = [type1, type2];
+	const labels = [label1, label2];
+	let hlsInstance = null;
+	let intervalId = null;
+	let isPlaying = true;
+	let isLoadingStream = false;
+
+	const params = new URLSearchParams(window.location.search);
+	const width = params.get('w');
+
+	async function loadMedia(streamIndex) {
+		if (isLoadingStream) {
+			console.log('Already loading a stream, skipping');
+			return;
+		}
+
+		isLoadingStream = true;
+		const url = urls[streamIndex];
+		const type = types[streamIndex];
+		const video = document.getElementById(videoid);
+
+		if (!video) {
+			isLoadingStream = false;
+			return;
+		}
+
+		console.log(`Loading ${type} ${streamIndex}: ${labels[streamIndex]} from ${url}`);
+
+		const urlValid = await validURL(url);
+		if (!urlValid) {
+			console.log(`Stream ${streamIndex} (${labels[streamIndex]}) unavailable`);
+			isLoadingStream = false;
+			return;
+		}
+
+		try {
+			if (type === 'image') {
+				if (hlsInstance) {
+					hlsInstance.destroy();
+					hlsInstance = null;
+				}
+				video.style.display = 'none';
+				let img = document.getElementById(videoid + '-img');
+				if (!img) {
+					img = document.createElement('img');
+					img.id = videoid + '-img';
+					img.style.width = width ? width + 'px' : '100%';
+					img.style.maxWidth = '1300px';
+					img.style.height = 'auto';
+					img.style.display = 'block';
+					img.style.margin = '0 auto';
+					video.parentElement.insertBefore(img, video);
+				}
+				img.src = url + '?nocache=' + Date.now();
+				img.style.display = 'block';
+				console.log(`Image loaded: ${labels[streamIndex]}`);
+			} else if (type === 'video') {
+				const img = document.getElementById(videoid + '-img');
+				if (img) img.style.display = 'none';
+				video.style.display = 'block';
+
+				if (hlsInstance) {
+					hlsInstance.destroy();
+					hlsInstance = null;
+				}
+
+				if (Hls.isSupported()) {
+					hlsInstance = new Hls({ debug: false, autoStartLoad: true });
+					hlsInstance.loadSource(url);
+					hlsInstance.attachMedia(video);
+
+					hlsInstance.once(Hls.Events.MEDIA_ATTACHED, function () {
+						console.log(`HLS attached for stream ${streamIndex}`);
+						video.muted = true;
+						if (isPlaying) {
+							video.play().catch(err => console.log('Play error:', err));
+						}
+						isLoadingStream = false;
+					});
+				} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+					video.src = url;
+					video.muted = true;
+					if (isPlaying) {
+						video.play().catch(err => console.log('Play error:', err));
+					}
+					isLoadingStream = false;
+				}
+			}
+
+			currentStream = streamIndex;
+			updateTitle();
+		} catch (err) {
+			console.error('Error loading media:', err);
+			isLoadingStream = false;
+		}
+	}
+
+	function updateTitle() {
+		const titleDiv = document.getElementById(videoid + '-title');
+		if (titleDiv) {
+			titleDiv.textContent = labels[currentStream];
+		}
+	}
+
+	function switchMedia() {
+		const nextStream = 1 - currentStream;
+		console.log(`Switching from stream ${currentStream} to ${nextStream}`);
+		loadMedia(nextStream);
+	}
+
+	function startAlternating() {
+		console.log('Starting alternating media');
+		isPlaying = true;
+		loadMedia(0);
+		intervalId = setInterval(() => {
+			if (isPlaying && !isLoadingStream) {
+				switchMedia();
+			}
+		}, intervalSeconds * 1000);
+	}
+
+	function stopAlternating() {
+		console.log('Stopping alternating media');
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+		isPlaying = false;
+	}
+
+	const video = document.getElementById(videoid);
+	if (video) {
+		console.log('Initializing alternating media for:', videoid);
+		if (width) {
+			video.style.width = width + 'px';
+		} else {
+			video.style.width = '100%';
+		}
+		video.style.maxWidth = '1300px';
+		video.style.height = 'auto';
+		video.style.visibility = 'visible';
+
+		const unavailableDiv = document.getElementById(videoid + "-unavailable");
+		if (unavailableDiv) {
+			unavailableDiv.style.display = 'none';
+		}
+
+		startAlternating();
+
+		video.addEventListener('pause', () => {
+			console.log('Video paused');
+			stopAlternating();
+		});
+
+		video.addEventListener('play', () => {
+			console.log('Video playing');
+			if (!intervalId) {
+				startAlternating();
+			}
+		});
+	} else {
+		console.error('Video element not found:', videoid);
 	}
 }
 

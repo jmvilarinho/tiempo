@@ -33,9 +33,10 @@
 </section>`,
 			init: function () {
 				var url = 'https://wow.camaramar.com/camaramar/5_razo.stream/playlist.m3u8';
+				var fallbackUrl = 'https://wow.camaramar.com/camaramar/2_razo_art.stream/playlist.m3u8';
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
-				showVideo(url, 'Razo')
+				showVideo(url, 'Razo', '', '', fallbackUrl)
 			}
 		},
 		{
@@ -45,23 +46,14 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<div id="Lapaman-alternative">
+			<div id="Lapaman-alternative" style="margin: 0; padding: 0;">
 				<a href='#Lapaman' id="#Lapaman">
-					<p>Aguete (Ría de Pontevedra)</p>
+					<p id="Lapaman-title" style="margin: 5px 0;">Aguete (Ría de Pontevedra)</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Lapaman-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Lapaman">
-				<source />
-				<p>Your browser does not support H.264/MP4.</p>
-			</video>
-			<div id="Menduina-alternative">
-				<a href='#Menduina' id="#Menduina">
-					<p>Menduina (Ría de Aldan)</p>
-				</a>
-			</div>
-			<div style="visibility: hidden" id="Menduina-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Menduina">
+			<img id="Lapaman-img" style="width: 100%; max-width: 1300px; height: auto; display: block; margin: 0;" />
+			<video controls id="Lapaman-video" style="width: 100%; max-width: 1300px; height: auto; display: none; margin: 0;">
 				<source />
 				<p>Your browser does not support H.264/MP4.</p>
 			</video>
@@ -71,16 +63,11 @@
 	</div>
 </section>`,
 			init: function () {
-				//var url = 'https://www.meteogalicia.gal/datosred/infoweb/clima/webcams/Aguete2/ultima.jpg';
-				//var url = "https://meteo-estaticos.xunta.gal/datosred/camaras/MeteoGalicia/Aguete2/ultima.jpg";
 				var url = getUltimaXuntaCam('Aguete2');
-				//var url = 'https://wow.camaramar.com/VODgrabaciones/meteo_Aguete2.mp4/playlist.m3u8';
 				var url2 = 'https://wow.camaramar.com/camaramar/48_menduina.stream/playlist.m3u8';
-				var alternativeuri = url;
 				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
 				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
-				showVideo(url, 'Lapaman', 'Aguete (Ría de Pontevedra)', alternativeuri)
-				showVideo(url2, 'Menduina', 'Menduina (Ría de Aldan)', alternativeuri)
+				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2, 'Menduina (Ría de Aldan)', 5);
 			}
 		},
 		{
