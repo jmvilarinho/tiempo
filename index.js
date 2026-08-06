@@ -309,6 +309,47 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '', fa
 	}
 }
 
+// Algunhas cámaras (camaramar) xa non permiten enlazar o vídeo HLS: a URL do stream
+// leva un SecureToken ligado á sesión do usuario e caduca aos 30 minutos. Pero a
+// instantánea que empregan como poster si se serve publicamente e actualízase cada
+// poucos minutos, así que a amosamos como imaxe e refrescámola periodicamente.
+function showSnapshot(url, imgid, refreshSeconds = 120) {
+	var img = document.getElementById(imgid);
+	var unavailable = document.getElementById(imgid + "-unavailable");
+
+	if (!img) {
+		console.error('Missing element for showSnapshot: ' + imgid);
+		return;
+	}
+
+	img.onload = function () {
+		img.style.visibility = "visible";
+		if (unavailable) {
+			unavailable.style.visibility = "hidden";
+		}
+	};
+	img.onerror = function () {
+		img.style.visibility = "hidden";
+		if (unavailable) {
+			unavailable.style.visibility = "visible";
+		}
+	};
+
+	function recarga() {
+		// O ficheiro é sempre o mesmo nome; sen isto o navegador serve a copia vella.
+		img.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'nocache=' + Date.now();
+	}
+
+	// Un só temporizador por imaxe aínda que se volva chamar a init().
+	if (img.dataset.snapshotTimer) {
+		clearInterval(Number(img.dataset.snapshotTimer));
+	}
+	img.dataset.snapshotTimer = setInterval(recarga, refreshSeconds * 1000);
+
+	img.style.width = getAncho();
+	recarga();
+}
+
 function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
