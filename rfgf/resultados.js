@@ -117,7 +117,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 				hora = '';
 
 			if (item.fecha)
-				dia = dia_semana(item.fecha);
+				dia = dia_semana_sp(item.fecha);
 			else
 				dia = '';
 

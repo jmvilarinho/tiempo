@@ -236,17 +236,21 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 }
 
 function dia_semana(fecha) {
-	var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
-	var dt = new Date(fecha.replace(pattern, '$3-$2-$1 12:00'));
+	// A data pode vir como dd-mm-yyyy ou dd/mm/yyyy, e ás veces con hora detrás ("21/12/2024 16:00"),
+	// así que extraemos só os tres números da data e ignoramos o resto.
+	var pattern = /(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})/;
+	var partes = String(fecha).match(pattern);
+	if (!partes)
+		return '';
+	var dt = new Date(parseInt(partes[3], 10), parseInt(partes[2], 10) - 1, parseInt(partes[1], 10), 12);
+	if (isNaN(dt.getTime()))
+		return '';
 	days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 	return days[dt.getDay()]; // "Friday"
 }
 
 function dia_semana_sp(fecha) {
-	var pattern = /(\d{2})\/(\d{2})\/(\d{4})/;
-	var dt = new Date(fecha.replace(pattern, '$3-$2-$1 12:00'));
-	days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-	return days[dt.getDay()]; // "Friday"
+	return dia_semana(fecha);
 }
 
 
