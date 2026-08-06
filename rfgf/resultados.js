@@ -66,12 +66,13 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		$('#results').append('<table border >');
 		$('#results').append(
 			'<tr>'
-			+ '<th colspan="4" align="center">' + back + 'Xornada ' + data.jornada + ' - ' + data.fecha_jornada.replace(/-/g, "/") + forward + '</th>'
+			+ '<th colspan="5" align="center">' + back + 'Xornada ' + data.jornada + ' - ' + data.fecha_jornada.replace(/-/g, "/") + forward + '</th>'
 			+ '</tr><tr>'
 			+ '<th>Data</th>'
 			+ '<th align="right"></th>'
 			+ '<th align="center">Resultado</th>'
 			+ '<th align="left"></th>'
+			+ '<th align="center">Día</th>'
 			+ '</tr>'
 		);
 		cont = 0;
@@ -115,6 +116,11 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			else
 				hora = '';
 
+			if (item.fecha)
+				dia = dia_semana(item.fecha);
+			else
+				dia = '';
+
 			goles_html = '';
 			if (item.Goles_casa != "" && item.Goles_visitante != "") {
 				goles_html = item.Goles_casa + ' - ' + item.Goles_visitante + xogo;
@@ -129,6 +135,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 				+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
 				+ '<td style="background-color:' + background + ';" align="center" >' + goles_html + '</td>'
 				+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
+				+ '<td style="background-color:' + background + ';" align="center" >' + dia + '</td>'
 				+ '</tr>');
 		});
 		$('#results').append('</table>');
