@@ -269,25 +269,54 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '', fa
 	var image = document.getElementById(videoid + "-unavailable");
 	let urlToUse = url;
 
-	let exists = await validURL(url);
-	if (!exists && fallbackurl) {
+	let alternativeShown = false;
+	function fallbackAlternative() {
+		if (alternativeShown) {
+			return;
+		}
+		alternativeShown = true;
+		if (video) {
+			video.remove();
+		}
+		if (!image) {
+			return;
+		}
+		// image.remove() rompería isto, así que no camiño bo agochámola con display:none.
+		image.style.display = "";
+		image.style.visibility = "visible";
+		if (alternative != '') {
+			showAlternative(videoid, alternative, alternativeurl);
+		}
+	}
+
+	// Se o elemento non é un <video> (p.ex. Perbes, que só ten instantánea) non ten
+	// sentido pedir o manifesto: iríamos directos á alternativa.
+	let exists = !!video && video.tagName === 'VIDEO' && await validURL(url);
+	if (!exists && video && video.tagName === 'VIDEO' && fallbackurl) {
 		urlToUse = fallbackurl;
 		exists = await validURL(fallbackurl);
 	}
 
 	if (!exists) {
-		image.style.visibility = "visible";
-		video.remove();
-		if (alternative != '') {
-			showAlternative(videoid, alternative, alternativeurl);
-		}
+		fallbackAlternative();
 
 	} else {
 		video.style.visibility = "visible";
-		image.remove();
+		// Non eliminamos o aviso: se o stream falla en execución (SecureToken caducado,
+		// cámara apagada) aínda temos que poder amosar a alternativa aí dentro.
+		image.style.display = "none";
 		if (Hls.isSupported()) {
 			var hls = new Hls({
 				debug: false,
+			});
+			// O manifesto pode responder 200 e aínda así non reproducir (chunklist
+			// protexida). Nese caso caemos na instantánea alternativa.
+			hls.on(Hls.Events.ERROR, function (event, data) {
+				if (!data.fatal) {
+					return;
+				}
+				hls.destroy();
+				fallbackAlternative();
 			});
 			hls.loadSource(urlToUse);
 			hls.attachMedia(video);
@@ -303,6 +332,9 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '', fa
 			video.src = urlToUse;
 			video.addEventListener('canplay', function () {
 				video.play();
+			});
+			video.addEventListener('error', function () {
+				fallbackAlternative();
 			});
 		}
 		setAncho(video);
@@ -494,7 +526,8 @@ function showAlternatingOverlay(baseid, urlImage, labelImage, urlVideo, labelVid
 		if (titleDiv) titleDiv.textContent = labelImage;
 	}
 
-	function showVideo() {
+	// Ojo: nome distinto do showVideo() global (index.js) para non confundilos.
+	function switchToVideo() {
 		console.log('Showing video: ' + labelVideo);
 		img.style.display = 'none';
 		video.style.display = 'block';
@@ -508,7 +541,7 @@ function showAlternatingOverlay(baseid, urlImage, labelImage, urlVideo, labelVid
 
 	function switchMedia() {
 		if (currentMedia === 'image') {
-			showVideo();
+			switchToVideo();
 		} else {
 			showImage();
 		}
