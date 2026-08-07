@@ -88,6 +88,26 @@ When changing data sources, update these constants rather than scattering URLs.
 - `index.js` holds the bulk of weather logic: forecast rendering (`getPrevision` →
   `createPrevision`), tides (`getMareas`), geolocated current temperature
   (`geoFindMe` → `getTemperatura`), HLS webcam playback (`showVideo`, using `hls.light.min.js`).
+- **Webcams and their fallbacks** (all in `index.js`). Each camera block in the fragments follows
+  a naming convention: `#<key>` is the media element, `#<key>-unavailable` the placeholder div
+  where a still image can be injected, and `#<key>-alternative` the caption/link div.
+  - `showVideo(url, videoid, alternative, alternativeurl, fallbackurl)` plays an HLS stream and
+    degrades to `alternativeurl` (a still image, shown via `showAlternative`) whenever the stream
+    cannot play: manifest not reachable (checked with `validURL`, after trying `fallbackurl`),
+    target element not a `<video>`, a **fatal `Hls.Events.ERROR` at runtime**, or an `error`
+    event on the native-HLS path. The runtime cases matter because some manifests answer `200`
+    while the chunklist is behind a session SecureToken (camaramar), so the failure only shows
+    up during playback. For that reason the success path *hides* `#<key>-unavailable` with
+    `display: none` instead of removing it — the fallback needs that div to still exist. Keep it
+    that way when touching this function.
+  - `showOnlyAlternative(videoid, ...)` for cameras with no stream at all (DGT traffic cams),
+    `showSnapshot(url, imgid, refreshSeconds)` for still-image cameras that should auto-refresh,
+    and `showAlternatingOverlay` / `showAlternatingMediaSmooth` to alternate image and video
+    (their internal `switchToVideo` / `showVideoStream` are deliberately *not* named `showVideo`,
+    to avoid shadowing the global one).
+  - Perbes (`Mino` key in `praias.html`) is the reference case of a camera whose element is an
+    `<img>`, not a `<video>`: its camaramar stream is token-locked, so `showVideo` short-circuits
+    to the public snapshot.
 - `common.js` is shared with the RFGF app: maps/Waze deep-links (`openMaps`, `openWaze`,
   platform detection in `detectPlatform`).
 - AEMET forecast JSON is fetched as ISO-8859-1 and decoded manually (see `getPrevisionDatos`).

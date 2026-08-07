@@ -22,6 +22,16 @@ En realidad son **dos apps** que comparten helpers:
 - **Open-Meteo** (`api.open-meteo.com` y `marine-api.open-meteo.com`, sin API key) para la
   temperatura actual y, en playas de Portugal, temperatura del agua, sensación térmica y
   mareas (estas últimas aproximadas, derivadas del nivel del mar horario).
+- **Webcams**: streams HLS de camaramar y cámaras de MeteoGalicia y DGT (estas últimas solo
+  imagen fija).
+
+## Webcams y alternativas
+
+Los streams caen a menudo (cámara apagada, o URL protegida por un token de sesión que caduca).
+Por eso cada cámara puede declarar una **imagen alternativa**: si el vídeo no arranca —o falla
+en mitad de la reproducción— se muestra la instantánea en su lugar. Algunas cámaras (Perbes,
+tráfico de DGT) no tienen stream utilizable y van directamente a la imagen fija, que se
+refresca cada pocos minutos.
 
 ## Desarrollo
 
