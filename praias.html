@@ -42,7 +42,9 @@
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/c914b0e1-5e2d-41cf-8c34-1f110a27c7c5.webp';
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
-				showVideo(url, 'Razo', '', alternativeuri, fallbackUrl)
+				//showVideo(url, 'Razo', '', alternativeuri, fallbackUrl)
+				showVideo(url, 'Razo', 'Razo', alternativeuri);
+
 			}
 		},
 		{
@@ -72,10 +74,11 @@
 			init: function () {
 				var url = getUltimaXuntaCam('Aguete2');
 				var url2 = 'https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8';
+				var url2_alternative = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 				//url2 = "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786049757&jdtcbrndmrdendtime=1786051567&jdtcbrndmrdhash=7WUfHEdmwXy6yQF3GcL-yC7eS-Q7-3YVCjzFRPx1HQ4%3D"
 				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
 				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
-				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2, 'Menduina (Ría de Aldan)', 5);
+				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2, 'Menduina (Ría de Aldan)', 5, url2_alternative);
 			}
 		},
 		{
@@ -115,9 +118,11 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<a href='#Coroso' id="#Coroso">
-				<p>Playa de Coroso (Ribeira)</p>
-			</a>
+			<div id="Coroso-alternative">
+				<a href='#Coroso' id="#Coroso">
+					<p>Playa de Coroso (Ribeira)</p>
+				</a>
+			</div>
 			<div style="visibility: hidden" id="Coroso-unavailable"><img width="100" src=img/unavailable.png></div>
 			<video controls id="Coroso">
 				<source />
@@ -131,6 +136,7 @@
 			init: function () {
 				var url = 'https://622a10e8864f7.streamlock.net/camaramar/31_coroso.stream/playlist.m3u8';
 				//url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786050174&jdtcbrndmrdendtime=1786051984&jdtcbrndmrdhash=KftgGxNG7vAuy9OYlsyBibGmxfU4o2HEioOWneTDUWQ%3D"
+				url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8";
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/865c5099-f700-4a8e-9af5-34c002295ebd.webp";
 				getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
 				getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
@@ -232,9 +238,11 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<a href='#Lanzada' id="#Lanzada">
-				<p>A Lanzada</p>
-			</a>
+			<div id="Lanzada-alternative">
+				<a href='#Lanzada' id="#Lanzada">
+					<p>A Lanzada</p>
+				</a>
+			</div>
 			<div style="visibility: hidden" id="Lanzada-unavailable"><img width="100" src=img/unavailable.png></div>
 			<video controls id="Lanzada">
 				<source />

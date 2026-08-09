@@ -240,9 +240,31 @@ async function validURL(url) {
 	return result;
 }
 
+// ¿Un erro de hls.js é un rexeitamento do servidor (403/401)? Non paga a pena reintentar:
+// o stream está protexido ou caducado e hai que ir á instantánea alternativa.
+function isDeniedError(data) {
+	if (!data) {
+		return false;
+	}
+	var status = 0;
+	if (data.response && data.response.code) {
+		status = data.response.code;
+	} else if (data.networkDetails && data.networkDetails.status) {
+		// Nalgunhas versións de hls.js o código só vén no XHR subxacente.
+		status = data.networkDetails.status;
+	}
+	return status === 401 || status === 403;
+}
+
 function showAlternative(videoid, alternative, alternativeurl) {
+	// O div do rótulo é opcional: se falta, non debe impedir que se amose a imaxe
+	// (antes petaba aquí e a cámara quedaba sen vídeo e sen alternativa).
 	var alternativeObj = document.getElementById(videoid + "-alternative");
-	alternativeObj.innerHTML = '<a href="#' + videoid + '"><p>' + alternative + '</p></a>';
+	if (alternativeObj) {
+		alternativeObj.innerHTML = '<a href="#' + videoid + '"><p>' + alternative + '</p></a>';
+	} else {
+		console.warn('Missing element for showAlternative: ' + videoid + '-alternative');
+	}
 
 	var ms = new Date().getTime();
 	const keyDiv = document.createElement('div');
@@ -250,6 +272,10 @@ function showAlternative(videoid, alternative, alternativeurl) {
 	keyDiv.innerHTML = '<img  id="' + videoid + '-alternative" width="680px" style="width: ' + width + '; height: auto; max-width: 1300px;" src="' + alternativeurl + '?nocache=' + ms + '">';
 
 	var imageObj = document.getElementById(videoid + "-unavailable");
+	if (!imageObj) {
+		console.error('Missing element for showAlternative: ' + videoid + '-unavailable');
+		return;
+	}
 	imageObj.innerHTML = '';
 	imageObj.appendChild(keyDiv);
 }
@@ -312,7 +338,10 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '', fa
 			// O manifesto pode responder 200 e aínda así non reproducir (chunklist
 			// protexida). Nese caso caemos na instantánea alternativa.
 			hls.on(Hls.Events.ERROR, function (event, data) {
-				if (!data.fatal) {
+				// Un 403/401 na chunklist ou nos segmentos (SecureToken de sesión) chega
+				// como erro NON fatal e hls.js reinténtao sen fin, así que nunca veriamos
+				// a alternativa: trátamolo como definitivo.
+				if (!data.fatal && !isDeniedError(data)) {
 					return;
 				}
 				hls.destroy();
@@ -382,7 +411,10 @@ function showSnapshot(url, imgid, refreshSeconds = 120) {
 	recarga();
 }
 
-function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {
+// urlVideoAlternative: instantánea que substitúe ao vídeo se o stream non se pode
+// reproducir (camaramar move os streams a /live/ tras un SecureToken de sesión e os
+// vellos devolven 404). Sen ela a quenda do vídeo quedaría en negro cada intervalo.
+function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlVideoAlternative = '') {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
 	const title = document.getElementById(baseid + '-title');
@@ -403,7 +435,9 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 	img.style.margin = '0 auto';
 	img.style.display = 'block';
 	video.style.margin = '0 auto';
-	video.style.display = 'block';
+	// Arrancamos na quenda da imaxe (showingImage = true): se puxésemos o vídeo en
+	// 'block' aquí, verianse os dous á vez ata o primeiro toggle.
+	video.style.display = 'none';
 
 	if (width) {
 		img.style.width = width + 'px';
@@ -412,31 +446,99 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 		video.style.maxWidth = width + 'px';
 	}
 
-	img.src = urlImage + '?nocache=' + Date.now();
+	// Reutilizamos o mesmo <img> para as dúas quendas cando o vídeo falla, así que
+	// calculamos os dous src unha soa vez (o navegador serve da caché ao repetilos).
+	// urlImage non se refresca: xa leva a marca de tempo no nome (getUltimaXuntaCam),
+	// así que un nocache novo devolvería o mesmo ficheiro.
+	var ms = Date.now();
+	const srcImage = urlImage + '?nocache=' + ms;
+	let srcVideoAlternative = urlVideoAlternative ? urlVideoAlternative + '?nocache=' + ms : '';
+	let altStamp = ms;
+	let videoFailed = false;
+
+	// A instantánea alternativa ten sempre o mesmo nome de ficheiro e actualízase cada
+	// poucos minutos, así que pedimos unha copia nova (como máximo cada ALT_REFRESH_MS)
+	// cando lle toca a súa quenda; se non, quedaría conxelada mentres a páxina siga aberta.
+	const ALT_REFRESH_MS = 120000;
+	function refrescaAlternativa() {
+		if (!urlVideoAlternative || Date.now() - altStamp < ALT_REFRESH_MS) {
+			return;
+		}
+		altStamp = Date.now();
+		srcVideoAlternative = urlVideoAlternative + '?nocache=' + altStamp;
+	}
+
+	img.src = srcImage;
 
 	if (unavailable) {
 		unavailable.style.display = 'none';
 	}
 
+	// O stream non se pode reproducir: na quenda do vídeo amosamos a súa instantánea.
+	function videoUnavailable() {
+		if (videoFailed || !srcVideoAlternative) {
+			return;
+		}
+		videoFailed = true;
+		console.warn('Stream non dispoñible en ' + baseid + ', empregamos a instantánea alternativa');
+		if (hlsInstance) {
+			hlsInstance.destroy();
+			hlsInstance = null;
+		}
+		video.style.display = 'none';
+		if (!showingImage) {
+			// Xa estabamos na quenda do vídeo: cambiamos agora mesmo, sen esperar.
+			refrescaAlternativa();
+			img.src = srcVideoAlternative;
+			img.style.display = 'block';
+		}
+	}
+
 	if (Hls.isSupported()) {
 		hlsInstance = new Hls({ debug: false });
+		hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+			// Coma en showVideo: un 403/401 chega como non fatal e reinténtase sen fin.
+			if (!data.fatal && !isDeniedError(data)) {
+				return;
+			}
+			videoUnavailable();
+		});
 		hlsInstance.loadSource(urlVideo);
 		hlsInstance.attachMedia(video);
 	} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
 		video.src = urlVideo;
+		video.addEventListener('error', videoUnavailable);
+	}
+
+	// Comprobación previa do manifesto: máis rápida e determinista que agardar polos
+	// reintentos de hls.js. Só ten sentido se hai alternativa que amosar.
+	if (srcVideoAlternative) {
+		validURL(urlVideo).then(function (ok) {
+			if (!ok) {
+				videoUnavailable();
+			}
+		});
 	}
 
 	function toggle() {
 		try {
 			if (showingImage) {
-				img.style.display = 'none';
-				video.style.display = 'block';
-				video.muted = true;
-				video.play().catch(e => console.log('Play error:', e));
+				if (videoFailed) {
+					refrescaAlternativa();
+					img.src = srcVideoAlternative;
+					img.style.display = 'block';
+					video.style.display = 'none';
+				} else {
+					img.style.display = 'none';
+					video.style.display = 'block';
+					video.muted = true;
+					video.play().catch(e => console.log('Play error:', e));
+				}
 				title.textContent = labelVideo;
 				showingImage = false;
 			} else {
 				video.style.display = 'none';
+				img.src = srcImage;
 				img.style.display = 'block';
 				video.pause();
 				title.textContent = labelImage;
