@@ -46,7 +46,12 @@ async function load_resultados(cod_grupo, cod_equipo, jornada, cod_competicion, 
 
 function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, rfef = false) {
 	$('#results').append('<br>');
-	$('#results').append(data.nombre_competicion + ' (' + data.nombre_grupo + ')<br>');
+	linea_competicion = data.nombre_competicion ? data.nombre_competicion : '';
+	if (data.nombre_grupo && data.nombre_grupo != '')
+		linea_competicion += ' (' + data.nombre_grupo + ')';
+	if (linea_competicion != '')
+		$('#results').append(linea_competicion + '<br>');
+	setNombreCompeticion(data.codigo_competicion, data.codigo_grupo, data.nombre_competicion, data.nombre_grupo);
 	crea_botons('resultados', cod_equipo, codgrupo, cod_competicion, rfef);
 
 	j = parseInt(data.jornada);

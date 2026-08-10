@@ -153,6 +153,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		if ('grupo' in item && item.grupo != '') {
 			competicion += ' (' + item.grupo.toLowerCase() + ')';
 		}
+		setNombreCompeticion(item.cod_competicion, item.cod_grupo, item.competicion, item.grupo);
 		$('#results').append(data.nombre_equipo + competicion + tvdiv + '<br>');
 		if (!version_reducida) {
 			var boton_plantilla = $('<input/>').attr({

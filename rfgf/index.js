@@ -65,6 +65,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 		if ('grupo' in itemCompeticion && itemCompeticion.grupo != '') {
 			competicion += ' (' + itemCompeticion.grupo.toLowerCase() + ')';
 		}
+		setNombreCompeticion(itemCompeticion.cod_competicion, itemCompeticion.cod_grupo, itemCompeticion.competicion, itemCompeticion.grupo);
 		$('#results').append(data.nombre_equipo + competicion + '<br>');
 		crea_botons('xornadas', cod_equipo, itemCompeticion.cod_grupo, itemCompeticion.cod_competicion, rfef);
 
@@ -216,11 +217,12 @@ async function load_clasificacion(cod_grupo, cod_equipo, cod_competicion, addHis
 			}
 			return response.json();
 		})
-		.then(data => {
+		.then(async data => {
 			if (data) {
 				show_error(data);
 				$('#results').html('');
 				add_back();
+				await cache_nombre_competicion(data.data, cod_grupo, cod_equipo, cod_competicion, rfef);
 				show_clasificacion(data.data, cod_grupo, cod_equipo, rfef);
 				add_back();
 			} else {
@@ -234,6 +236,40 @@ async function load_clasificacion(cod_grupo, cod_equipo, cod_competicion, addHis
 }
 
 
+// A clasificación da RFEF non trae o nome da competición. Se tampouco está cacheado (entrouse
+// directamente polo hash #clasificacion/...), pídese a getresultados, que si o devolve.
+async function cache_nombre_competicion(data, cod_grupo, cod_equipo, cod_competicion, rfef) {
+	if (!data || (data.competicion && data.competicion != ''))
+		return;
+	var codcompeticion = data.codigo_competicion ? data.codigo_competicion : cod_competicion;
+	var codgrupo = data.codigo_grupo ? data.codigo_grupo : cod_grupo;
+	if (!codcompeticion || getNombreCompeticion(codcompeticion, codgrupo).competicion != '')
+		return;
+
+	var url = remote_url + '?type=getresultados&codequipo=' + cod_equipo + '&codgrupo=' + codgrupo + '&jornada=';
+	url += "&codcompeticion=" + codcompeticion;
+	if (rfef)
+		url += "&rfef=1";
+
+	console.log("GET " + url);
+	await fetch(url)
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Network response was not ok');  // Handle HTTP errors
+			}
+			return response.json();
+		})
+		.then(resultados => {
+			if (resultados && resultados.data) {
+				setNombreCompeticion(resultados.data.codigo_competicion, resultados.data.codigo_grupo,
+					resultados.data.nombre_competicion, resultados.data.nombre_grupo);
+			}
+		})
+		.catch(error => {
+			console.error('Fetch error:', error.message);  // Log the error
+		});
+}
+
 function base64_decode(s) {
 	//return $.base64('decode', data.html);
 	return decodeURIComponent(escape(atob(s)));
@@ -241,7 +277,21 @@ function base64_decode(s) {
 
 function show_clasificacion(data, cod_grupo, cod_equipo, rfef = false) {
 	$('#results').append('<br>');
-	$('#results').append(data.competicion + ' ( ' + data.grupo + ')<br>');
+	nombre_competicion = data.competicion ? data.competicion : '';
+	nombre_grupo = data.grupo ? data.grupo : '';
+	if (nombre_competicion == '') {
+		// a RFEF devolve a clasificación só como HTML, sen nome de competición nin de grupo
+		cacheado = getNombreCompeticion(data.codigo_competicion, data.codigo_grupo ? data.codigo_grupo : cod_grupo);
+		nombre_competicion = cacheado.competicion;
+		if (nombre_grupo == '')
+			nombre_grupo = cacheado.grupo;
+	}
+	if (nombre_competicion != '') {
+		linea_competicion = nombre_competicion;
+		if (nombre_grupo != '')
+			linea_competicion += ' ( ' + nombre_grupo + ')';
+		$('#results').append(linea_competicion + '<br>');
+	}
 	crea_botons('clasificacion', cod_equipo, cod_grupo, data.codigo_competicion, rfef);
 	if (data.html != '') {
 		html = '<link href="css/all.css" rel=stylesheet>'

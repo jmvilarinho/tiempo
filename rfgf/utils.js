@@ -329,6 +329,57 @@ function isRFEF(cod_equipo) {
 	return false;
 }
 
+// A clasificación da RFEF chega sen nome de competición nin de grupo (só o HTML da táboa),
+// así que se garda o nome cada vez que outra páxina (equipo, portada, resultados) si o coñece.
+function getNombreCompeticionKey(cod_competicion, cod_grupo) {
+	return (cod_competicion || '') + '/' + (cod_grupo || '');
+}
+
+function getNombresCompeticion() {
+	var cookieValue = getCookie('nombresCompeticion');
+	if (!cookieValue)
+		return {};
+	try {
+		return JSON.parse(decodeURIComponent(cookieValue));
+	} catch (error) {
+		console.error('Cookie nombresCompeticion non válida: ' + error.message);
+		return {};
+	}
+}
+
+function setNombreCompeticion(cod_competicion, cod_grupo, nombre_competicion, nombre_grupo) {
+	if (!cod_competicion || !nombre_competicion)
+		return;
+	var nombres = getNombresCompeticion();
+	nombres[getNombreCompeticionKey(cod_competicion, cod_grupo)] = {
+		competicion: nombre_competicion,
+		grupo: nombre_grupo ? nombre_grupo : ''
+	};
+	// a cookie ten que seguir sendo pequena: quedan só as últimas competicións vistas
+	var keys = Object.keys(nombres);
+	while (keys.length > 20) {
+		delete nombres[keys.shift()];
+	}
+	setCookie('nombresCompeticion', encodeURIComponent(JSON.stringify(nombres)), 30);
+}
+
+function getNombreCompeticion(cod_competicion, cod_grupo) {
+	var nombres = getNombresCompeticion();
+	var nombre = nombres[getNombreCompeticionKey(cod_competicion, cod_grupo)];
+	if (!nombre) {
+		// pode estar gardada cun grupo distinto (ou sen grupo): vale o nome da competición
+		var prefijo = (cod_competicion || '') + '/';
+		var keys = Object.keys(nombres);
+		for (var i = 0; i < keys.length; i++) {
+			if (keys[i].indexOf(prefijo) == 0) {
+				return { competicion: nombres[keys[i]].competicion, grupo: '' };
+			}
+		}
+		return { competicion: '', grupo: '' };
+	}
+	return nombre;
+}
+
 function getClubName(cod_club, defaultName) {
 	var arrayLength = clubs.length;
 	for (var i = 0; i < arrayLength; i++) {
