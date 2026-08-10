@@ -33,6 +33,19 @@ en mitad de la reproducción— se muestra la instantánea en su lugar. Algunas 
 tráfico de DGT) no tienen stream utilizable y van directamente a la imagen fija, que se
 refresca cada pocos minutos.
 
+## Fútbol (app `rfgf/`)
+
+Los datos vienen de un único API Gateway que hace de proxy sobre dos fuentes: **futgal**
+(RFGF) y **RFEF** para los equipos marcados con `rfef: 1` en el registro `equipos` de
+`rfgf/index.html`. Las dos fuentes no devuelven lo mismo:
+
+- La **clasificación** llega como HTML de la web original. La de futgal trae los escudos de
+  los equipos; la de la RFEF no trae ninguno (la RFEF no publica escudos en estos datos), así
+  que ahí la tabla se queda sin iconos a propósito.
+- La clasificación de la RFEF tampoco trae el nombre de la competición. Se guarda en la cookie
+  `nombresCompeticion` cuando lo devuelven otras páginas (portada, xornadas, resultados) y, si
+  se entra directamente por la URL `#clasificacion/...`, se pide una vez a los resultados.
+
 ## Desarrollo
 
 No hay nada que compilar. Sirve la raíz del repo por HTTP y abre la página — abrir con

@@ -147,7 +147,24 @@ When changing data sources, update these constants rather than scattering URLs.
   `cod_competicion` is known.
 - **RFEF vs futgal:** some teams play in RFEF competitions (`rfef: 1`); the `rfef` flag is
   threaded through `load_*` calls and added as `&rfef=1` to proxy requests, selecting a
-  different upstream source.
+  different upstream source. The two upstreams do **not** return the same fields, so check
+  before assuming a payload shape:
+  - **Clasificación** now arrives from both sources as a base64 `html` blob (the upstream
+    table, decoded by `base64_decode` and appended together with the local `css/*.css`); the
+    JSON `clasificacion` array that `show_clasificacion` also knows how to render comes back
+    empty. The futgal HTML embeds the team crests (absolute `futgal.es` URLs); the RFEF one
+    has no `<img>` at all — RFEF publishes no crests in this data (nor in `getresultados` /
+    `getequipo`, where `url_img_*` / `escudo_equipo_*` come back empty), and there is no
+    guessable crest URL pattern either. Leaving RFEF standings without badges is a deliberate
+    decision: don't add a local crest registry or a placeholder icon to fill the gap.
+  - The RFEF clasificación also comes with `competicion` and `grupo` **empty**. The name is
+    cached from the pages that do get it (`getequipo` → `show_xornadas` / `show_portada_equipo`,
+    `getresultados` → `show_resultados`) via `setNombreCompeticion` / `getNombreCompeticion`
+    in `utils.js` (cookie `nombresCompeticion`, keyed `cod_competicion/cod_grupo`,
+    URL-encoded JSON, capped at 20 entries). On a cold start straight into
+    `#clasificacion/...` nothing is cached yet, so `cache_nombre_competicion` (in `index.js`)
+    fetches `getresultados` just for the name before rendering. Keep the header line
+    tolerant of empty values — don't print `Competición ()` when the group is missing.
 - `rfgf/data/` and `rfgf/samples/` hold captured HTML/JSON fixtures of upstream responses,
   useful for understanding payload shapes when working offline.
 
@@ -156,7 +173,8 @@ When changing data sources, update these constants rather than scattering URLs.
 State lives entirely in cookies (no localStorage, no server session). Helpers are duplicated
 in `index.js` and `rfgf/utils.js`: `setCookie`/`getCookie`/`eraseCookie`, plus array-valued
 cookies in the RFGF app via `getCookieArray`/`setArrayCookie` (used for `favoritosItems` and
-`calendarioItems`). `sanitizeEquiposCookies` / `pruneCookieItemsByEquipos` strip codes from
+`calendarioItems`) and the competition-name cache in `nombresCompeticion` (see RFEF vs futgal
+above; its JSON is URL-encoded because the names carry accents and spaces). `sanitizeEquiposCookies` / `pruneCookieItemsByEquipos` strip codes from
 those cookies that no longer match a team in the `equipos` array — call after changing the
 team list to clean stale selections.
 
