@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wowza SecureToken v2 — token generator &amp; player</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --line: #2b303b;
+    --fg: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #5aa9ff;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --err: #f87171;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f4f6fa; --panel:#fff; --panel-2:#eef1f6; --line:#d6dbe4; --fg:#131720; --muted:#5b6472; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: var(--bg); color: var(--fg);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
+  .wrap { display: grid; grid-template-columns: minmax(340px, 420px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select, textarea, button {
+    font-family: inherit; font-size: 13px; color: var(--fg);
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 7px 9px; width: 100%;
+  }
+  input[type=file] { padding: 6px; }
+  textarea { font-family: var(--mono); resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  button { width: auto; cursor: pointer; background: var(--panel-2); }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #06101d; font-weight: 600; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  code, .mono { font-family: var(--mono); }
+  #url {
+    width: 100%; min-height: 84px; font-size: 12px; word-break: break-all;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+  }
+  video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; display: block; }
+  #log { font-family: var(--mono); font-size: 12px; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+  #log div { padding: 2px 0; border-bottom: 1px solid var(--line); }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .err { color: var(--err); } .muted { color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line); background: var(--panel-2); }
+  .pill.live { border-color: var(--ok); color: var(--ok); }
+  .pill.dead { border-color: var(--err); color: var(--err); }
+  .note { font-size: 12px; color: var(--muted); border-left: 2px solid var(--warn); padding-left: 10px; margin-top: 12px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Wowza SecureToken v2 — token generator &amp; player</h1>
+<p class="sub">
+  Signs <span class="mono">playlist.m3u8</span> URLs the same way the capture did:
+  <span class="mono">base64(sha256(contentPath + "?" + sorted([secret, "…starttime=…", "…endtime=…"]).join("&amp;")))</span>.
+  Defaults come from <span class="mono">www.camaramar.com2.har</span>.
+</p>
+
+<div class="wrap">
+
+  <!-- ------------------------------ controls ------------------------------ -->
+  <div>
+    <div class="card">
+      <h2>Stream</h2>
+
+      <label for="har">Load settings from a HAR capture (optional)</label>
+      <input type="file" id="har" accept=".har,.json">
+
+      <div class="row" style="grid-template-columns: 110px 1fr">
+        <div>
+          <label for="scheme">Scheme</label>
+          <select id="scheme">
+            <option value="https" selected>https</option>
+            <option value="http">http</option>
+          </select>
+        </div>
+        <div>
+          <label for="host">Host <span class="muted">(host[:port])</span></label>
+          <input id="host" value="622a10e8864f7.streamlock.net">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="path">Content path (app/stream)</label>
+          <input id="path" value="live/5_razo.stream">
+        </div>
+        <div>
+          <label for="playlist">Playlist</label>
+          <input id="playlist" value="playlist.m3u8">
+        </div>
+      </div>
+
+      <h2 style="margin-top:18px">Token</h2>
+
+      <label for="secret">Shared secret <span class="muted">(server-side value — not in the HAR)</span></label>
+      <input id="secret" type="password" placeholder="Wowza SecureToken shared secret" autocomplete="off">
+
+      <div class="row">
+        <div>
+          <label for="prefix">Param prefix</label>
+          <input id="prefix" value="jdtcbrndmrd">
+        </div>
+        <div>
+          <label for="algo">Digest</label>
+          <select id="algo">
+            <option value="SHA-256" selected>SHA-256</option>
+            <option value="SHA-384">SHA-384</option>
+            <option value="SHA-512">SHA-512</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-3">
+        <div>
+          <label for="b64">Base64</label>
+          <select id="b64">
+            <option value="url" selected>URL-safe (-_)</option>
+            <option value="std">standard (+/)</option>
+          </select>
+        </div>
+        <div>
+          <label for="window">Window (s)</label>
+          <input id="window" type="number" value="1810">
+        </div>
+        <div>
+          <label for="skew">Backdate (s)</label>
+          <input id="skew" type="number" value="13">
+        </div>
+      </div>
+
+      <label for="extra">Extra hashed params <span class="muted">(one <span class="mono">name=value</span> per line, prefix added automatically)</span></label>
+      <textarea id="extra" rows="2" placeholder="clientip=1.2.3.4"></textarea>
+
+      <div class="btns">
+        <button class="primary" id="btn-play">Generate &amp; play</button>
+        <button id="btn-gen">Generate only</button>
+        <button id="btn-copy">Copy URL</button>
+        <button id="btn-fetch">Test fetch</button>
+      </div>
+
+      <label style="margin-top:14px">
+        <input type="checkbox" id="auto" style="width:auto;margin-right:6px">
+        Auto-renew token before it expires
+      </label>
+
+      <p class="note">
+        The secret is only used locally (WebCrypto / in-page SHA-2) and is never sent anywhere —
+        but anything in client-side JS is readable by whoever opens the page. That is exactly why
+        the real site signs these URLs on its backend. Keep this page local; don't deploy it.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Verify against capture</h2>
+      <p class="sub" style="margin:0 0 10px">
+        Load a HAR above, then check that your secret reproduces the captured hash.
+        Do this before trusting generated URLs.
+      </p>
+      <div id="sample" class="mono muted" style="font-size:12px">No HAR loaded.</div>
+      <div class="btns">
+        <button id="btn-verify" disabled>Verify secret</button>
+        <button id="btn-verify-all" disabled>Try all variants</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------------------ output ------------------------------ -->
+  <div>
+    <div class="card">
+      <h2>Signed URL <span id="expiry" class="pill">no token</span></h2>
+      <div id="url" class="mono muted">— not generated yet —</div>
+    </div>
+
+    <div class="card">
+      <h2>Player</h2>
+      <video id="video" controls playsinline muted></video>
+      <div class="btns">
+        <button id="btn-reload">Regenerate &amp; reload</button>
+        <button id="btn-stop">Stop</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---8<--- TOKEN CORE START (kept dependency-free so it can be unit-tested in node) ---8<---
+(function (root) {
+  "use strict";
+
+  /* ---- SHA-256 in plain JS -------------------------------------------------
+     WebCrypto is used when available, but crypto.subtle is undefined in any
+     non-secure context, and some browsers withhold it on file:// URLs. This
+     fallback keeps the page working when opened straight off disk.          */
+  var K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+
+  function sha256Bytes(bytes) {
+    var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    var bitLen = bytes.length * 8;
+    var padded = new Uint8Array((((bytes.length + 8) >> 6) + 1) * 64);
+    padded.set(bytes);
+    padded[bytes.length] = 0x80;
+    // 64-bit big-endian length; the high word covers inputs > 512 MB (never hit here).
+    var dv = new DataView(padded.buffer);
+    dv.setUint32(padded.length - 8, Math.floor(bitLen / 0x100000000), false);
+    dv.setUint32(padded.length - 4, bitLen >>> 0, false);
+
+    var w = new Uint32Array(64);
+    for (var off = 0; off < padded.length; off += 64) {
+      for (var i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4, false);
+      for (i = 16; i < 64; i++) {
+        var s0 = rotr(w[i-15],7) ^ rotr(w[i-15],18) ^ (w[i-15] >>> 3);
+        var s1 = rotr(w[i-2],17) ^ rotr(w[i-2],19) ^ (w[i-2] >>> 10);
+        w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+      }
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for (i = 0; i < 64; i++) {
+        var S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
+        var ch = (e & f) ^ (~e & g);
+        var t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+        var S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
+        var maj = (a & b) ^ (a & c) ^ (b & c);
+        var t2 = (S0 + maj) >>> 0;
+        h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+      }
+      H[0]=(H[0]+a)>>>0; H[1]=(H[1]+b)>>>0; H[2]=(H[2]+c)>>>0; H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0; H[5]=(H[5]+f)>>>0; H[6]=(H[6]+g)>>>0; H[7]=(H[7]+h)>>>0;
+    }
+    var out = new Uint8Array(32), o = new DataView(out.buffer);
+    for (i = 0; i < 8; i++) o.setUint32(i * 4, H[i], false);
+    return out;
+  }
+  function rotr(x, n) { return ((x >>> n) | (x << (32 - n))) >>> 0; }
+
+  function b64(bytes, urlsafe) {
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    var out = (typeof btoa === "function")
+      ? btoa(s)
+      : Buffer.from(bytes).toString("base64");
+    return urlsafe ? out.replace(/\+/g, "-").replace(/\//g, "_") : out;
+  }
+
+  function digest(algo, text) {
+    var bytes = new TextEncoder().encode(text);
+    var subtle = (typeof crypto !== "undefined" && crypto.subtle) ? crypto.subtle : null;
+    if (subtle) {
+      return subtle.digest(algo, bytes).then(function (buf) { return new Uint8Array(buf); });
+    }
+    if (algo !== "SHA-256") {
+      return Promise.reject(new Error(
+        "WebCrypto unavailable (insecure context) and only SHA-256 has a built-in fallback. " +
+        "Serve this page over https:// or localhost to use " + algo + "."));
+    }
+    return Promise.resolve(sha256Bytes(bytes));
+  }
+
+  /* ---- Wowza SecureToken v2 ---------------------------------------------- */
+
+  // Ordered token params (everything except the hash itself).
+  function buildParams(cfg, start, end) {
+    var p = {};
+    p[cfg.prefix + "starttime"] = String(start);
+    p[cfg.prefix + "endtime"] = String(end);
+    (cfg.extra || []).forEach(function (kv) {
+      var name = kv.name.indexOf(cfg.prefix) === 0 ? kv.name : cfg.prefix + kv.name;
+      p[name] = String(kv.value);
+    });
+    return p;
+  }
+
+  // parts = [secret, "k=v", ...] sorted lexicographically, joined with "&",
+  // prefixed by "contentPath?" — then hashed and base64'd.
+  function computeHash(cfg, secret, params) {
+    var hashName = cfg.prefix + "hash";
+    var parts = [secret];
+    Object.keys(params).forEach(function (k) {
+      if (k !== hashName) parts.push(k + "=" + params[k]);
+    });
+    parts.sort();
+    var payload = String(cfg.contentPath).replace(/^\/+|\/+$/g, "") + "?" + parts.join("&");
+    return digest(cfg.algo || "SHA-256", payload).then(function (d) {
+      return { hash: b64(d, cfg.urlsafe === true), payload: payload };
+    });
+  }
+
+  function buildUrl(cfg, secret, start, end) {
+    var params = buildParams(cfg, start, end);
+    return computeHash(cfg, secret, params).then(function (res) {
+      params[cfg.prefix + "hash"] = res.hash;
+      var qs = Object.keys(params)
+        .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); })
+        .join("&");
+      var path = "/" + String(cfg.contentPath).replace(/^\/+|\/+$/g, "") +
+                 "/" + String(cfg.playlist).replace(/^\/+/, "");
+      return {
+        url: (cfg.scheme || "https") + "://" + cfg.host + path + "?" + qs,
+        params: params, hash: res.hash, payload: res.payload, start: start, end: end
+      };
+    });
+  }
+
+  // Recover the query string from a Wowza chunklist_..._tk<base64>.m3u8 name.
+  function decodeTk(name) {
+    var i = name.indexOf("_tk");
+    if (i === -1) throw new Error("no '_tk' marker in name");
+    var blob = name.slice(i + 3).replace(/\.(m3u8|ts|m4s)$/, "");
+    while (blob.length % 4) blob += "=";
+    return (typeof atob === "function") ? atob(blob) : Buffer.from(blob, "base64").toString("binary");
+  }
+
+  root.WowzaToken = {
+    buildUrl: buildUrl, computeHash: computeHash, buildParams: buildParams,
+    decodeTk: decodeTk, sha256Bytes: sha256Bytes, b64: b64
+  };
+})(typeof module !== "undefined" && module.exports ? module.exports : window);
+// ---8<--- TOKEN CORE END ---8<---
+
+
+/* =========================== page wiring =========================== */
+(function () {
+  "use strict";
+  if (typeof window === "undefined") return;
+
+  var WT = window.WowzaToken;
+  var $ = function (id) { return document.getElementById(id); };
+  var video = $("video");
+  var hls = null, current = null, expiryTimer = null, renewTimer = null, harSample = null;
+
+  function log(msg, cls) {
+    var el = document.createElement("div");
+    el.className = cls || "";
+    el.textContent = "[" + new Date().toLocaleTimeString() + "] " + msg;
+    $("log").prepend(el);
+  }
+
+  function cfg() {
+    var extra = $("extra").value.split("\n")
+      .map(function (l) { return l.trim(); })
+      .filter(Boolean)
+      .map(function (l) {
+        var i = l.indexOf("=");
+        return { name: i === -1 ? l : l.slice(0, i), value: i === -1 ? "" : l.slice(i + 1) };
+      });
+    return {
+      scheme: $("scheme").value,
+      host: $("host").value.trim(),
+      contentPath: $("path").value.trim(),
+      playlist: $("playlist").value.trim() || "playlist.m3u8",
+      prefix: $("prefix").value.trim(),
+      algo: $("algo").value,
+      urlsafe: $("b64").value === "url",
+      extra: extra
+    };
+  }
+
+  function generate() {
+    var secret = $("secret").value;
+    // Hard stop rather than a warning. Signing with "" produces a perfectly
+    // well-formed URL that the edge refuses, and the resulting hls.js
+    // networkError buries the real cause several lines up the log.
+    if (!secret) {
+      $("secret").style.outline = "2px solid #e0524a";
+      $("secret").focus();
+      log("Stopped: the Shared secret field is empty. Nothing was requested — " +
+          "signing with an empty secret only yields a guaranteed 403 and an " +
+          "hls.js error that hides this line. Type the secret and try again.", "err");
+      return Promise.reject(new Error("no secret"));
+    }
+    $("secret").style.outline = "";
+    var now = Math.floor(Date.now() / 1000);
+    var start = now - (parseInt($("skew").value, 10) || 0);
+    var end = start + (parseInt($("window").value, 10) || 1810);
+    return WT.buildUrl(cfg(), secret, start, end).then(function (res) {
+      current = res;
+      $("url").textContent = res.url;
+      $("url").classList.remove("muted");
+      log("Token generated — start=" + res.start + " end=" + res.end +
+          " (" + (res.end - res.start) + "s) hash=" + res.hash, "ok");
+      startExpiryTicker();
+      scheduleRenew();
+      return res;
+    }).catch(function (e) {
+      log("Hash failed: " + e.message, "err");
+      throw e;
+    });
+  }
+
+  function startExpiryTicker() {
+    clearInterval(expiryTimer);
+    expiryTimer = setInterval(tick, 1000);
+    tick();
+  }
+  function tick() {
+    if (!current) return;
+    var left = current.end - Math.floor(Date.now() / 1000);
+    var pill = $("expiry");
+    if (left <= 0) {
+      pill.textContent = "expired";
+      pill.className = "pill dead";
+      clearInterval(expiryTimer);
+    } else {
+      var m = Math.floor(left / 60), s = left % 60;
+      pill.textContent = "valid " + m + "m " + (s < 10 ? "0" : "") + s + "s";
+      pill.className = "pill live";
+    }
+  }
+
+  function scheduleRenew() {
+    clearTimeout(renewTimer);
+    if (!$("auto").checked || !current) return;
+    var lead = 30; // renew 30 s before expiry
+    var ms = Math.max(5, (current.end - Math.floor(Date.now() / 1000) - lead)) * 1000;
+    renewTimer = setTimeout(function () {
+      log("Token nearing expiry — renewing and reloading source.", "warn");
+      play();
+    }, ms);
+  }
+
+  /* ---- hls.js loading (native HLS on Safari needs nothing) ---- */
+  var HLS_CDNS = [
+    "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+    "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js"
+  ];
+  function loadHls(i) {
+    i = i || 0;
+    if (window.Hls) return Promise.resolve(true);
+    if (i >= HLS_CDNS.length) return Promise.resolve(false);
+    return new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = HLS_CDNS[i];
+      s.onload = function () { resolve(true); };
+      s.onerror = function () { resolve(loadHls(i + 1)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function attach(url) {
+    if (hls) { hls.destroy(); hls = null; }
+    if (video.canPlayType("application/vnd.apple.mpegurl") && !window.Hls) {
+      video.src = url;                      // Safari / iOS native HLS
+      video.play().catch(function (e) { log("Autoplay blocked: " + e.message, "warn"); });
+      log("Playing via native HLS.");
+      return;
+    }
+    if (!window.Hls || !window.Hls.isSupported()) {
+      log("hls.js unavailable and no native HLS support — cannot play here. " +
+          "The URL above is still valid; try it in VLF/VLC or Safari.", "err");
+      return;
+    }
+    hls = new window.Hls({ lowLatencyMode: true, enableWorker: true });
+    hls.on(window.Hls.Events.ERROR, function (_e, data) {
+      log("hls.js " + (data.fatal ? "FATAL " : "") + data.type + " / " + data.details +
+          (data.response ? " (HTTP " + data.response.code + ")" : ""), data.fatal ? "err" : "warn");
+      if (data.fatal && data.details === "manifestLoadError") {
+        log("A 403/401 here means the token was rejected — check the shared secret with “Verify secret”.", "err");
+      }
+    });
+    hls.on(window.Hls.Events.MANIFEST_PARSED, function (_e, data) {
+      log("Manifest OK — " + data.levels.length + " level(s): " +
+          data.levels.map(function (l) { return l.width + "x" + l.height; }).join(", "), "ok");
+      video.play().catch(function (e) { log("Autoplay blocked: " + e.message + " — press play.", "warn"); });
+    });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  }
+
+  function play() {
+    return generate().then(function (res) {
+      return loadHls().then(function () { attach(res.url); });
+    }).catch(function () {});
+  }
+
+  /* ---- HAR import ---- */
+  function detectPrefix(names) {
+    for (var i = 0; i < names.length; i++) {
+      if (/starttime$/.test(names[i])) return names[i].replace(/starttime$/, "");
+    }
+    return null;
+  }
+
+  $("har").addEventListener("change", function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var har;
+      try { har = JSON.parse(fr.result); }
+      catch (err) { return log("Not valid JSON: " + err.message, "err"); }
+      var entries = (har.log && har.log.entries) || [];
+      for (var i = 0; i < entries.length; i++) {
+        var raw = (entries[i].request || {}).url || "";
+        var u;
+        try { u = new URL(raw); } catch (err) { continue; }
+        var names = [];
+        u.searchParams.forEach(function (_v, k) { names.push(k); });
+        var prefix = detectPrefix(names);
+        if (!prefix || !u.searchParams.get(prefix + "hash")) continue;
+
+        var segs = u.pathname.split("/").filter(Boolean);
+        var hash = u.searchParams.get(prefix + "hash");   // already URL-decoded
+        var bin = atob(hash.replace(/-/g, "+").replace(/_/g, "/"));
+        var params = {};
+        u.searchParams.forEach(function (v, k) { if (k !== prefix + "hash") params[k] = v; });
+
+        $("host").value = u.host;
+        $("playlist").value = segs.length ? segs[segs.length - 1] : "playlist.m3u8";
+        $("path").value = segs.slice(0, -1).join("/");
+        $("prefix").value = prefix;
+        $("algo").value = { 32: "SHA-256", 48: "SHA-384", 64: "SHA-512" }[bin.length] || "SHA-256";
+        // '+' or '/' proves standard base64; otherwise URL-safe (this deployment
+        // emits '-'/'_', and hashes with none of the four chars are ambiguous).
+        $("b64").value = /[+/]/.test(hash) ? "std" : "url";
+
+        var st = parseInt(u.searchParams.get(prefix + "starttime"), 10);
+        var en = parseInt(u.searchParams.get(prefix + "endtime"), 10);
+        if (st && en && en > st) $("window").value = en - st;
+
+        var extras = [];
+        Object.keys(params).forEach(function (k) {
+          var bare = k.slice(prefix.length);
+          if (k.indexOf(prefix) === 0 && bare !== "starttime" && bare !== "endtime") {
+            extras.push(bare + "=" + params[k]);
+          }
+        });
+        $("extra").value = extras.join("\n");
+
+        harSample = { prefix: prefix, hash: hash, params: params, contentPath: segs.slice(0, -1).join("/") };
+        $("sample").innerHTML =
+          "captured hash: <b>" + hash + "</b><br>" +
+          "payload: " + harSample.contentPath + "?&lt;SECRET&gt;&amp;" +
+          Object.keys(params).map(function (k) { return k + "=" + params[k]; }).sort().join("&amp;");
+        $("btn-verify").disabled = false;
+        $("btn-verify-all").disabled = false;
+        log("Loaded token layout from HAR: " + prefix + " @ " + u.host + "/" + harSample.contentPath, "ok");
+        return;
+      }
+      log("No tokenised URLs found in that HAR.", "err");
+    };
+    fr.readAsText(f);
+  });
+
+  function verify(all) {
+    if (!harSample) return;
+    var base = cfg();
+    base.contentPath = harSample.contentPath;
+    base.prefix = harSample.prefix;
+    var variants = all
+      ? [["SHA-256", false], ["SHA-256", true], ["SHA-384", false], ["SHA-384", true], ["SHA-512", false], ["SHA-512", true]]
+      : [[base.algo, base.urlsafe]];
+
+    log("Expected: " + harSample.hash);
+    var any = false;
+    variants.reduce(function (chain, v) {
+      return chain.then(function () {
+        var probe = Object.assign({}, base, { algo: v[0], urlsafe: v[1] });
+        return WT.computeHash(probe, $("secret").value, harSample.params).then(function (r) {
+          var ok = r.hash === harSample.hash;
+          any = any || ok;
+          log((ok ? "MATCH  " : "no     ") + v[0] + "/" + (v[1] ? "url-safe" : "standard") + "  " + r.hash,
+              ok ? "ok" : "muted");
+          if (ok) { $("algo").value = v[0]; $("b64").value = v[1] ? "url" : "std"; }
+        });
+      });
+    }, Promise.resolve()).then(function () {
+      log(any
+        ? "Secret confirmed — generated URLs will be accepted."
+        : "No match: wrong secret, or the hash inputs differ (e.g. Wowza folds the client IP in — add clientip=<ip> to extra params).",
+        any ? "ok" : "err");
+    }).catch(function (e) { log("Verify failed: " + e.message, "err"); });
+  }
+
+  /* ---- buttons ---- */
+  $("btn-play").addEventListener("click", function () { play(); });
+  $("btn-reload").addEventListener("click", function () { play(); });
+  $("btn-gen").addEventListener("click", function () { generate().catch(function () {}); });
+  $("btn-verify").addEventListener("click", function () { verify(false); });
+  $("btn-verify-all").addEventListener("click", function () { verify(true); });
+  $("auto").addEventListener("change", scheduleRenew);
+
+  $("btn-copy").addEventListener("click", function () {
+    if (!current) return log("Nothing generated yet.", "warn");
+    navigator.clipboard.writeText(current.url).then(
+      function () { log("URL copied.", "ok"); },
+      function () { log("Clipboard blocked — select the URL above manually.", "warn"); }
+    );
+  });
+
+  $("btn-stop").addEventListener("click", function () {
+    if (hls) { hls.destroy(); hls = null; }
+    video.removeAttribute("src");
+    video.load();
+    clearTimeout(renewTimer);
+    log("Stopped.");
+  });
+
+  $("btn-fetch").addEventListener("click", function () {
+    var p = current ? Promise.resolve(current) : generate();
+    p.then(function (res) {
+      log("GET " + res.url.slice(0, 90) + "…");
+      return fetch(res.url, { headers: { "Accept": "*/*" } }).then(function (r) {
+        return r.text().then(function (body) {
+          log("HTTP " + r.status + " " + r.statusText + " [" + (r.headers.get("content-type") || "?") + "]",
+              r.ok ? "ok" : "err");
+          var head = body.split("\n").slice(0, 4).join("\n").trim();
+          if (head) log(head, r.ok ? "" : "err");
+          if (r.ok && /_tk([A-Za-z0-9+/=_-]+)/.test(body)) {
+            try { log("chunklist token decodes to: " + WT.decodeTk(body.match(/chunklist[^\s]*/)[0]), "muted"); }
+            catch (e) { /* not every playlist embeds one */ }
+          }
+        });
+      });
+    }).catch(function (e) {
+      log("Fetch failed: " + e.message + " (CORS or network — check the browser console).", "err");
+    });
+  });
+
+  log("Ready. Enter the shared secret, then “Generate & play”. " +
+      "Without the real secret the URL is well-formed but the edge returns 403.", "muted");
+
+  // Warn when we are not pointed at a local mock. Deferred a tick so any config
+  // injected by mock_wowza.py (which runs after this script) is already applied.
+  // Without this, aiming at a production edge looks identical to a wrong secret:
+  // both just yield 403.
+  setTimeout(function () {
+    var host = $("host").value.trim();
+    var isLocal = /^(localhost|127\.0\.0\.1|\[::1\]|::1)(:\d+)?$/i.test(host);
+    if (location.protocol === "file:") {
+      log("Opened straight from disk (file://). mock_wowza.py serves this very page " +
+          "with the correct host, path and token format already filled in — " +
+          "run it and open http://localhost:<port>/ instead.", "warn");
+    }
+    if (!isLocal) {
+      log("Target is " + host + ", which is not a local mock. That edge keeps its own " +
+          "shared secret, so anything you type here will come back 403 no matter what. " +
+          "Point this at your own server to test hash generation.", "warn");
+    }
+  }, 0);
+})();
+</script>
+</body>
+</html>
