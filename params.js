@@ -28,6 +28,12 @@ var url_to_id = {
 
     "https://622a10e8864f7.streamlock.net/live/61_perbes.stream/playlist.m3u8": 96,
     "https://622a10e8864f7.streamlock.net/camaramar/61_perbes.stream/playlist.m3u8": 96,
+
+    "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8": 103,
+    "https://622a10e8864f7.streamlock.net/camaramar/31_coroso.stream/playlist.m3u8": 103,
+
+    "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8"    : 78,
+    "https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8"    : 78,
 };
 
 // Minutos que se considera válido o valor gardado na cookie.
@@ -35,7 +41,6 @@ var CACHE_MINUTOS = 1;
 
 
 function getWebcamIdFromUrl(url) {
-
     if (!(url in url_to_id)) {
         console.log(`getWebcamIdFromUrl(${url}) = ${url_to_id[url]} params=undefined`);
         return "";
@@ -66,7 +71,6 @@ function getParams(id) {
     //{"datos_json": {"estado": 200, "content": {"url": "https://622a10e8864f7.streamlock.net/live/68_lanzada.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786435014&jdtcbrndmrdendtime=1786436824&jdtcbrndmrdhash=IRbLB7qytNaOso9JikqLqrTN-OhZjQ63qxklth9xr1o%3D", "expires_at": 1786436824, "refresh_at": 1786436524, "protected": true}, "timestamp": 1786435024}, "source": "live data", "timestamp": 1786435024, "estado": 200, "statusCode": 200, "headers": {"Content-Type": "application/json"}}
 
     var url = proxyHostCamaramar + encodeURIComponent(urlstream);
-    console.log("aaaaaaaaa " + url);
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, false);   // false = síncrono
