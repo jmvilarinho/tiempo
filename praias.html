@@ -37,14 +37,12 @@
 				// aplicación Wowza a /live/ e engadiron SecureToken ligado á sesión do usuario,
 				// polo que xa non se pode enlazar dende unha páxina estática.
 				var url = 'https://s61.ipcamlive.com/streams/3dfzg63etbyh0kjsl/stream.m3u8';
-				// Praia de Pedra do Sal (Baldaio), a carón de Razo.
-				var fallbackUrl = 'https://s169.ipcamlive.com/streams/a94s610odrn8iyime/stream.m3u8';
+				url="https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/c914b0e1-5e2d-41cf-8c34-1f110a27c7c5.webp';
-				alternativeuri = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
-				//showVideo(url, 'Razo', '', alternativeuri, fallbackUrl)
-				showVideo(url, 'Razo', 'Razo', alternativeuri);
+				var streamParams = getWebcamIdFromUrl(url);
+				showVideo(url + streamParams, 'Razo', 'Razo', alternativeuri);
 
 			}
 		},
@@ -167,11 +165,12 @@
 				// Non hai stream: camaramar move o vídeo tras SecureToken de sesión e
 				// non atopamos ningunha webcam libre en Perbes. Usamos a instantánea
 				// pública da súa cámara (webcam id 96), que se actualiza cada poucos minutos.
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/61_perbes.stream/playlist.m3u8';
+				var url = 'https://622a10e8864f7.streamlock.net/live/61_perbes.stream/playlist.m3u8';
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/79d5d078-3b54-4bd6-b842-111acb0ecc20.webp'
 				getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
 				getTemperatura('Mino-temperatura', 43.357382, -8.211300);
-				showVideo(url, 'Mino', 'Perbes', alternativeuri)
+				var streamParams = getWebcamIdFromUrl(url);
+				showVideo(url + streamParams , 'Mino', 'Perbes', alternativeuri)
 			}
 		},
 		{
