@@ -1291,6 +1291,7 @@ function geoFindMeRetry(event, divName) {
 const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=aemet&url=";
 const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
 const proxyHostMeteosix = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=meteosix&url=";
+const proxyHostCamaramar = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=camaramar&url=";
 
 //const URL_MINISTERIO = "https://sedeaplicaciones.minetur.gob.es";
 //const FUEL_PRICES_HOST = "https://energia.serviciosmin.gob.es";

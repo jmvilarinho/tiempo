@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="gl">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Diagnóstico SecureToken (só local)</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- Os mesmos scripts que carga index.html, e na mesma orde: o obxectivo é
+	     executar o código real do sitio no navegador real e no mesmo orixe, non
+	     unha reprodución del. -->
+	<script src="jquery-3.7.1.min.js"></script>
+	<script src="hls.light.min.js"></script>
+	<script src="common.js?nocache=4"></script>
+	<script src="index.js?nocache=35"></script>
+	<style>
+		body { font: 14px/1.5 system-ui, sans-serif; margin: 1.2rem; max-width: 60rem; }
+		h1 { font-size: 1.2rem; }
+		#log { background: #111; color: #ddd; padding: .8rem; border-radius: 6px;
+		       font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap;
+		       word-break: break-all; max-height: 22rem; overflow: auto; }
+		.ok { color: #7ddb7d; } .err { color: #ff8a80; } .warn { color: #ffd479; }
+		video { width: 400px; max-width: 100%; background: #000; display: block;
+		        margin-top: .8rem; }
+		button { font: inherit; padding: .4rem .8rem; margin-right: .4rem; }
+		code { background: #eee; padding: 0 .25rem; }
+	</style>
+</head>
+
+<body>
+	<h1>Diagnóstico SecureToken — Coroso</h1>
+	<p>Executa as funcións reais de <code>index.js</code> paso a paso e di en cal para.
+		Non toca ningunha páxina do sitio. <b>Non subir a GitHub Pages</b>: só serve para
+		probar en local contra <code>mock_wowza.py</code>.</p>
+
+	<p>
+		<button id="run">Probar a cadea completa</button>
+		<button id="direct">Reproducir con hls.js e rexistro detallado</button>
+		<button id="clear">Baleirar a cookie de tokens</button>
+	</p>
+
+	<div id="log"></div>
+
+	<!-- Os tres elementos que espera showVideo para a cámara 'Coroso'. -->
+	<div id="Coroso-alternative"></div>
+	<div style="visibility: hidden" id="Coroso-unavailable"><img width="100" src="img/unavailable.png"></div>
+	<video controls id="Coroso" style="visibility: hidden">
+		<source />
+	</video>
+
+	<script>
+		// A mesma URL que usa praias.html para Coroso (a única cámara que xa apunta
+		// a /live/, é dicir a única que pasa polo asinador).
+		const CAM = 'https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8';
+
+		const logDiv = document.getElementById('log');
+		function say(msg, cls) {
+			const line = document.createElement('div');
+			if (cls) line.className = cls;
+			line.textContent = msg;
+			logDiv.appendChild(line);
+			logDiv.scrollTop = logDiv.scrollHeight;
+		}
+
+		// O código de index.js explícase por console.log/warn; recollémolo aquí para
+		// non obrigar a ter as DevTools abertas.
+		['log', 'warn', 'error'].forEach(function (k) {
+			const orig = console[k].bind(console);
+			console[k] = function () {
+				orig.apply(null, arguments);
+				say('  [console.' + k + '] ' + Array.prototype.join.call(arguments, ' '),
+					k === 'log' ? null : 'warn');
+			};
+		});
+
+		document.getElementById('clear').onclick = function () {
+			eraseCookie('streamTokens');
+			eraseCookie('streamSigner');
+			say('Cookies streamTokens e streamSigner borradas.', 'ok');
+		};
+
+		document.getElementById('run').onclick = async function () {
+			logDiv.innerHTML = '';
+			say('páxina ............ ' + location.href);
+			say('Hls.isSupported() . ' + (window.Hls ? Hls.isSupported() : 'Hls NON cargou'),
+				(window.Hls && Hls.isSupported()) ? 'ok' : 'err');
+
+			// 1. ¿Detéctase o asinador?
+			const signer = (typeof proxyHostStreamToken !== 'undefined' && proxyHostStreamToken)
+				|| localStreamSigner();
+			say('asinador .......... ' + signer, signer ? 'ok' : 'err');
+			if (!signer) {
+				say('PARA AQUÍ: este hostname non se considera local nin privado, así que ' +
+					'non se busca ningún asinador. Abre a páxina por http://172.25.48.1:5500 ' +
+					'ou http://localhost:5500.', 'err');
+				return;
+			}
+
+			// 2. ¿Contesta o mock? Distinguimos "non está a escoitar" de "erro HTTP",
+			//    que son dous problemas distintos e o fetch dá o mesmo aspecto.
+			let signed = null;
+			try {
+				const r = await fetch(signer + encodeURIComponent(CAM));
+				say('asinador HTTP ..... ' + r.status, r.ok ? 'ok' : 'err');
+				if (!r.ok) {
+					say('PARA AQUÍ: o asinador respondeu ' + r.status + '.', 'err');
+					return;
+				}
+				const data = await r.json();
+				signed = data.url;
+				say('URL asinada ....... ' + signed, 'ok');
+			} catch (e) {
+				say('fetch ao asinador FALLOU: ' + e.message, 'err');
+				say('Causas habituais, por orde: (a) mock_wowza.py non está a escoitar en ' +
+					'8089; (b) está a escoitar só no loopback e esta páxina vén dunha IP ' +
+					'privada — Chrome bloquea iso (Private Network Access), arránxase con ' +
+					'--bind ' + location.hostname + '; (c) sen cabeceiras CORS.', 'err');
+				return;
+			}
+
+			// 3. O camiño real: getSignedStreamURL, coa súa caché.
+			const viaCache = await getSignedStreamURL(CAM);
+			say('getSignedStreamURL  ' + viaCache,
+				viaCache === CAM ? 'err' : 'ok');
+			if (viaCache === CAM) {
+				say('PARA AQUÍ: devolveu a URL sen asinar, así que showVideo iría á ' +
+					'instantánea alternativa.', 'err');
+				return;
+			}
+			say('cookie streamTokens ' + (getCookie('streamTokens') || '(baleira)'));
+
+			// 4. ¿Chega o manifesto? É o que decide showVideo.
+			say('validURL(manifesto) ' + await validURL(viaCache));
+
+			// 5. E agora o showVideo de verdade, o mesmo que chama praias.html.
+			say('--- chamando a showVideo() igual que praias.html ---');
+			await showVideo(CAM, 'Coroso', 'Coroso',
+				'https://www.camaramar.com/uploads/webcam/865c5099-f700-4a8e-9af5-34c002295ebd.webp');
+			const v = document.getElementById('Coroso');
+			if (!v) {
+				say('showVideo eliminou o <video>: foi á alternativa. Mira as liñas de ' +
+					'console de arriba para saber por que.', 'err');
+			} else {
+				say('o <video> segue aí; se non se ve imaxe, mira os eventos do outro botón.',
+					'ok');
+			}
+		};
+
+		// Reprodución directa, sen showVideo, con todos os eventos de hls.js: serve para
+		// separar "o token non vale" de "o vídeo non se decodifica".
+		document.getElementById('direct').onclick = async function () {
+			logDiv.innerHTML = '';
+			const url = await getSignedStreamURL(CAM);
+			say('fonte ............. ' + url);
+			const v = document.getElementById('Coroso');
+			v.style.visibility = 'visible';
+			if (!Hls.isSupported()) { say('hls.js non soportado neste navegador', 'err'); return; }
+			const hls = new Hls({ debug: false });
+			hls.on(Hls.Events.MANIFEST_PARSED, function (e, d) {
+				say('MANIFEST_PARSED ... ' + d.levels.length + ' nivel(is)', 'ok');
+			});
+			hls.on(Hls.Events.LEVEL_LOADED, function (e, d) {
+				say('LEVEL_LOADED ...... ' + d.details.fragments.length + ' fragmentos, ' +
+					'live=' + d.details.live, 'ok');
+			});
+			hls.on(Hls.Events.FRAG_LOADED, function (e, d) {
+				say('FRAG_LOADED ....... sn=' + d.frag.sn + ' ' +
+					Math.round((d.frag.stats.total || 0) / 1024) + ' KiB', 'ok');
+			});
+			hls.on(Hls.Events.ERROR, function (e, d) {
+				say('ERROR ............. fatal=' + d.fatal + ' ' + d.type + ' / ' + d.details +
+					(d.response ? ' HTTP ' + d.response.code : ''), 'err');
+			});
+			v.addEventListener('playing', function () { say('o <video> está a reproducir', 'ok'); });
+			hls.loadSource(url);
+			hls.attachMedia(v);
+			hls.on(Hls.Events.MEDIA_ATTACHED, function () { v.muted = true; v.play(); });
+		};
+
+		say('Listo. Preme "Probar a cadea completa".');
+
+		// ?auto=1 lanza a proba soa, para poder correr esta páxina en Chrome headless
+		// e ler o rexistro sen premer nada.
+		if (new URLSearchParams(location.search).get('auto')) {
+			document.getElementById('run').click();
+		}
+	</script>
+</body>
+
+</html>
