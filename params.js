@@ -26,6 +26,9 @@ var url_to_id = {
     "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8": 11,
     "https://622a10e8864f7.streamlock.net/camaramar/5_razo.stream/playlist.m3u8": 11,
 
+    "https://622a10e8864f7.streamlock.net/live/2_razo_art.stream/playlist.m3u8": 1034,
+    "https://622a10e8864f7.streamlock.net/camaramar/2_razo_art.stream/playlist.m3u8": 1034,
+
     "https://622a10e8864f7.streamlock.net/live/61_perbes.stream/playlist.m3u8": 96,
     "https://622a10e8864f7.streamlock.net/camaramar/61_perbes.stream/playlist.m3u8": 96,
 

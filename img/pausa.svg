@@ -1,0 +1,7 @@
+<!-- Icona do botón de pausa da alternancia de cámaras (alternateMediaSimple en index.js).
+     Círculo escuro con borde branco para que se vea sobre calquera imaxe de fondo. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+	<circle cx="12" cy="12" r="11" fill="#2b2b2b" fill-opacity="0.75" stroke="#ffffff" stroke-width="1.5" />
+	<rect x="8.5" y="7" width="2.5" height="10" rx="0.8" fill="#ffffff" />
+	<rect x="13" y="7" width="2.5" height="10" rx="0.8" fill="#ffffff" />
+</svg>

@@ -411,10 +411,19 @@ function showSnapshot(url, imgid, refreshSeconds = 120) {
 	recarga();
 }
 
-// urlVideoAlternative: instantánea que substitúe ao vídeo se o stream non se pode
-// reproducir (camaramar move os streams a /live/ tras un SecureToken de sesión e os
-// vellos devolven 404). Sen ela a quenda do vídeo quedaría en negro cada intervalo.
-function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlVideoAlternative = '') {
+// ¿A URL é un manifesto HLS? Serve para decidir se unha quenda de alternateMediaSimple
+// se reproduce nun <video> ou se amosa como instantánea nun <img>.
+function esStreamHls(url) {
+	return /\.m3u8(\?|$)/i.test(url || '');
+}
+
+// Alterna dúas cámaras no mesmo bloque. Cada quenda pode ser un stream HLS ou unha
+// instantánea (detéctase coa extensión .m3u8), e cada unha ten a súa propia imaxe
+// alternativa — urlImageAlternative para a primeira, urlVideoAlternative para a segunda,
+// na mesma orde que as urls — que a substitúe cando o seu stream non se pode reproducir
+// (camaramar move os streams a /live/ tras un SecureToken de sesión e os vellos devolven
+// 404/403). Sen ela a quenda do vídeo quedaría en negro cada intervalo.
+function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '') {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
 	const title = document.getElementById(baseid + '-title');
@@ -425,140 +434,253 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 		return;
 	}
 
-	let showingImage = true;
-	let intervalId = null;
-	let hlsInstance = null;
-
 	const params = new URLSearchParams(window.location.search);
 	const width = params.get('w');
-
-	img.style.margin = '0 auto';
-	img.style.display = 'block';
-	video.style.margin = '0 auto';
-	// Arrancamos na quenda da imaxe (showingImage = true): se puxésemos o vídeo en
-	// 'block' aquí, verianse os dous á vez ata o primeiro toggle.
-	video.style.display = 'none';
-
-	if (width) {
-		img.style.width = width + 'px';
-		img.style.maxWidth = width + 'px';
-		video.style.width = width + 'px';
-		video.style.maxWidth = width + 'px';
-	}
-
-	// Reutilizamos o mesmo <img> para as dúas quendas cando o vídeo falla, así que
-	// calculamos os dous src unha soa vez (o navegador serve da caché ao repetilos).
-	// urlImage non se refresca: xa leva a marca de tempo no nome (getUltimaXuntaCam),
-	// así que un nocache novo devolvería o mesmo ficheiro.
-	var ms = Date.now();
-	const srcImage = urlImage + '?nocache=' + ms;
-	let srcVideoAlternative = urlVideoAlternative ? urlVideoAlternative + '?nocache=' + ms : '';
-	let altStamp = ms;
-	let videoFailed = false;
 
 	// A instantánea alternativa ten sempre o mesmo nome de ficheiro e actualízase cada
 	// poucos minutos, así que pedimos unha copia nova (como máximo cada ALT_REFRESH_MS)
 	// cando lle toca a súa quenda; se non, quedaría conxelada mentres a páxina siga aberta.
 	const ALT_REFRESH_MS = 120000;
-	function refrescaAlternativa() {
-		if (!urlVideoAlternative || Date.now() - altStamp < ALT_REFRESH_MS) {
-			return;
+	const ms = Date.now();
+
+	function aplicaAncho(el) {
+		el.style.margin = '0 auto';
+		if (width) {
+			el.style.width = width + 'px';
+			el.style.maxWidth = width + 'px';
 		}
-		altStamp = Date.now();
-		srcVideoAlternative = urlVideoAlternative + '?nocache=' + altStamp;
 	}
 
-	img.src = srcImage;
+	aplicaAncho(img);
+	aplicaAncho(video);
+	// Arrancamos amosando a primeira quenda (amosa() máis abaixo): se puxésemos os dous
+	// en 'block' aquí, verianse á vez ata o primeiro toggle.
+	img.style.display = 'block';
+	video.style.display = 'none';
 
 	if (unavailable) {
 		unavailable.style.display = 'none';
 	}
 
-	// O stream non se pode reproducir: na quenda do vídeo amosamos a súa instantánea.
-	function videoUnavailable() {
-		if (videoFailed || !srcVideoAlternative) {
+	// O <video> do fragmento asígnase á primeira quenda que sexa stream; se as dúas o son
+	// fai falta un segundo elemento.
+	let videoLibre = video;
+
+	// Con dous streams nun só <video> habería que destruír e recargar hls.js en cada
+	// cambio (pantalla en negro cada poucos segundos), así que clonamos o elemento.
+	function creaVideoExtra() {
+		let extra = document.getElementById(baseid + '-video2');
+		if (!extra) {
+			extra = video.cloneNode(true);
+			extra.id = baseid + '-video2';
+			video.parentNode.insertBefore(extra, video.nextSibling);
+		}
+		aplicaAncho(extra);
+		extra.style.display = 'none';
+		return extra;
+	}
+
+	function creaQuenda(url, label, urlAlternativa) {
+		const quenda = {
+			url: url,
+			label: label,
+			stream: esStreamHls(url),
+			// A instantánea non se refresca por si mesma: as da Xunta xa levan a marca de
+			// tempo no nome (getUltimaXuntaCam), así que un nocache novo devolvería o mesmo
+			// ficheiro. Calcúlase unha vez e o navegador sérvea da caché en cada quenda.
+			src: url + (url.indexOf('?') >= 0 ? '&' : '?') + 'nocache=' + ms,
+			urlAlternativa: urlAlternativa || '',
+			srcAlternativa: urlAlternativa ? urlAlternativa + '?nocache=' + ms : '',
+			stampAlternativa: ms,
+			video: null,
+			hls: null,
+			cargaParada: false,
+			fallou: false
+		};
+		if (quenda.stream) {
+			quenda.video = videoLibre || creaVideoExtra();
+			videoLibre = null;
+		}
+		return quenda;
+	}
+
+	const quendas = [
+		creaQuenda(urlImage, labelImage, urlImageAlternative),
+		creaQuenda(urlVideo, labelVideo, urlVideoAlternative)
+	];
+	let actual = 0;
+
+	// Con dous streams no mesmo bloque só interesa descargar o que se está a ver: hls.js
+	// seguiría enchendo o buffer do agochado e duplicaría o ancho de banda. Cun só stream
+	// déixase cargando (así non hai que agardar por el ao volver á súa quenda).
+	const paraCargaAgochada = quendas.filter(q => q.stream).length > 1;
+
+	function refrescaAlternativa(q) {
+		if (!q.urlAlternativa || Date.now() - q.stampAlternativa < ALT_REFRESH_MS) {
 			return;
 		}
-		videoFailed = true;
-		console.warn('Stream non dispoñible en ' + baseid + ', empregamos a instantánea alternativa');
-		if (hlsInstance) {
-			hlsInstance.destroy();
-			hlsInstance = null;
+		q.stampAlternativa = Date.now();
+		q.srcAlternativa = q.urlAlternativa + '?nocache=' + q.stampAlternativa;
+	}
+
+	// A quenda non se pode amosar (stream protexido/caducado ou instantánea sen publicar):
+	// pasamos á súa imaxe alternativa, que se amosa sempre no <img> compartido.
+	function noDispoñible(q) {
+		if (!q || q.fallou || !q.srcAlternativa) {
+			return;
 		}
-		video.style.display = 'none';
-		if (!showingImage) {
-			// Xa estabamos na quenda do vídeo: cambiamos agora mesmo, sen esperar.
-			refrescaAlternativa();
-			img.src = srcVideoAlternative;
+		q.fallou = true;
+		console.warn('Media non dispoñible en ' + baseid + ' (' + q.label + '), empregamos a instantánea alternativa');
+		if (q.hls) {
+			q.hls.destroy();
+			q.hls = null;
+		}
+		if (q.video) {
+			q.video.style.display = 'none';
+		}
+		if (quendas[actual] === q) {
+			// Xa estabamos nesta quenda: cambiamos agora mesmo, sen esperar.
+			amosa(q);
+		}
+	}
+
+	function arranca(q) {
+		if (!q.stream) {
+			return;
+		}
+		if (Hls.isSupported()) {
+			q.hls = new Hls({ debug: false });
+			q.hls.on(Hls.Events.ERROR, function (event, data) {
+				// Coma en showVideo: un 403/401 chega como non fatal e reinténtase sen fin.
+				if (!data.fatal && !isDeniedError(data)) {
+					return;
+				}
+				noDispoñible(q);
+			});
+			q.hls.loadSource(q.url);
+			q.hls.attachMedia(q.video);
+		} else if (q.video.canPlayType('application/vnd.apple.mpegurl')) {
+			q.video.src = q.url;
+			q.video.addEventListener('error', function () {
+				noDispoñible(q);
+			});
+		}
+
+		// Comprobación previa do manifesto: máis rápida e determinista que agardar polos
+		// reintentos de hls.js. Só ten sentido se hai alternativa que amosar.
+		if (q.srcAlternativa) {
+			validURL(q.url).then(function (ok) {
+				if (!ok) {
+					noDispoñible(q);
+				}
+			});
+		}
+	}
+
+	// O <img> é compartido polas dúas quendas, así que un erro de carga é sempre da quenda
+	// que se está a amosar. Se xa fallou (estamos amosando a alternativa) non se reintenta.
+	img.addEventListener('error', function () {
+		noDispoñible(quendas[actual]);
+	});
+
+	function oculta(q) {
+		if (!q.video) {
+			return;
+		}
+		q.video.style.display = 'none';
+		q.video.pause();
+		if (paraCargaAgochada && q.hls) {
+			q.hls.stopLoad();
+			q.cargaParada = true;
+		}
+	}
+
+	function amosa(q) {
+		if (q.stream && !q.fallou) {
+			img.style.display = 'none';
+			if (q.cargaParada && q.hls) {
+				// startLoad() sen posición retoma no bordo do directo.
+				q.hls.startLoad();
+				q.cargaParada = false;
+			}
+			q.video.style.display = 'block';
+			q.video.muted = true;
+			q.video.play().catch(e => console.log('Play error:', e));
+		} else {
+			refrescaAlternativa(q);
+			img.src = q.fallou ? q.srcAlternativa : q.src;
 			img.style.display = 'block';
 		}
-	}
-
-	if (Hls.isSupported()) {
-		hlsInstance = new Hls({ debug: false });
-		hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-			// Coma en showVideo: un 403/401 chega como non fatal e reinténtase sen fin.
-			if (!data.fatal && !isDeniedError(data)) {
-				return;
-			}
-			videoUnavailable();
-		});
-		hlsInstance.loadSource(urlVideo);
-		hlsInstance.attachMedia(video);
-	} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-		video.src = urlVideo;
-		video.addEventListener('error', videoUnavailable);
-	}
-
-	// Comprobación previa do manifesto: máis rápida e determinista que agardar polos
-	// reintentos de hls.js. Só ten sentido se hai alternativa que amosar.
-	if (srcVideoAlternative) {
-		validURL(urlVideo).then(function (ok) {
-			if (!ok) {
-				videoUnavailable();
-			}
-		});
+		title.textContent = q.label;
 	}
 
 	function toggle() {
 		try {
-			if (showingImage) {
-				if (videoFailed) {
-					refrescaAlternativa();
-					img.src = srcVideoAlternative;
-					img.style.display = 'block';
-					video.style.display = 'none';
-				} else {
-					img.style.display = 'none';
-					video.style.display = 'block';
-					video.muted = true;
-					video.play().catch(e => console.log('Play error:', e));
-				}
-				title.textContent = labelVideo;
-				showingImage = false;
-			} else {
-				video.style.display = 'none';
-				img.src = srcImage;
-				img.style.display = 'block';
-				video.pause();
-				title.textContent = labelImage;
-				showingImage = true;
-			}
+			oculta(quendas[actual]);
+			actual = (actual + 1) % quendas.length;
+			amosa(quendas[actual]);
 		} catch (e) {
 			console.error('Error in toggle:', e);
 		}
 	}
 
-	function start() {
-		if (intervalId) {
-			clearInterval(intervalId);
+	// Un só temporizador por bloque aínda que se volva chamar a init().
+	function paraTemporizador() {
+		if (img.dataset.alternateTimer) {
+			clearInterval(Number(img.dataset.alternateTimer));
+			delete img.dataset.alternateTimer;
 		}
-		intervalId = setInterval(() => {
-			toggle();
-		}, intervalSeconds * 1000);
 	}
 
-	start();
+	function arrancaTemporizador() {
+		paraTemporizador();
+		img.dataset.alternateTimer = setInterval(toggle, intervalSeconds * 1000);
+	}
+
+	// Botón para pausar/continuar a alternancia, á dereita do nome. Créase desde aquí para
+	// que o teña calquera bloque con alternancia sen tocar o HTML dos fragmentos. É un <img>
+	// e non un <button> porque o nome adoita ir dentro da <a> á cámara: paramos aí o clic
+	// para que non se siga a ligazón. A pausa só conxela a quenda actual, o vídeo segue.
+	let pausado = false;
+	const boton = document.createElement('img');
+
+	function actualizaBoton() {
+		boton.src = pausado ? 'img/continuar.svg' : 'img/pausa.svg';
+		boton.alt = pausado ? 'Continuar' : 'Pausar';
+		boton.title = pausado ? 'Continuar a alternancia' : 'Pausar a alternancia';
+	}
+
+	function creaBoton() {
+		// Se se volve chamar a init() sobre os mesmos elementos, o botón vello levaría o
+		// seu propio 'pausado' (e o seu listener): substitúese sempre por un novo.
+		const vello = document.getElementById(baseid + '-toggle');
+		if (vello) {
+			vello.remove();
+		}
+		boton.id = baseid + '-toggle';
+		boton.style.cssText = 'width: 22px; height: 22px; margin-left: 10px; vertical-align: middle; cursor: pointer;';
+		actualizaBoton();
+		boton.addEventListener('click', function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			pausado = !pausado;
+			actualizaBoton();
+			if (pausado) {
+				paraTemporizador();
+			} else {
+				arrancaTemporizador();
+			}
+		});
+		// O nome é un <p> (bloque): en liña para que o botón quede ao seu lado e non debaixo.
+		title.style.display = 'inline-block';
+		title.style.verticalAlign = 'middle';
+		title.parentNode.insertBefore(boton, title.nextSibling);
+	}
+
+	quendas.forEach(arranca);
+	amosa(quendas[actual]);
+	creaBoton();
+	arrancaTemporizador();
 }
 
 function showAlternatingOverlay(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {

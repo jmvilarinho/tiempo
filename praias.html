@@ -16,34 +16,36 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<div id="Razo-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_razo' rel="noreferrer" target=camaramar>
-					<p>Razo</p>
+			<div id="Razo-alternative" style="margin: 0; padding: 0;">
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_razo' id="#Razo" rel="noreferrer" target=camaramar>
+					<p id="Razo-title" style="margin: 5px 0;">Razo</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Razo-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Razo">
+			<img id="Razo-img" style="width: 100%; max-width: 1300px; height: auto; display: block; margin: 0;" />
+			<video controls id="Razo-video" style="width: 100%; max-width: 1300px; height: auto; display: none; margin: 0;">
 				<source />
 				<p>Your browser does not support H.264/MP4.</p>
 			</video>
+			<div style="height: 5px;"></div>
 			<div id='Razo-temperatura'></div>
 			<div id='Razo-prevision'></div>
 		</div>
 	</div>
 </section>`,
 			init: function () {
-				// Cámaras do Concello de Carballo en ipcamlive (HLS aberto, CORS *, sen token).
-				// A antiga fonte de camaramar (/camaramar/5_razo.stream) devolve 404: moveron a
-				// aplicación Wowza a /live/ e engadiron SecureToken ligado á sesión do usuario,
-				// polo que xa non se pode enlazar dende unha páxina estática.
-				var url = 'https://s61.ipcamlive.com/streams/3dfzg63etbyh0kjsl/stream.m3u8';
-				url = "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
+				var url = "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
+				var streamParams = getWebcamIdFromUrl(url);
+				// Instantáneas (poster de camaramar) para cando o stream non se poida reproducir.
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/c914b0e1-5e2d-41cf-8c34-1f110a27c7c5.webp';
+
+				var url2 = "https://622a10e8864f7.streamlock.net/live/2_razo_art.stream/playlist.m3u8"
+				var streamParams2 = getWebcamIdFromUrl(url2);
+				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
+
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
-				var streamParams = getWebcamIdFromUrl(url);
-				showVideo(url + streamParams, 'Razo', 'Razo', alternativeuri);
-
+				alternateMediaSimple('Razo', url + streamParams, 'Razo', url2 + streamParams2, 'Razo oeste', 5, alternativeuri, alternativeuri2);
 			}
 		},
 		{
@@ -72,15 +74,16 @@
 </section>`,
 			init: function () {
 				var url = getUltimaXuntaCam('Aguete2');
+
 				var url2 = 'https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8';
 				url2 = "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8"
 				var streamParams2 = getWebcamIdFromUrl(url2);
+				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 
-				var url2_alternative = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
-				//url2 = "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786049757&jdtcbrndmrdendtime=1786051567&jdtcbrndmrdhash=7WUfHEdmwXy6yQF3GcL-yC7eS-Q7-3YVCjzFRPx1HQ4%3D"
 				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
 				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
-				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, url2_alternative);
+				// A primeira quenda é a instantánea da Xunta: non ten alternativa que amosar.
+				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, '', alternativeuri2);
 			}
 		},
 		{
@@ -122,7 +125,7 @@
 		<div class="col-rt-12">
 			<div id="Coroso-alternative">
 				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_coroso' id="#Coroso" rel="noreferrer" target=camaramar>
-					<p>Playa de Coroso (Ribeira)</p>
+					<p>Praia de Coroso (Ribeira)</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Coroso-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -155,7 +158,7 @@
 		<div class="col-rt-12">
 			<div id="Mino-alternative">
 				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_perbes' id="#Mino" rel="noreferrer" target=camaramar>
-					<p>Playa de Perbes</p>
+					<p>Praia de Perbes</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Mino-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -188,8 +191,8 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Sabon-alternative">
-				<a href='https://www.camaramar.com/webcam/playa-de-sabon' id="#Sabon" rel="noreferrer" target=camaramar>
-					<p>Sabón</p>
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_playa-de-sabon' id="#Sabon" rel="noreferrer" target=camaramar>
+					<p>Praia de Sabón</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Sabon-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -247,7 +250,7 @@
 		<div class="col-rt-12">
 			<div id="Lanzada-alternative">
 				<a href='https://www.camaramar.com/webcam/galicia_pontevedra_lanzada' id="#Lanzada" rel="noreferrer" target=camaramar>
-					<p>A Lanzada</p>
+					<p>Praia de A Lanzada</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Lanzada-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -350,7 +353,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<a href='#Rodeira' id="#Rodeira">
-				<p>Playa de Rodeira (Cangas do Morrazo)</p>
+				<p>Praia de Rodeira (Cangas do Morrazo)</p>
 			</a>
 			<div style="visibility: hidden" id="Rodeira-unavailable"><img width="100" src=img/unavailable.png></div>
 			<video controls id="Rodeira">

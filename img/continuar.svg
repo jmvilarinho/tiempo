@@ -1,0 +1,6 @@
+<!-- Icona do botón de continuar a alternancia de cámaras (alternateMediaSimple en index.js).
+     Mesmo debuxo que pausa.svg cun triángulo de play. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+	<circle cx="12" cy="12" r="11" fill="#2b2b2b" fill-opacity="0.75" stroke="#ffffff" stroke-width="1.5" />
+	<path d="M9.5 6.8 L17 12 L9.5 17.2 Z" fill="#ffffff" />
+</svg>

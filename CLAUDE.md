@@ -105,6 +105,19 @@ When changing data sources, update these constants rather than scattering URLs.
     and `showAlternatingOverlay` / `showAlternatingMediaSmooth` to alternate image and video
     (their internal `switchToVideo` / `showVideoStream` are deliberately *not* named `showVideo`,
     to avoid shadowing the global one).
+  - `alternateMediaSimple(baseid, url1, label1, url2, label2, intervalSeconds, url1Alternative,
+    url2Alternative)` is the one in use for the alternating blocks (Razo, Lapamán). Its markup is
+    `#<key>-img` + `#<key>-video` + `#<key>-title`. **Either turn may be an HLS stream or a still
+    image** — `esStreamHls` decides by the `.m3u8` extension — and each turn has its own fallback
+    snapshot (`url1Alternative` / `url2Alternative`), shown in the shared `<img>` when its stream
+    can't play (`validURL` precheck, fatal/denied `Hls.Events.ERROR`, native-HLS `error`) or when
+    its own snapshot fails to load. When *both* turns are streams the function clones the `<video>`
+    into `#<key>-video2` so neither stream has to be torn down on every switch, and calls
+    `hls.stopLoad()` / `startLoad()` on the hidden one so only the visible stream downloads.
+    It also injects a pause/resume toggle (`#<key>-toggle`, icons `img/pausa.svg` /
+    `img/continuar.svg`) right after `#<key>-title`, which only starts/stops the rotation timer —
+    the stream on screen keeps playing. It is an `<img>` with `preventDefault`/`stopPropagation`
+    because the title usually sits inside the `<a>` to the camera's site.
   - Perbes (`Mino` key in `praias.html`) is the reference case of a camera whose element is an
     `<img>`, not a `<video>`: its camaramar stream is token-locked, so `showVideo` short-circuits
     to the public snapshot.
