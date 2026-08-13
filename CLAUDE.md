@@ -85,6 +85,22 @@ When changing data sources, update these constants rather than scattering URLs.
   selector, persists the selection in the `praiasItems` / `poboacionsItems` cookie, and only
   runs `init()` for selected entries. To add a beach/town, add an entry to that array — it is
   the single source of truth, like the RFGF `equipos` array.
+  The entries load **in parallel**: `renderSelector` writes the whole selection's HTML in a
+  single `innerHTML` assignment (one reflow) and then dispatches each `init()` through
+  `tarefa()` — a `setTimeout(…, 0)` wrapper that returns a promise — so one entry's synchronous
+  work (building the Hls players, table markup) doesn't delay the others' requests and the
+  browser can paint in between. A plain microtask (`Promise.resolve().then`) would *not* work
+  here: microtasks drain before the browser paints.
+  `render_praias` / `render_poboacions` / `renderSelector` are `async` and resolve when every
+  `init()` has finished, via `Promise.all`. An entry opts into being waited for by **returning**
+  its promise (`return showVideo(...)` / `return alternateMediaSimple(...)`) — that is why the
+  fragments' `init()` bodies end in `return`; an `init()` that returns nothing is only waited
+  for up to its own launch. Each entry is caught separately, so one failure doesn't stop the
+  rest. Everything up to the first `await` is still synchronous (selector markup, entry HTML,
+  `beforeInit` → `total_elementos`), so callers may keep calling `render_*()` without `await`,
+  as `praias.html` / `poboacions.html` and the checkbox toggles do.
+  Because a re-render (checkbox click) replaces the content, each render bumps a generation
+  counter in `renderGeneration` and pending `init()`s from a superseded render are dropped.
 - `index.js` holds the bulk of weather logic: forecast rendering (`getPrevision` →
   `createPrevision`), tides (`getMareas`), geolocated current temperature
   (`geoFindMe` → `getTemperatura`), HLS webcam playback (`showVideo`, using `hls.light.min.js`).
@@ -114,6 +130,15 @@ When changing data sources, update these constants rather than scattering URLs.
     its own snapshot fails to load. When *both* turns are streams the function clones the `<video>`
     into `#<key>-video2` so neither stream has to be torn down on every switch, and calls
     `hls.stopLoad()` / `startLoad()` on the hidden one so only the visible stream downloads.
+    It is **`async`**, like `showVideo`: the block is painted synchronously (current turn, title
+    and toggle button) and only the per-turn `validURL` manifest check is awaited, *before*
+    creating that turn's `Hls` — so a dead stream never gets a player, and the caller's task is
+    not blocked. Don't move `amosa` / `creaBoton` / `arrancaTemporizador` behind that `await`:
+    `validURL` has no timeout, so an unresponsive host would leave the block empty and without a
+    toggle forever. Two consequences of the await to keep in mind: `amosa()` must not call
+    `play()` before the player exists (it checks `q.hls || q.video.src`, and `arranca` calls
+    `amosa` again once the player is ready), and a turn whose manifest check outlived the
+    rotation interval gets `stopLoad()`ed on the spot if it is no longer the visible one.
     It also injects a pause/resume toggle (`#<key>-toggle`, icons `img/pausa.svg` /
     `img/continuar.svg`) right after `#<key>-title`, which only starts/stops the rotation timer —
     the stream on screen keeps playing. It is an `<img>` with `preventDefault`/`stopPropagation`

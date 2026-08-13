@@ -6,8 +6,8 @@
 // id="webcam-video-9"
 // poster="https://www.camaramar.com/uploads/webcam/753e6314-6cee-4ae2-aabc-623c248b1613.webp"
 // muted autoplay playsinline webkit-playsinline preload="auto"
-// class="video-js vjs-default-skin w-full h-full js-webcam-player" 
-// disablePictureInPicture 
+// class="video-js vjs-default-skin w-full h-full js-webcam-player"
+// disablePictureInPicture
 // data-player-id="webcam-video-9"
 // data-stream-src="https://622a10e8864f7.streamlock.net/live/68_lanzada.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786431073&jdtcbrndmrdendtime=1786432883&jdtcbrndmrdhash=y3E9rp-BJVy8oCq7AxMa04YYviNaHscMT6kicTrp_VE%3D"
 // data-stream-expires-at="1786432883"

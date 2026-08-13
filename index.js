@@ -423,7 +423,11 @@ function esStreamHls(url) {
 // na mesma orde que as urls — que a substitúe cando o seu stream non se pode reproducir
 // (camaramar move os streams a /live/ tras un SecureToken de sesión e os vellos devolven
 // 404/403). Sen ela a quenda do vídeo quedaría en negro cada intervalo.
-function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '') {
+// É asíncrona coma showVideo: o bloque (imaxe/vídeo, rótulo e botón) queda pintado de
+// forma síncrona, e o que se agarda é a comprobación do manifesto de cada quenda antes
+// de montar o seu reprodutor. Antes era síncrona e facía todo iso —crear os Hls,
+// loadSource, attachMedia— dentro da tarefa de quen a chamaba, que quedaba bloqueada.
+async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '') {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
 	const title = document.getElementById(baseid + '-title');
@@ -544,10 +548,20 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 		}
 	}
 
-	function arranca(q) {
+	async function arranca(q) {
 		if (!q.stream) {
 			return;
 		}
+
+		// Comprobación previa do manifesto, coma en showVideo: máis rápida e determinista
+		// que agardar polos reintentos de hls.js, e así non se monta un reprodutor (nin se
+		// descarga nada) para un stream caído. Só ten sentido se hai alternativa que amosar;
+		// se non a hai, arrincamos igual e que hls.js reintente.
+		if (q.srcAlternativa && !(await validURL(q.url))) {
+			noDispoñible(q);
+			return;
+		}
+
 		if (Hls.isSupported()) {
 			q.hls = new Hls({ debug: false });
 			q.hls.on(Hls.Events.ERROR, function (event, data) {
@@ -566,14 +580,16 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 			});
 		}
 
-		// Comprobación previa do manifesto: máis rápida e determinista que agardar polos
-		// reintentos de hls.js. Só ten sentido se hai alternativa que amosar.
-		if (q.srcAlternativa) {
-			validURL(q.url).then(function (ok) {
-				if (!ok) {
-					noDispoñible(q);
-				}
-			});
+		// amosa() xa se chamou (síncrona, para non deixar o bloque baleiro mentres se
+		// comproba o manifesto), cando esta quenda aínda non tiña reprodutor. Se é a
+		// visible hai que amosala de novo, agora que xa se pode reproducir.
+		if (quendas[actual] === q && !q.fallou) {
+			amosa(q);
+		} else if (paraCargaAgochada && q.hls) {
+			// Montouse mentres estaba agochada (o manifesto tardou máis que o intervalo):
+			// non ten sentido que encha o buffer sen verse. amosa() fará startLoad().
+			q.hls.stopLoad();
+			q.cargaParada = true;
 		}
 	}
 
@@ -605,7 +621,12 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 			}
 			q.video.style.display = 'block';
 			q.video.muted = true;
-			q.video.play().catch(e => console.log('Play error:', e));
+			// O reprodutor pode non estar montado aínda (arranca() agarda pola
+			// comprobación do manifesto): sen fonte, play() rexeitaría. Cando o teña,
+			// arranca() volve chamar aquí.
+			if (q.hls || q.video.src) {
+				q.video.play().catch(e => console.log('Play error:', e));
+			}
 		} else {
 			refrescaAlternativa(q);
 			img.src = q.fallou ? q.srcAlternativa : q.src;
@@ -677,10 +698,15 @@ function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo
 		title.parentNode.insertBefore(boton, title.nextSibling);
 	}
 
-	quendas.forEach(arranca);
+	// Primeiro píntase o bloque e móntase o botón, de forma síncrona: se agardásemos
+	// polos manifestos, un servidor que non responde (validURL non ten timeout) deixaría
+	// o bloque baleiro e sen botón para sempre. Despois arrincan as dúas quendas en
+	// paralelo, e agárdase por elas só para quen queira saber cando remataron.
 	amosa(quendas[actual]);
 	creaBoton();
 	arrancaTemporizador();
+
+	await Promise.all(quendas.map(arranca));
 }
 
 function showAlternatingOverlay(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5) {

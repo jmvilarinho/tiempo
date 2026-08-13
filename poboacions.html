@@ -68,7 +68,8 @@
 				var url = 'https://www.crtvg.es:1554/hls/obradoiro/index.m3u8';
 				getPrevisionMunicipio(15078, 'Obradoiro-prevision', 2216, 42.880464, -8.545735);
 				getTemperatura('Obradoiro-temperatura', 42.880464, -8.545735);
-				showVideo(url, 'Obradoiro')
+				// Devólvese a promesa para que render_poboacions() poida agardar por ela.
+				return showVideo(url, 'Obradoiro')
 			}
 		},
 		{
@@ -92,7 +93,7 @@
 				var url = 'https://www.crtvg.es:1554/hls/coruna/index.m3u8';
 				getPrevisionMunicipio(15030, 'Riazor-prevision', 2137, 43.370865, -8.395928);
 				getTemperatura('Riazor-temperatura', 43.370865, -8.395928);
-				showVideo(url, 'Riazor')
+				return showVideo(url, 'Riazor')
 			}
 		},
 		{
@@ -195,7 +196,7 @@
 				var url = 'https://www.crtvg.es:1555/hls/cebreiro/index.m3u8';
 				getPrevisionMunicipio(27045, 'Cebreiro-prevision', 0, 42.707862, -7.042951);
 				getTemperatura('Cebreiro-temperatura', 42.707862, -7.042951);
-				showVideo(url, 'Cebreiro')
+				return showVideo(url, 'Cebreiro')
 			}
 		},
 	];

@@ -36,6 +36,7 @@
 			init: function () {
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
+
 				var url = "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
 				var streamParams = getWebcamIdFromUrl(url);
 				// Instantáneas (poster de camaramar) para cando o stream non se poida reproducir.
@@ -45,7 +46,8 @@
 				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
 
-				alternateMediaSimple('Razo', url + streamParams, 'Razo', url2 + streamParams2, 'Razo oeste', 8, alternativeuri, alternativeuri2);
+				// Devólvese a promesa para que render_praias() poida agardar por ela.
+				return alternateMediaSimple('Razo', url + streamParams, 'Razo', url2 + streamParams2, 'Razo oeste', 8, alternativeuri, alternativeuri2);
 			}
 		},
 		{
@@ -75,15 +77,15 @@
 			init: function () {
 				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
 				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
-				var url = getUltimaXuntaCam('Aguete2');
 
+				var url = getUltimaXuntaCam('Aguete2');
 				var url2 = 'https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8';
 				url2 = "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8"
 				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 
 				// A primeira quenda é a instantánea da Xunta: non ten alternativa que amosar.
-				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, '', alternativeuri2);
+				return alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, '', alternativeuri2);
 			}
 		},
 		{
@@ -109,11 +111,12 @@
 	</div>
 </section>`,
 			init: function () {
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/9_caraminal.stream/playlist.m3u8';
-				var alternativeuri = getUltimaXuntaCam('Coron');
 				getPrevision(1506702, 'Cabio-prevision', 25, 42.586036, -8.932807);
 				getTemperatura('Cabio-temperatura', 42.586036, -8.932807);
-				showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
+
+				var url = 'https://622a10e8864f7.streamlock.net/camaramar/9_caraminal.stream/playlist.m3u8';
+				var alternativeuri = getUltimaXuntaCam('Coron');
+				return showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
 			}
 		},
 		{
@@ -139,14 +142,15 @@
 	</div>
 </section>`,
 			init: function () {
+				getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
+				getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
+
 				var url = 'https://622a10e8864f7.streamlock.net/camaramar/31_coroso.stream/playlist.m3u8';
 				//url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786050174&jdtcbrndmrdendtime=1786051984&jdtcbrndmrdhash=KftgGxNG7vAuy9OYlsyBibGmxfU4o2HEioOWneTDUWQ%3D"
 				url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8";
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/865c5099-f700-4a8e-9af5-34c002295ebd.webp";
-				getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
-				getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
 				var streamParams = getWebcamIdFromUrl(url);
-				showVideo(url + streamParams, 'Coroso', 'Coroso', alternativeuri)
+				return showVideo(url + streamParams, 'Coroso', 'Coroso', alternativeuri)
 			}
 		},
 		{
@@ -172,15 +176,16 @@
 	</div>
 </section>`,
 			init: function () {
+				getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
+				getTemperatura('Mino-temperatura', 43.357382, -8.211300);
+
 				// Non hai stream: camaramar move o vídeo tras SecureToken de sesión e
 				// non atopamos ningunha webcam libre en Perbes. Usamos a instantánea
 				// pública da súa cámara (webcam id 96), que se actualiza cada poucos minutos.
 				var url = 'https://622a10e8864f7.streamlock.net/live/61_perbes.stream/playlist.m3u8';
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/79d5d078-3b54-4bd6-b842-111acb0ecc20.webp'
-				getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
-				getTemperatura('Mino-temperatura', 43.357382, -8.211300);
 				var streamParams = getWebcamIdFromUrl(url);
-				showVideo(url + streamParams, 'Mino', 'Perbes', alternativeuri)
+				return showVideo(url + streamParams, 'Mino', 'Perbes', alternativeuri)
 			}
 		},
 		{
@@ -206,11 +211,12 @@
 	</div>
 </section>`,
 			init: function () {
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/sabon.stream/playlist.m3u8';
-				var alternativeuri = getUltimaXuntaCam('Langosteira');
 				getPrevision(1500501, 'Sabon-prevision', 70, 43.329833, -8.505300);
 				getTemperatura('Sabon-temperatura', 43.329833, -8.505300);
-				showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)
+
+				var url = 'https://622a10e8864f7.streamlock.net/camaramar/sabon.stream/playlist.m3u8';
+				var alternativeuri = getUltimaXuntaCam('Langosteira');
+				return showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)
 			}
 		},
 		{
@@ -235,10 +241,11 @@
 	</div>
 </section>`,
 			init: function () {
-				var url = 'https://www.crtvg.es:1556/hls/sanxenxo/index.m3u8';
 				getPrevision(3605117, 'Sanxenxo-prevision', 27, 42.401320, -8.812949);
 				getTemperatura('Sanxenxo-temperatura', 42.401320, -8.812949);
-				showVideo(url, 'Sanxenxo')
+
+				var url = 'https://www.crtvg.es:1556/hls/sanxenxo/index.m3u8';
+				return showVideo(url, 'Sanxenxo')
 			}
 		},
 		{
@@ -264,13 +271,14 @@
 	</div>
 </section>`,
 			init: function () {
+				getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
+				getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
+
 				var url = 'https://622a10e8864f7.streamlock.net/camaramar/68_lanzada.stream/playlist.m3u8';
 				url = "https://622a10e8864f7.streamlock.net/live/68_lanzada.stream/playlist.m3u8";
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/753e6314-6cee-4ae2-aabc-623c248b1613.webp";
-				getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
-				getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
 				var streamParams = getWebcamIdFromUrl(url);
-				showVideo(url + streamParams, 'Lanzada', 'Lanzada', alternativeuri)
+				return showVideo(url + streamParams, 'Lanzada', 'Lanzada', alternativeuri)
 			}
 		},
 		{
@@ -301,7 +309,7 @@
 				getPrevisionIPMA(1110600, 'Caparica-prevision', 'Costa de Caparica', 38.640788, -9.236447, 'https://www.ipma.pt/pt/otempo/prev.localidade.hora/index.jsp#Set%C3%BAbal&Praia%20da%20Costa%20da%20Caparica', true, true);
 				getTemperatura('Caparica-temperatura', 38.640788, -9.236447);
 				var url = 'https://video-auth1.iol.pt/beachcam/bccaparicanovapraia/playlist.m3u8';
-				showVideo(url, 'Caparica')
+				return showVideo(url, 'Caparica')
 			}
 		},
 	];

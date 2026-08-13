@@ -1044,8 +1044,32 @@ function getSelectedKeys(cookieName, list, defaultKeys) {
 	return selected.filter(function (k) { return validKeys.indexOf(k) >= 0; });
 }
 
+// Contador de renderizados por contido. Os init() lánzanse en tarefas
+// independentes (ver máis abaixo), así que hai que poder descartar os que
+// queden pendentes dun render xa substituído (ex: dous clics seguidos no
+// selector), porque o HTML no que ían escribir xa non está no DOM.
+var renderGeneration = {};
+
+// Executa fn nunha tarefa nova (non nun microtask, que se drenaría sen deixar
+// pintar) e devolve o seu resultado como promesa: así o navegador respira entre
+// elementos e aínda se pode agardar polo que devolva fn.
+function tarefa(fn) {
+	return new Promise(function (resolve, reject) {
+		setTimeout(function () {
+			try {
+				resolve(fn());
+			} catch (e) {
+				reject(e);
+			}
+		}, 0);
+	});
+}
+
 // opts: { list, defaultKeys, cookieName, selectorId, contentId, title, toggleFn, beforeInit }
-function renderSelector(opts) {
+// Devolve unha promesa que se resolve cando remataron todos os init(). O selector
+// e o HTML das entradas píntanse de forma síncrona (antes do primeiro await), así
+// que quen non precise agardar pode chamala sen await, coma ata agora.
+async function renderSelector(opts) {
 	var list = opts.list;
 	if (typeof list === 'undefined' || !list) {
 		return;
@@ -1074,8 +1098,6 @@ function renderSelector(opts) {
 	if (!content) {
 		return;
 	}
-	content.innerHTML = '';
-
 	var selectedEntries = list.filter(function (p) { return selected.indexOf(p.key) >= 0; });
 
 	// Hook previo á inicialización (ex: axustar total_elementos en praias).
@@ -1083,28 +1105,52 @@ function renderSelector(opts) {
 		opts.beforeInit(selectedEntries);
 	}
 
-	var separador = '<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>';
-	for (var i = 0; i < selectedEntries.length; i++) {
-		var p = selectedEntries[i];
-		if (i > 0) {
-			content.insertAdjacentHTML('beforeend', separador);
-		}
-		content.insertAdjacentHTML('beforeend', p.html);
-		try {
-			p.init();
-		} catch (e) {
-			console.error('Error inicializando ' + p.key + ':', e);
-		}
-	}
+	// Este render invalida os init() pendentes do anterior.
+	var generation = (renderGeneration[opts.contentId] || 0) + 1;
+	renderGeneration[opts.contentId] = generation;
 
 	if (selectedEntries.length === 0) {
 		content.innerHTML = '<p style="text-align:center;">(Selecciona algunha opción)</p>';
+		return;
 	}
+
+	// --- pintado: todo o HTML nunha soa escritura (un único reflow, en vez
+	// dun por elemento intercalado co traballo do seu init) ---
+	var separador = '<center><img width="200" style="width: 100%; height: auto; max-width: 1300px;" src=img/line.png></center>';
+	var partes = [];
+	for (var i = 0; i < selectedEntries.length; i++) {
+		if (i > 0) {
+			partes.push(separador);
+		}
+		partes.push(selectedEntries[i].html);
+	}
+	content.innerHTML = partes.join('');
+
+	// --- carga en paralelo: cada init() vai na súa propia tarefa, así o
+	// traballo síncrono dun elemento (montar os reprodutores, construír a táboa…)
+	// non retrasa o arranque das peticións dos demais e o navegador pode pintar
+	// entre medias. As peticións en si xa eran asíncronas (fetch), o que se
+	// serializaba era o disparalas.
+	// Agárdase por todas: se un init() devolve unha promesa (p.ex.
+	// `return showVideo(...)`) tamén se agarda por ela, así a promesa de
+	// render_praias() / render_poboacions() significa "todo arrancado". ---
+	await Promise.all(selectedEntries.map(function (p) {
+		return tarefa(function () {
+			// Render substituído mentres esperaba a quenda: non hai nada que inicializar.
+			if (renderGeneration[opts.contentId] !== generation) {
+				return;
+			}
+			return p.init();
+		}).catch(function (e) {
+			// Cada entrada falla por separado: un erro non impide agardar polas demais.
+			console.error('Error inicializando ' + p.key + ':', e);
+		});
+	}));
 }
 
 // ---- Poboacións ----
-function render_poboacions() {
-	renderSelector({
+async function render_poboacions() {
+	return renderSelector({
 		list: (typeof poboacions_list !== 'undefined') ? poboacions_list : null,
 		defaultKeys: (typeof poboacions_default !== 'undefined') ? poboacions_default : null,
 		cookieName: 'poboacionsItems',
@@ -1121,8 +1167,8 @@ function toggle_poboacion(checkbox) {
 }
 
 // ---- Praias ----
-function render_praias() {
-	renderSelector({
+async function render_praias() {
+	return renderSelector({
 		list: (typeof praias_list !== 'undefined') ? praias_list : null,
 		defaultKeys: (typeof praias_default !== 'undefined') ? praias_default : null,
 		cookieName: 'praiasItems',
