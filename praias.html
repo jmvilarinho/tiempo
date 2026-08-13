@@ -34,6 +34,8 @@
 	</div>
 </section>`,
 			init: function () {
+				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
+				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
 				var url = "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
 				var streamParams = getWebcamIdFromUrl(url);
 				// Instantáneas (poster de camaramar) para cando o stream non se poida reproducir.
@@ -43,8 +45,6 @@
 				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
 
-				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
-				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
 				alternateMediaSimple('Razo', url + streamParams, 'Razo', url2 + streamParams2, 'Razo oeste', 8, alternativeuri, alternativeuri2);
 			}
 		},
@@ -73,6 +73,8 @@
 	</div>
 </section>`,
 			init: function () {
+				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
+				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
 				var url = getUltimaXuntaCam('Aguete2');
 
 				var url2 = 'https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8';
@@ -80,8 +82,6 @@
 				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 
-				getPrevision(3602606, 'Lapaman-prevision', 28, 42.342433, -8.752242);
-				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
 				// A primeira quenda é a instantánea da Xunta: non ten alternativa que amosar.
 				alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, '', alternativeuri2);
 			}
@@ -266,7 +266,6 @@
 			init: function () {
 				var url = 'https://622a10e8864f7.streamlock.net/camaramar/68_lanzada.stream/playlist.m3u8';
 				url = "https://622a10e8864f7.streamlock.net/live/68_lanzada.stream/playlist.m3u8";
-				var alternativeuri = "https://www.camaramar.com/uploads/webcam/753e6314-6cee-4ae2-aabc-623c248b1613.webp"
 				getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
 				getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
 				var streamParams = getWebcamIdFromUrl(url);
