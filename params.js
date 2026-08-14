@@ -37,6 +37,12 @@ var url_to_id = {
 
     "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8"    : 78,
     "https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8"    : 78,
+
+    "https://622a10e8864f7.streamlock.net/live/4_barranan.stream/playlist.m3u8"    : 15,
+    "https://622a10e8864f7.streamlock.net/camaramar/4_barranan.stream/playlist.m3u8"    : 15,
+
+    "https://622a10e8864f7.streamlock.net/live/33_carnota.stream/playlist.m3u8"    : 56,
+    "https://622a10e8864f7.streamlock.net/camaramar/33_carnota.stream/playlist.m3u8"    : 56,
 };
 
 // Minutos que se considera válido o valor gardado na cookie.
