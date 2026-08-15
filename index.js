@@ -704,7 +704,8 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 	// paralelo, e agárdase por elas só para quen queira saber cando remataron.
 	amosa(quendas[actual]);
 	creaBoton();
-	arrancaTemporizador();
+	//arrancaTemporizador();
+	if (pausado) {                                                     paraTemporizador();                                } else {                                                           arrancaTemporizador();                             }
 
 	await Promise.all(quendas.map(arranca));
 }
