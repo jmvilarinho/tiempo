@@ -17,8 +17,8 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Razo-alternative" style="margin: 0; padding: 0;">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_razo' id="#Razo" rel="noreferrer" target=camaramar>
-					<p id="Razo-title" style="margin: 5px 0;">Razo</p>
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_razo' rel="noreferrer" target=camaramar>
+					<p id="Razo-title" style="margin: 5px 0;">Praia de Razo</p>
 				</a>
 			</div>
 			<div style="visibility: hidden" id="Razo-unavailable"><img width="100" src=img/unavailable.png></div>
@@ -47,7 +47,11 @@
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
 
 				// Devólvese a promesa para que render_praias() poida agardar por ela.
+<<<<<<< HEAD
 				return alternateMediaSimple('Razo', url + streamParams, 'Razo', url2 + streamParams2, 'Razo oeste', 8, alternativeuri, alternativeuri2, true);
+=======
+				return alternateMediaSimple('Razo', url + streamParams, 'Praia de Razo', url2 + streamParams2, 'Praia de Razo (oeste)', 8, alternativeuri, alternativeuri2);
+>>>>>>> origin/main
 			}
 		},
 		{
@@ -58,7 +62,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Lapaman-alternative" style="margin: 0; padding: 0;">
-				<a href='https://www.camaramar.com/webcam/galicia_pontevedra_menduina' id="#Lapaman" rel="noreferrer" target=camaramar>
+				<a href='https://www.camaramar.com/webcam/galicia_pontevedra_menduina' rel="noreferrer" target=camaramar>
 					<p id="Lapaman-title" style="margin: 5px 0;">Aguete (Ría de Pontevedra)</p>
 				</a>
 			</div>
@@ -85,7 +89,7 @@
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 
 				// A primeira quenda é a instantánea da Xunta: non ten alternativa que amosar.
-				return alternateMediaSimple('Lapaman', url, 'Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Menduina (Ría de Aldan)', 5, '', alternativeuri2);
+				return alternateMediaSimple('Lapaman', url, 'Praia de Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Praia de Menduiña (Ría de Aldan)', 5, '', alternativeuri2);
 			}
 		},
 		{
@@ -96,7 +100,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Pobra-alternative">
-				<a href='https://www.camaramar.com/webcam/vilanova-de-arousa-playa-a-brana-vilanova-de-arousa' id="#Pobra" rel="noreferrer" target=camaramar>
+				<a href='https://www.camaramar.com/webcam/vilanova-de-arousa-playa-a-brana-vilanova-de-arousa' rel="noreferrer" target=camaramar>
 					<p>Pobra do Caramiñal</p>
 				</a>
 			</div>
@@ -127,7 +131,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Coroso-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_coroso' id="#Coroso" rel="noreferrer" target=camaramar>
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_coroso' rel="noreferrer" target=camaramar>
 					<p>Praia de Coroso (Ribeira)</p>
 				</a>
 			</div>
@@ -161,7 +165,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Mino-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_perbes' id="#Mino" rel="noreferrer" target=camaramar>
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_perbes' rel="noreferrer" target=camaramar>
 					<p>Praia de Perbes</p>
 				</a>
 			</div>
@@ -189,34 +193,36 @@
 			}
 		},
 		{
-			key: 'Sabon',
+			key: 'Barranan',
 			name: 'Barrañán',
 			html: `
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<div id="Sabon-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_playa-de-sabon' id="#Sabon" rel="noreferrer" target=camaramar>
-					<p>Praia de Sabón</p>
+			<div id="Barranan-alternative">
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_barranan' rel="noreferrer" target=camaramar>
+					<p>Praia de Barrañán</p>
 				</a>
 			</div>
-			<div style="visibility: hidden" id="Sabon-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Sabon">
+			<div style="visibility: hidden" id="Barranan-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Barranan">
 				<source />
 				<p>Your browser does not support H.264/MP4.</p>
 			</video>
-			<div id='Sabon-temperatura'></div>
-			<div id='Sabon-prevision'></div>
+			<div id='Barranan-temperatura'></div>
+			<div id='Barranan-prevision'></div>
 		</div>
 	</div>
 </section>`,
 			init: function () {
-				getPrevision(1500501, 'Sabon-prevision', 70, 43.310240, -8.552241);
-				getTemperatura('Sabon-temperatura', 43.310240, -8.552241);
+				getPrevision(1500501, 'Barranan-prevision', 70, 43.311220, -8.552285);
+				getTemperatura('Barranan-temperatura',  43.311220, -8.552285);
 
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/sabon.stream/playlist.m3u8';
-				var alternativeuri = getUltimaXuntaCam('Langosteira');
-				return showVideo(url, 'Sabon', 'Langosteira - Coruña', alternativeuri)
+				//var url = 'https://622a10e8864f7.streamlock.net/camaramar/sabon.stream/playlist.m3u8';
+				//var alternativeuri = getUltimaXuntaCam('Langosteira');
+				var url = "https://622a10e8864f7.streamlock.net/live/4_barranan.stream/playlist.m3u8";
+				var alternativeuri = "https://www.camaramar.com/uploads/webcam/cadde944-f3ca-490b-8460-ecf5cc818fd1.webp";
+				return showVideo(url, 'Barranan', 'Praia de Barrañán (Arteixo)', alternativeuri)
 			}
 		},
 		{
@@ -226,7 +232,7 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<a href='https://www.camaramar.com/webcam/sanxenxo-playa-de-foxos' id="#Sanxenxo" rel="noreferrer" target=camaramar>
+			<a href='https://www.camaramar.com/webcam/sanxenxo-playa-de-foxos' rel="noreferrer" target=camaramar>
 				<p>Sanxenxo</p>
 			</a>
 			<div style="visibility: hidden" id="Sanxenxo-unavailable"><img width="100" src=img/unavailable.png>
@@ -256,7 +262,7 @@
 	<div class="rt-container">
 		<div class="col-rt-12">
 			<div id="Lanzada-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_pontevedra_lanzada' id="#Lanzada" rel="noreferrer" target=camaramar>
+				<a href='https://www.camaramar.com/webcam/galicia_pontevedra_lanzada' rel="noreferrer" target=camaramar>
 					<p>Praia de A Lanzada</p>
 				</a>
 			</div>
@@ -281,6 +287,43 @@
 				return showVideo(url + streamParams, 'Lanzada', 'Lanzada', alternativeuri)
 			}
 		},
+
+		{
+			key: 'Carnota',
+			name: 'Carnota',
+			html: `
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<div id="Carnota-alternative">
+				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_carnota' rel="noreferrer" target=camaramar>
+					<p>Praia de Carnota</p>
+				</a>
+			</div>
+			<div style="visibility: hidden" id="Carnota-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Carnota">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div id='Carnota-temperatura'></div>
+			<div id='Carnota-prevision'></div>
+		</div>
+	</div>
+</section>`,
+			init: function () {
+				getPrevision(1502001, 'Carnota-prevision', 23, 42.833146, -9.105996);
+				getTemperatura('Carnota-temperatura',  42.833146, -9.105996);
+
+				var url = 'https://622a10e8864f7.streamlock.net/live/33_carnota.stream/playlist.m3u8';
+				var alternativeuri = "https://www.camaramar.com/uploads/webcam/d0a1a079-811d-4b3b-b2e0-36a477f8f650.webp";
+				var streamParams = getWebcamIdFromUrl(url);
+				return showVideo(url + streamParams, 'Carnota', 'Carnota', alternativeuri)
+			}
+		},
+
+
+
+
 		{
 			key: 'Caparica',
 			name: 'Costa de Caparica',
@@ -294,7 +337,7 @@
 <section style="text-align:center;">
 	<div class="rt-container">
 		<div class="col-rt-12">
-			<a href='https://beachcam.meo.pt/livecams/costa-da-caparica-praia-nova/' id="#Caparica" target=camaramar><p>Praia Nova (Costa de Caparica)</p></a>
+			<a href='https://beachcam.meo.pt/livecams/costa-da-caparica-praia-nova/'  target=camaramar><p>Praia Nova (Costa de Caparica)</p></a>
 			<div style="visibility: hidden" id="Caparica-unavailable"><img width="100" src=img/unavailable.png></div>
 			<video controls id="Caparica">
 				<source />
