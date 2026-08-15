@@ -427,7 +427,7 @@ function esStreamHls(url) {
 // forma síncrona, e o que se agarda é a comprobación do manifesto de cada quenda antes
 // de montar o seu reprodutor. Antes era síncrona e facía todo iso —crear os Hls,
 // loadSource, attachMedia— dentro da tarefa de quen a chamaba, que quedaba bloqueada.
-async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '') {
+async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '',isPausado=false) {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
 	const title = document.getElementById(baseid + '-title');
@@ -662,7 +662,7 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 	// que o teña calquera bloque con alternancia sen tocar o HTML dos fragmentos. É un <img>
 	// e non un <button> porque o nome adoita ir dentro da <a> á cámara: paramos aí o clic
 	// para que non se siga a ligazón. A pausa só conxela a quenda actual, o vídeo segue.
-	let pausado = false;
+	let pausado = isPausado;
 	const boton = document.createElement('img');
 
 	function actualizaBoton() {
