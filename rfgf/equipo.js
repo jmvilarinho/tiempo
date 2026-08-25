@@ -98,7 +98,7 @@ function show_equipo(data, cod_equipo,rfef=false) {
 			if (isSameWeek(dt, new Date(Date.now())))
 				background = '#a78183';
 
-			if (item.hora)
+			if (item.hora && item.hora !== "00:00")
 				hora = ' - ' + item.hora;
 			else
 				hora = '';

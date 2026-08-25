@@ -35,7 +35,7 @@ async function load_acta(cod_acta, addHistory = true) {
 function show_acta_equipo(data) {
 	lineas = 0;
 	$('#results').append('<br>');
-	$('#results').append('<b>' + data.fecha.replace(/-/g, "/") + ' ' + data.hora + ', ' + data.campo + '</b>');
+	$('#results').append('<b>' + data.fecha.replace(/-/g, "/") + (data.hora && data.hora !== "00:00" ? ' ' + data.hora : '') + ', ' + data.campo + '</b>');
 	$('#results').append('<br>');
 	crea_botons('back');
 	$('#results').append('<br>');

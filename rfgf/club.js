@@ -131,7 +131,7 @@ function show_club(data, cod_club, current_date) {
 
 		var pattern = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2})\:(\d{2})/;
 		hora = item.fecha;
-		if (item.hora)
+		if (item.hora && item.hora !== "00:00")
 			hora += ' ' + item.hora;
 		else
 			hora += ' 23:55'
@@ -170,7 +170,7 @@ function show_club(data, cod_club, current_date) {
 
 function show_partidos_club(title, item, id, local) {
 
-	if (item.hora) {
+	if (item.hora && item.hora !== "00:00") {
 		hora = ' - ' + item.hora;
 		dia_str = item.fecha.replace(/-/g, "/") + hora + ' (' + dia_semana_sp(item.fecha) + ')';
 	}

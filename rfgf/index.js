@@ -88,7 +88,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
 				cont += 1
 
-				if (item.hora) {
+				if (item.hora && item.hora !== "00:00") {
 					hora = ' - ' + item.hora;
 					hora2 = hora;
 					if (item.equipo_casa != 'Descansa')

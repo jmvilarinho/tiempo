@@ -207,7 +207,7 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 				cont += 1
 				var pattern = /(\d{2})\-(\d{2})\-(\d{4}) (\d{2})\:(\d{2})/;
 				hora = item.fecha;
-				if (item.hora) {
+				if (item.hora && item.hora !== "00:00") {
 					hora += ' ' + item.hora;
 					var date_obj = new Date(hora.replace(pattern, '$3-$2-$1 $4:$5'));
 					var date_now_obj = new Date(Date.now())

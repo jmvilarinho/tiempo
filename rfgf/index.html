@@ -30,7 +30,7 @@
   <script type="text/javascript" src="jquery.base64.js"></script>
 
   <script src="../common.js?nocache=2"></script>
-  <script type="text/javascript" src="utils.js?nocache=2"></script>
+  <script type="text/javascript" src="utils.js?nocache=3"></script>
   <script>
     version_reducida = true;
 
@@ -62,7 +62,7 @@
       { id: 901770110, codcompeticion: 33836163, codgrupo: 33836164, name: 'Noia B', color: '#ff471a', duracion_min: 95, rfef: 1 },
       { id: 207191, codcompeticion: 33836170, codgrupo: 33836171, name: 'Noia Juvenil', color: '#cc2900', duracion_min: 90, rfef: 1 },
       //{ id: 205729, codcompeticion: 23289361, codgrupo: 23289362, name: 'Parrulo', color: '#142987', duracion_min: 95, rfef: 1 },
-      { id: 205729, codcompeticion: 33836159, codgrupo: 33892849, name: 'Parrulo', color: '#142987', duracion_min: 95, rfef: 1 },
+      { id: 205729, codcompeticion: 33836159, name: 'Parrulo', color: '#142987', duracion_min: 95, rfef: 1 },
 
       { id: 748, name: 'Ordenes', color: '#2fa83b', duracion_min: 105 },
       { id: 9361400, codcompeticion: 24123293, codgrupo: 25773845, name: 'Ordenes Fem', color: '#60d26f', duracion_min: 105 },
@@ -140,7 +140,9 @@
       update_vista(document.location.href);
     };
 
-    update_vista();
+    loadRFEFGroups().then(() => {
+      update_vista();
+    });
   </script>
 </body>
 <footer>

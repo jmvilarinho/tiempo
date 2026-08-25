@@ -116,7 +116,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			if (!(item.situacion_juego == '1' || item.situacion_juego == '' || item.situacion_juego == '2'))
 				xogo += '<br>situacion_juego: "' + item.situacion_juego + '"';
 
-			if (item.hora)
+			if (item.hora && item.hora !== "00:00")
 				hora = ' - ' + item.hora;
 			else
 				hora = '';

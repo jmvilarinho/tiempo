@@ -144,7 +144,7 @@ function show_portada_equipo_favoritos(data, cod_equipo, rfef = false) {
 				cont += 1
 				var pattern = /(\d{2})\-(\d{2})\-(\d{4}) (\d{2})\:(\d{2})/;
 				hora = item.fecha;
-				if (item.hora)
+				if (item.hora && item.hora !== "00:00")
 					hora += ' ' + item.hora;
 				else
 					hora += ' 23:55'
@@ -188,7 +188,7 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 		dia_str = item.fecha.replace(/-/g, "/");
 		id = "33284008833000";
 	} else {
-		if (item.hora) {
+		if (item.hora && item.hora !== "00:00") {
 			dia_str = item.fecha.replace(/-/g, "/") + ' - ' + item.hora + ' (' + dia_semana(item.fecha) + ')';
 		} else {
 			dia_str = item.fecha.replace(/-/g, "/") + ' ???';

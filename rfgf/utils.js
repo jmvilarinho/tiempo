@@ -419,6 +419,53 @@ function closeNav(id = '0') {
 		load_portada(id);
 	document.getElementById("mySidenav").style.width = "0";
 }
+
+async function loadRFEFGroups() {
+	const equiposRFEFSinGrupo = equipos.filter(e => isRFEF(e.id) && typeof e.codgrupo === 'undefined' && e.codcompeticion);
+
+	for (const equipo of equiposRFEFSinGrupo) {
+		try {
+			const url = `https://resultados.rfef.es/pnfg/NPcd/NFG_Mov_LstGruposCompeticion?cod_primaria=&buscar=1&codcompeticion=${equipo.codcompeticion}&rt=1`;
+			const response = await fetch(url);
+			const html = await response.text();
+
+			const regex = /href="[^"]*CodGrupo=(\d+)[^"]*">([^<]+)<\/a>/g;
+			let match;
+			const gruposAgregados = [];
+
+			while ((match = regex.exec(html)) !== null) {
+				const codgrupo = match[1];
+				const nombreGrupo = match[2].trim();
+				equipos.push({
+					id: equipo.id,
+					codgrupo: codgrupo,
+					codcompeticion: equipo.codcompeticion,
+					name: `${equipo.name} - ${nombreGrupo}`,
+					color: equipo.color,
+					duracion_min: equipo.duracion_min,
+					rfef: 1
+				});
+				gruposAgregados.push({ codgrupo, nombreGrupo });
+			}
+
+			if (gruposAgregados.length > 0) {
+				console.log(`Agregados ${gruposAgregados.length} grupos para ${equipo.name}`);
+			}
+		} catch (error) {
+			console.error(`Error obteniendo grupos de RFEF para ${equipo.name}:`, error);
+		}
+	}
+
+	rebuildMenu();
+}
+
+function rebuildMenu() {
+	$('#mySidenav').empty();
+	$('#mySidenav').append('<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>');
+	equipos.forEach(e => {
+		$('#mySidenav').append(`<a href="javascript:closeNav('${e.id}')">${e.name}</a>`);
+	});
+}
 /* Set the width of the side navigation to 0 */
 function closeNav2(id = '0') {
 	if (id != '0')

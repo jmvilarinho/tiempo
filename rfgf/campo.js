@@ -167,7 +167,7 @@ async function show_campo(data, cod_campo, current_date) {
 
 		var pattern = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2})\:(\d{2})/;
 		hora = item.fecha;
-		if (item.hora)
+		if (item.hora && item.hora !== "00:00")
 			hora += ' ' + item.hora;
 		else
 			hora += ' 23:55'
@@ -206,7 +206,7 @@ async function show_campo(data, cod_campo, current_date) {
 
 function show_partido(item, id, local) {
 
-	if (item.hora) {
+	if (item.hora && item.hora !== "00:00") {
 		hora = ' - ' + item.hora;
 		dia_str = item.fecha.replace(/-/g, "/") + hora + ' (' + dia_semana_sp(item.fecha) + ')';
 	}
