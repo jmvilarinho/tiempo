@@ -196,15 +196,30 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 		});
 
 		try {
-			if (!mostrado && lineas < total_lineas) {
+			if (!mostrado) {
 				total = item.partidos.length;
-				if (
-					(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
-					||
-					((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
-						(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
-				) {
-					$('#results').append('<br><p>Competición rematada</p>');
+				if (total > 0) {
+					const pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
+					const primerPartido = item.partidos[0];
+					const dt = new Date(primerPartido.fecha.replace(pattern, '$3-$2-$1 12:00'));
+					const now = new Date(Date.now());
+
+					if (dt > now) {
+						$('#results').append('<br><p>No ha comenzado la competición</p>');
+					} else if (lineas < total_lineas) {
+						if (
+							(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
+							||
+							((item.partidos[total - 1].equipo_casa == 'Descansa' || item.partidos[total - 1].equipo_fuera == 'Descansa') &&
+								(item.partidos[total - 2].goles_casa != '' && item.partidos[total - 2].goles_fuera != ''))
+						) {
+							$('#results').append('<br><p>Competición rematada</p>');
+						} else {
+							$('#results').append('<br><p>Non hai competición esta semán</p>');
+						}
+					} else {
+						$('#results').append('<br><p>Non hai competición esta semán</p>');
+					}
 				}
 			}
 
@@ -215,7 +230,6 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 	});
 
 	updateWidth(...tables_id);
-	console.log(lineas + "*************************************************");
 
 	if (lineas == 0) {
 		var arrayLength = equipos.length;
@@ -225,14 +239,6 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 				nombre = 'para ' + equipos[i].name;
 		}
 		$('#results').append('<br><br><b>Equipo:</b> ' + data.nombre_equipo + '<br><br><b>Non hai datos ' + nombre + '</b><br><br><br>');
-	} else if (!mostrado) {
-		var arrayLength = equipos.length;
-		nombre = ''
-		for (var i = 0; i < arrayLength; i++) {
-			if (equipos[i].id == cod_equipo)
-				nombre = 'para ' + equipos[i].name;
-		}
-		$('#results').append('<br><br><b>Equipo:</b> ' + data.nombre_equipo + '<br><br><b>Non hai competición esta semán ' + nombre + '</b><br><br><br>');
 	}
 }
 
