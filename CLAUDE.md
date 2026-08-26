@@ -167,6 +167,13 @@ When changing data sources, update these constants rather than scattering URLs.
   missing segment, and dispatches to the matching `load_*` function. Each `load_*` does
   `history.pushState` with the canonical hash and persists its codes to cookies, so back/forward
   and reloads restore state. `window.onpopstate` re-runs `update_vista`.
+  The initial `update_vista()` in `rfgf/index.html` must **not** be chained behind any network
+  call: `loadRFEFGroups()` (in `utils.js`, best-effort discovery of the RFEF groups of a
+  competition declared without `codgrupo`) is fired *after* it, without `await`, because
+  `resultados.rfef.es` takes ~20 s per request, sends no CORS headers and redirects to a login
+  page — awaiting it left the page showing only the *Menú* button. It runs its requests in
+  parallel, each with an `AbortController` timeout, and only calls `rebuildMenu()` if it
+  actually added teams.
 - **Pages** are one JS file each: `portada.js`, `resultados.js` (also clasificación/goleadores),
   `calendario.js`, `club.js`, `campo.js`, `acta.js`, `plantilla.js`, `favoritos.js`,
   `equipo.js`. Their `load_*`/`show_*` functions render directly into `#results` by appending

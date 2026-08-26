@@ -420,43 +420,66 @@ function closeNav(id = '0') {
 	document.getElementById("mySidenav").style.width = "0";
 }
 
+// resultados.rfef.es publica os grupos dunha competición nunha páxina que non permite CORS e
+// que adoita tardar preto de 20 s en responder, así que esta descuberta é "best effort":
+// NUNCA debe bloquear o render (chámase sen await desde index.html, e cada petición leva o seu
+// propio timeout). Se algún día devolve datos, só engade entradas ao menú.
+var RFEF_GRUPOS_TIMEOUT_MS = 8000;
+var rfefGruposCargados = false;
+
 async function loadRFEFGroups() {
+	if (rfefGruposCargados)
+		return;
+	rfefGruposCargados = true;
+
 	const equiposRFEFSinGrupo = equipos.filter(e => isRFEF(e.id) && typeof e.codgrupo === 'undefined' && e.codcompeticion);
+	if (equiposRFEFSinGrupo.length == 0)
+		return;
 
-	for (const equipo of equiposRFEFSinGrupo) {
-		try {
-			const url = `https://resultados.rfef.es/pnfg/NPcd/NFG_Mov_LstGruposCompeticion?cod_primaria=&buscar=1&codcompeticion=${equipo.codcompeticion}&rt=1`;
-			const response = await fetch(url);
-			const html = await response.text();
+	const engadidos = await Promise.all(equiposRFEFSinGrupo.map(equipo => loadRFEFGroupsEquipo(equipo)));
+	if (engadidos.some(n => n > 0))
+		rebuildMenu();
+}
 
-			const regex = /href="[^"]*CodGrupo=(\d+)[^"]*">([^<]+)<\/a>/g;
-			let match;
-			const gruposAgregados = [];
+async function loadRFEFGroupsEquipo(equipo) {
+	const url = `https://resultados.rfef.es/pnfg/NPcd/NFG_Mov_LstGruposCompeticion?cod_primaria=&buscar=1&codcompeticion=${equipo.codcompeticion}&rt=1`;
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), RFEF_GRUPOS_TIMEOUT_MS);
+	var engadidos = 0;
 
-			while ((match = regex.exec(html)) !== null) {
-				const codgrupo = match[1];
-				const nombreGrupo = match[2].trim();
-				equipos.push({
-					id: equipo.id,
-					codgrupo: codgrupo,
-					codcompeticion: equipo.codcompeticion,
-					name: `${equipo.name} - ${nombreGrupo}`,
-					color: equipo.color,
-					duracion_min: equipo.duracion_min,
-					rfef: 1
-				});
-				gruposAgregados.push({ codgrupo, nombreGrupo });
-			}
+	try {
+		console.log("GET " + url);
+		const response = await fetch(url, { signal: controller.signal });
+		const html = await response.text();
 
-			if (gruposAgregados.length > 0) {
-				console.log(`Agregados ${gruposAgregados.length} grupos para ${equipo.name}`);
-			}
-		} catch (error) {
-			console.error(`Error obteniendo grupos de RFEF para ${equipo.name}:`, error);
+		const regex = /href="[^"]*CodGrupo=(\d+)[^"]*">([^<]+)<\/a>/g;
+		let match;
+		while ((match = regex.exec(html)) !== null) {
+			const codgrupo = match[1];
+			const nombreGrupo = match[2].trim();
+			if (equipos.some(e => e.id == equipo.id && e.codgrupo == codgrupo))
+				continue;
+			equipos.push({
+				id: equipo.id,
+				codgrupo: codgrupo,
+				codcompeticion: equipo.codcompeticion,
+				name: `${equipo.name} - ${nombreGrupo}`,
+				color: equipo.color,
+				duracion_min: equipo.duracion_min,
+				rfef: 1
+			});
+			engadidos += 1;
 		}
+
+		if (engadidos > 0)
+			console.log(`Engadidos ${engadidos} grupos para ${equipo.name}`);
+	} catch (error) {
+		console.error(`Erro obtendo os grupos da RFEF para ${equipo.name}: ` + error.message);
+	} finally {
+		clearTimeout(timeout);
 	}
 
-	rebuildMenu();
+	return engadidos;
 }
 
 function rebuildMenu() {
