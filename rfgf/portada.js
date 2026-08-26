@@ -205,7 +205,7 @@ function show_portada_equipo(data, cod_equipo, rfef = false) {
 					const now = new Date(Date.now());
 
 					if (dt > now) {
-						$('#results').append('<br><p>No ha comenzado la competición</p>');
+						$('#results').append('<br><p>Non comezou a competición</p>');
 					} else if (lineas < total_lineas) {
 						if (
 							(item.partidos[total - 1].goles_casa != '' && item.partidos[total - 1].goles_fuera != '')
