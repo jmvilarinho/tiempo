@@ -121,7 +121,8 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			else
 				hora = '';
 
-			if (item.fecha)
+			// sen hora de partido non hai día confirmado, non amosamos o día da semana
+			if (item.fecha && hora)
 				dia = dia_semana_sp(item.fecha);
 			else
 				dia = '';
