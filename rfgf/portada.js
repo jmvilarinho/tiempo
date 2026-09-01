@@ -349,9 +349,14 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		color_resultado = color_goles('white', cod_equipo, item.codequipo_casa, item.codequipo_fuera, item.goles_casa, item.goles_fuera);
 
 
-		if (item.partido_en_juego == '1')
+		goles_casa_html = item.goles_casa;
+		goles_fuera_html = item.goles_fuera;
+		// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
+		if (item.partido_en_juego == '1') {
 			xogo = '<br>(en xogo)';
-		else
+			goles_casa_html = '<span class="marcador_temporal">' + goles_casa_html + '</span>';
+			goles_fuera_html = '<span class="marcador_temporal">' + goles_fuera_html + '</span>';
+		} else
 			xogo = '';
 
 		if (item.codacta != '')
@@ -363,12 +368,12 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
 			+ data1
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + item.goles_casa + xogo + '&nbsp;</td>'
+			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + xogo + '&nbsp;</td>'
 			+ '</tr>'
 			+ '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + fuera + '</td>'
 			+ data2
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + item.goles_fuera + xogo + '&nbsp;</td>'
+			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_fuera_html + xogo + '&nbsp;</td>'
 			+ '</tr>';
 	}
 

@@ -228,18 +228,23 @@ function show_partidos_club(title, item, id, local) {
 				color_resultado = "#D7DF01";
 		}
 
-		if (item.partido_en_juego == '1')
+		goles_casa_html = item.goles_casa;
+		goles_visitante_html = item.goles_visitante;
+		// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
+		if (item.partido_en_juego == '1') {
 			xogo = '<br>(en xogo)';
-		else
+			goles_casa_html = '<span class="marcador_temporal">' + goles_casa_html + '</span>';
+			goles_visitante_html = '<span class="marcador_temporal">' + goles_visitante_html + '</span>';
+		} else
 			xogo = '';
 
 		datos = '<tr>'
 			+ '<td bgcolor="white">' + casa + '</td>'
-			+ '<td style="background-color:' + color_resultado + ';" align="center">&nbsp;' + item.goles_casa + '&nbsp;' + xogo + '</td>'
+			+ '<td style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + '&nbsp;' + xogo + '</td>'
 			+ '</tr>'
 			+ '<tr>'
 			+ '<td bgcolor="white">' + fuera + '</td>'
-			+ '<td style="background-color:' + color_resultado + ';" align="center">&nbsp;' + item.goles_visitante + '&nbsp;' + xogo + '</td>'
+			+ '<td style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_visitante_html + '&nbsp;' + xogo + '</td>'
 			+ '</tr>';
 	}
 

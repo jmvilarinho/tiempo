@@ -82,6 +82,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				+ '</tr>');
 
 			cont = 0;
+			hai_temporal = false;
 			jQuery.each(itemCompeticion.partidos, function (index, item) {
 				var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
 				var dt = new Date(item.fecha.replace(pattern, '$3-$2-$1 12:00'));
@@ -150,7 +151,13 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 					xogo = '';
 
 				if (item.goles_casa != '' && item.goles_fuera != '') {
-					goles_html = item.goles_casa + ' - ' + item.goles_fuera + xogo;
+					marcador = item.goles_casa + ' - ' + item.goles_fuera;
+					// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
+					if (item.partido_en_juego == '1') {
+						marcador = '<span class="marcador_temporal">' + marcador + '</span>';
+						hai_temporal = true;
+					}
+					goles_html = marcador + xogo;
 					if (item.codacta != '') {
 						goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')" title="Acta">' + goles_html + '</a>';
 					}
@@ -168,6 +175,10 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 					+ '<td style="background-color:' + background + ';" >' + (item.campo != '' ? campo : '') + '</td>'
 					+ '</tr>');
 			});
+			if (hai_temporal)
+				$('#results').append('<tr>'
+					+ '<td colspan="6" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">Marcador temporal</span> (partido en xogo)</td>'
+					+ '</tr>');
 			$('#results').append('</table>');
 
 		} else {

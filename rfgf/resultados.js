@@ -81,6 +81,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			+ '</tr>'
 		);
 		cont = 0;
+		hai_temporal = false;
 
 		jQuery.each(data.partidos, function (index, item) {
 			background = getBackgroundColor(cont, (item.CodEquipo_local == cod_equipo || item.CodEquipo_visitante == cod_equipo));
@@ -129,7 +130,13 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 
 			goles_html = '';
 			if (item.Goles_casa != "" && item.Goles_visitante != "") {
-				goles_html = item.Goles_casa + ' - ' + item.Goles_visitante + xogo;
+				marcador = item.Goles_casa + ' - ' + item.Goles_visitante;
+				// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
+				if (item.situacion_juego == '2') {
+					marcador = '<span class="marcador_temporal">' + marcador + '</span>';
+					hai_temporal = true;
+				}
+				goles_html = marcador + xogo;
 				if (item.codacta != '') {
 					goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')">' + goles_html + '</a>';
 				}
@@ -144,6 +151,10 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 				+ '<td style="background-color:' + background + ';" align="center" >' + dia + '</td>'
 				+ '</tr>');
 		});
+		if (hai_temporal)
+			$('#results').append('<tr>'
+				+ '<td colspan="5" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">Marcador temporal</span> (partido en xogo)</td>'
+				+ '</tr>');
 		$('#results').append('</table>');
 
 	} else {

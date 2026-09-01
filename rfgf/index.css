@@ -91,6 +91,13 @@ th.font_responsive{
 	border-spacing: 0;
 }
 
+.marcador_temporal {
+	color: #ffd400;
+	font-weight: bold;
+	/* contorno escuro: o amarelo tamén ten que lerse sobre as cores de resultado (#04B431, #F78181, #D7DF01) */
+	text-shadow: 1px 0 0 #3a2f00, -1px 0 0 #3a2f00, 0 1px 0 #3a2f00, 0 -1px 0 #3a2f00;
+}
+
 .racha {
 	padding: 0 2px 0 2px;
 	color: white;
