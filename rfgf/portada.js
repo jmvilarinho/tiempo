@@ -270,17 +270,23 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		align = 'left';
 	}
 
+	// os tags poden non vir no payload: trátanse como baleiros
+	equipo_casa = item.equipo_casa || '';
+	equipo_fuera = item.equipo_fuera || '';
+	goles_casa = item.goles_casa || '';
+	goles_fuera = item.goles_fuera || '';
+
 	campo = '';
-	if (item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa') {
-		dia_str = item.fecha.replace(/-/g, "/");
+	if (equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') {
+		dia_str = fecha_barras(item.fecha);
 	} else {
 		if (item.hora && item.hora !== "00:00")
 			hora = ' - ' + item.hora;
 		else
 			hora = ' ???';
-		dia_str = item.fecha.replace(/-/g, "/") + hora + ' (' + dia_semana(item.fecha) + ')';
+		dia_str = fecha_barras(item.fecha) + hora + ' (' + dia_semana(item.fecha) + ')';
 
-		if ( 'campo' in item && item.campo.trim() != '' && !item.campo.includes('Pendiente') ) {
+		if (item.campo && String(item.campo).trim() != '' && !String(item.campo).includes('Pendiente')) {
 			//campo = '<a href="https://waze.com/ul?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
 			//campo = '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 			//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.codigo_postal_campo + ' ' + item.direccion_campo + ' ' + item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
@@ -288,41 +294,41 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 			direccionEscape = String(item.direccion_campo).replace(/"/g, '').replace(/'/g, '');
 			campo = `<a href="#" onclick="openMapsSearch(event,'${item.codigo_postal_campo} ${direccionEscape} ${campoEscape}')">${item.campo} </a> <img src="../img/dot.png" height="15px">`;
 		} else {
-			campo =item.campo;
+			campo = item.campo || '';
 		}
 	}
 
 	casa = ''
 	fuera = ''
-	if (item.equipo_casa != 'Descansa') {
-		if (item.escudo_equipo_casa != '')
+	if (equipo_casa != 'Descansa') {
+		if (item.escudo_equipo_casa)
 			casa = '<a href="javascript:load_plantilla(\'' + item.codequipo_casa + '\')" title="Plantilla">'
 				+ '<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_logo">' + '</a>' + br;
 
-		if (item.codequipo_casa != '')
-			casa += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + item.equipo_casa + '</a>';
+		if (item.codequipo_casa)
+			casa += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + equipo_casa + '</a>';
 		else
-			casa += '&nbsp;' + item.equipo_casa + '&nbsp;';
+			casa += '&nbsp;' + equipo_casa + '&nbsp;';
 
 	} else {
-		casa = '&nbsp;' + item.equipo_casa + '&nbsp;';
+		casa = '&nbsp;' + equipo_casa + '&nbsp;';
 	}
 
-	if (item.equipo_fuera != 'Descansa') {
-		if (item.escudo_equipo_fuera != '')
+	if (equipo_fuera != 'Descansa') {
+		if (item.escudo_equipo_fuera)
 			fuera = '<a href="javascript:load_plantilla(\'' + item.codequipo_fuera + '\')" title="Plantilla">'
 				+ '<img src="https://www.futgal.es' + item.escudo_equipo_fuera + '" align="absmiddle" class="escudo_logo">' + '</a>' + br;
 
-		if (item.codequipo_fuera != '')
-			fuera += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + item.equipo_fuera + '</a>';
+		if (item.codequipo_fuera)
+			fuera += '&nbsp;<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + codcompeticion + '\')">' + equipo_fuera + '</a>';
 		else
-			fuera += '&nbsp;' + item.equipo_fuera + '&nbsp;';
+			fuera += '&nbsp;' + equipo_fuera + '&nbsp;';
 
 	} else {
-		fuera = '&nbsp;' + item.equipo_fuera + '&nbsp;';
+		fuera = '&nbsp;' + equipo_fuera + '&nbsp;';
 	}
 
-	if (codcompeticion && !version_reducida && !(item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa')) {
+	if (codcompeticion && !version_reducida && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa')) {
 		span = 1;
 		data1 = '<td bgcolor="white"><div id="data_casa"></div></td>';
 		data2 = '<td bgcolor="white"><div id="data_fuera"></div></td>';
@@ -334,7 +340,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		data3 = '';
 	}
 
-	if ('goles_casa' in item && 'goles_fuera' in item && item.goles_casa == "" && item.goles_fuera == "") {
+	if (goles_casa == "" && goles_fuera == "") {
 		span = 3;
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
@@ -346,20 +352,20 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 			+ '</tr>';
 
 	} else {
-		color_resultado = color_goles('white', cod_equipo, item.codequipo_casa, item.codequipo_fuera, item.goles_casa, item.goles_fuera);
+		color_resultado = color_goles('white', cod_equipo, item.codequipo_casa, item.codequipo_fuera, goles_casa, goles_fuera);
 
 
-		goles_casa_html = item.goles_casa;
-		goles_fuera_html = item.goles_fuera;
-		// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
-		if (item.partido_en_juego == '1') {
+		goles_casa_html = goles_casa;
+		goles_fuera_html = goles_fuera;
+		// resultado provisional (partido en xogo): o marcador aínda é temporal, resáltase en amarelo
+		if (marcador_provisional(item)) {
 			xogo = '<br>(en xogo)';
 			goles_casa_html = '<span class="marcador_temporal">' + goles_casa_html + '</span>';
 			goles_fuera_html = '<span class="marcador_temporal">' + goles_fuera_html + '</span>';
 		} else
 			xogo = '';
 
-		if (item.codacta != '')
+		if (item.codacta)
 			click = '  title="Acta" onclick="javascript:load_acta(\'' + item.codacta + '\');" ';
 		else
 			click = '';
@@ -391,7 +397,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		+ data3
 		+ '</table>');
 
-	if (codcompeticion && !(item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa') && !version_reducida)
+	if (codcompeticion && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') && !version_reducida)
 		load_comparativa(codcompeticion, codgrupo, item.codequipo_casa, item.codequipo_fuera, nombre_equipo)
 }
 
@@ -453,27 +459,25 @@ function show_comparativa(data, nombre_equipo) {
 				fuera = item.equipo_fuera
 
 			color_resultado = background;
-			if ('goles_casa' in item && 'goles_fuera' in item && item.goles_casa != "" && item.goles_fuera != "") {
-				goles_casa = item.goles_casa;
-				goles_fuera = item.goles_fuera;
+			// os tags poden non vir no payload: trátanse como baleiros
+			goles_casa = item.goles_casa || '';
+			goles_fuera = item.goles_fuera || '';
+			if (goles_casa != "" && goles_fuera != "") {
 				if (item.equipo_casa == nombre_equipo) {
-					if (Number(item.goles_casa) > Number(item.goles_fuera))
+					if (Number(goles_casa) > Number(goles_fuera))
 						color_resultado = "#04B431";
-					else if (Number(item.goles_casa) < Number(item.goles_fuera))
+					else if (Number(goles_casa) < Number(goles_fuera))
 						color_resultado = "#F78181";
 					else
 						color_resultado = "#D7DF01";
 				} else if (item.equipo_fuera == nombre_equipo) {
-					if (Number(item.goles_fuera) > Number(item.goles_casa))
+					if (Number(goles_fuera) > Number(goles_casa))
 						color_resultado = "#04B431";
-					else if (Number(item.goles_fuera) < Number(item.goles_casa))
+					else if (Number(goles_fuera) < Number(goles_casa))
 						color_resultado = "#F78181";
 					else
 						color_resultado = "#D7DF01";
 				}
-			} else {
-				goles_casa = '';
-				goles_fuera = '';
 			}
 
 			historico += '<tr>'

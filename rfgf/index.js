@@ -85,14 +85,18 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 			hai_temporal = false;
 			jQuery.each(itemCompeticion.partidos, function (index, item) {
 				var pattern = /(\d{2})\-(\d{2})\-(\d{4})/;
-				var dt = new Date(item.fecha.replace(pattern, '$3-$2-$1 12:00'));
+				var dt = new Date(String(item.fecha || '').replace(pattern, '$3-$2-$1 12:00'));
 				background = getBackgroundColor(cont, (isSameWeek(dt, new Date(Date.now()))));
 				cont += 1
+
+				// os tags poden non vir no payload: trátanse como baleiros
+				equipo_casa = item.equipo_casa || '';
+				equipo_fuera = item.equipo_fuera || '';
 
 				if (item.hora && item.hora !== "00:00") {
 					hora = ' - ' + item.hora;
 					hora2 = hora;
-					if (item.equipo_casa != 'Descansa')
+					if (equipo_casa != 'Descansa')
 						hora2 += ' (' + dia_semana(item.fecha) + ')';
 				} else {
 					hora = '';
@@ -100,15 +104,15 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				}
 
 
-				if (item.codequipo_casa == cod_equipo || item.equipo_casa == 'Descansa') {
-					casa = item.equipo_casa;
+				if (item.codequipo_casa == cod_equipo || equipo_casa == 'Descansa') {
+					casa = equipo_casa;
 					campo = item.campo;
 				} else {
-					if (item.codequipo_casa != '')
-						casa = '<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_casa + '</a>';
+					if (item.codequipo_casa)
+						casa = '<a href="javascript:load_xornadas(\'' + item.codequipo_casa + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + equipo_casa + '</a>';
 					else
-						casa = item.equipo_casa;
-					if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa != '')
+						casa = equipo_casa;
+					if (item.codequipo_casa != cod_equipo && item.posicion_equipo_casa)
 						casa += '&nbsp;(' + item.posicion_equipo_casa + 'º)';
 					//campo = '<a href="https://maps.google.com?q=' + encodeURIComponent(item.campo) + '" target="_blank">' + item.campo + '</a> <img src="../img/dot.png" height="15px">';
 					//campo = '<a href="waze://?q=' + encodeURIComponent(item.campo) + '&navigate=yes" target="_blank">' + item.campo + '</a> <img src="../img/waze.png" height="15px">';
@@ -118,47 +122,50 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 
 				}
 
-				if (item.equipo_casa != 'Descansa') {
-					if (item.escudo_equipo_casa != '')
+				if (equipo_casa != 'Descansa') {
+					if (item.escudo_equipo_casa)
 						casa += '&nbsp;<img src="https://www.futgal.es' + item.escudo_equipo_casa + '" align="absmiddle" class="escudo_widget">';
 				}
 
 
-				if (item.codequipo_fuera == cod_equipo || item.equipo_fuera == 'Descansa') {
-					fuera = item.equipo_fuera;
+				if (item.codequipo_fuera == cod_equipo || equipo_fuera == 'Descansa') {
+					fuera = equipo_fuera;
 				} else {
 					fuera = '';
-					if (item.equipo_fuera != cod_equipo && item.posicion_equipo_fuera != '')
+					if (equipo_fuera != cod_equipo && item.posicion_equipo_fuera)
 						fuera += '(' + item.posicion_equipo_fuera + 'º)&nbsp;';
-					if (item.codequipo_fuera != '')
-						fuera += '<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + item.equipo_fuera + '</a>';
+					if (item.codequipo_fuera)
+						fuera += '<a href="javascript:load_xornadas(\'' + item.codequipo_fuera + '\',false,' + rfef + ',\'' + itemCompeticion.cod_grupo + '\',\'' + itemCompeticion.cod_competicion + '\')">' + equipo_fuera + '</a>';
 					else
-						fuera += item.equipo_fuera;
+						fuera += equipo_fuera;
 				}
-				if (item.equipo_fuera != 'Descansa') {
-					if (item.escudo_equipo_fuera != '')
+				if (equipo_fuera != 'Descansa') {
+					if (item.escudo_equipo_fuera)
 						fuera = '<img src="https://www.futgal.es' + item.escudo_equipo_fuera + '" align="absmiddle" class="escudo_widget">&nbsp;' + fuera;
 				}
 
-				if (item.equipo_casa == 'Descansa' || item.equipo_fuera == 'Descansa')
+				if (equipo_casa == 'Descansa' || equipo_fuera == 'Descansa')
 					campo = '';
 
-				color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, item.goles_casa, item.goles_fuera);
+				// os goles poden non vir no payload: trátanse como baleiros
+				goles_casa = item.goles_casa || '';
+				goles_fuera = item.goles_fuera || '';
+				color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, goles_casa, goles_fuera);
 
-				if (item.partido_en_juego == '1')
+				if (marcador_provisional(item))
 					xogo = '<br>(en xogo)';
 				else
 					xogo = '';
 
-				if (item.goles_casa != '' && item.goles_fuera != '') {
-					marcador = item.goles_casa + ' - ' + item.goles_fuera;
-					// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
-					if (item.partido_en_juego == '1') {
+				if (goles_casa != '' && goles_fuera != '') {
+					marcador = goles_casa + ' - ' + goles_fuera;
+					// resultado provisional (partido en xogo): o marcador aínda é temporal, resáltase en amarelo
+					if (marcador_provisional(item)) {
 						marcador = '<span class="marcador_temporal">' + marcador + '</span>';
 						hai_temporal = true;
 					}
 					goles_html = marcador + xogo;
-					if (item.codacta != '') {
+					if (item.codacta) {
 						goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')" title="Acta">' + goles_html + '</a>';
 					}
 				} else {
@@ -167,12 +174,12 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 
 
 				$('#results').append('<tr>'
-					+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora + '</td>'
+					+ '<td style="background-color:' + background + ';" >' + fecha_barras(item.fecha) + hora + '</td>'
 					+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
 					+ '<td style="background-color:' + color_resultado + ';" align="center" >' + goles_html + '</td>'
 					+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
-					+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora2 + '</td>'
-					+ '<td style="background-color:' + background + ';" >' + (item.campo != '' ? campo : '') + '</td>'
+					+ '<td style="background-color:' + background + ';" >' + fecha_barras(item.fecha) + hora2 + '</td>'
+					+ '<td style="background-color:' + background + ';" >' + (item.campo ? campo : '') + '</td>'
 					+ '</tr>');
 			});
 			if (hai_temporal)

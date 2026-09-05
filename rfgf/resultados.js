@@ -61,17 +61,19 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		back = '';
 	}
 
-	if (data.jornada < data.listado_jornadas[0].jornadas.length)
+	if (data.listado_jornadas && data.listado_jornadas.length > 0 && data.listado_jornadas[0].jornadas && data.jornada < data.listado_jornadas[0].jornadas.length)
 		forward = "&nbsp;&nbsp;&nbsp;<a href=\"javascript:load_resultados('" + codgrupo + "','" + cod_equipo + "','" + (j + 1) + "','" + cod_competicion + "',false," + rfef + ")\"><img class=\"escudo_widget\" src=../img/forward.png></a>";
 	else
 		forward = '';
 
-	if (data.partidos.length > 0) {
+	fecha_jornada = data.fecha_jornada ? ' - ' + fecha_barras(data.fecha_jornada) : '';
+
+	if (data.partidos && data.partidos.length > 0) {
 
 		$('#results').append('<table border >');
 		$('#results').append(
 			'<tr>'
-			+ '<th colspan="5" align="center">' + back + 'Xornada ' + data.jornada + ' - ' + data.fecha_jornada.replace(/-/g, "/") + forward + '</th>'
+			+ '<th colspan="5" align="center">' + back + 'Xornada ' + data.jornada + fecha_jornada + forward + '</th>'
 			+ '</tr><tr>'
 			+ '<th>Data</th>'
 			+ '<th align="right"></th>'
@@ -89,38 +91,46 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 
 			$('#results').append('<tr>');
 
-			if (item.Nombre_equipo_local == 'Descansa') {
-				casa = item.Nombre_equipo_local;
-			} else if (item.CodEquipo_local != "") {
-				casa = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_local + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + item.Nombre_equipo_local + '</a>';
+			// os tags poden non vir no payload: trátanse como baleiros
+			nome_local = item.Nombre_equipo_local || '';
+			nome_visitante = item.Nombre_equipo_visitante || '';
+
+			if (nome_local == 'Descansa') {
+				casa = nome_local;
+			} else if (item.CodEquipo_local) {
+				casa = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_local + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + nome_local + '</a>';
 			} else {
-				casa = item.Nombre_equipo_local;
+				casa = nome_local;
 			}
 
-			if (item.Nombre_equipo_local != 'Descansa' && item.url_img_local != '')
+			if (nome_local != 'Descansa' && item.url_img_local)
 				casa = casa + '&nbsp;<img src="https://www.futgal.es' + item.url_img_local + '" align="absmiddle" class="escudo_widget">';
 
-			if (item.Nombre_equipo_visitante == 'Descansa') {
-				fuera = item.Nombre_equipo_visitante;
-			} else if (item.CodEquipo_visitante != "") {
-				fuera = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_visitante + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + item.Nombre_equipo_visitante + '</a>';
+			if (nome_visitante == 'Descansa') {
+				fuera = nome_visitante;
+			} else if (item.CodEquipo_visitante) {
+				fuera = '<a href="javascript:load_xornadas(\'' + item.CodEquipo_visitante + '\',false,' + rfef + ',\'' + codgrupo + '\',\'' + cod_competicion + '\')">' + nome_visitante + '</a>';
 			} else {
-				fuera = item.Nombre_equipo_visitante;
+				fuera = nome_visitante;
 			}
-			if (item.Nombre_equipo_visitante != 'Descansa' && item.url_img_visitante != '')
+			if (nome_visitante != 'Descansa' && item.url_img_visitante)
 				fuera = '<img src="https://www.futgal.es' + item.url_img_visitante + '" align="absmiddle" class="escudo_widget">&nbsp;' + fuera;
 
-			if (item.situacion_juego == '2')
+			situacion_juego = item.situacion_juego || '';
+
+			if (marcador_provisional(item))
 				xogo = '<br>(en xogo)';
 			else
 				xogo = '';
-			if (!(item.situacion_juego == '1' || item.situacion_juego == '' || item.situacion_juego == '2'))
-				xogo += '<br>situacion_juego: "' + item.situacion_juego + '"';
+			if (!(situacion_juego == '1' || situacion_juego == '' || situacion_juego == '2'))
+				xogo += '<br>situacion_juego: "' + situacion_juego + '"';
 
 			if (item.hora && item.hora !== "00:00")
 				hora = ' - ' + item.hora;
 			else
 				hora = '';
+
+			fecha = fecha_barras(item.fecha);
 
 			// sen hora de partido non hai día confirmado, non amosamos o día da semana
 			if (item.fecha && hora)
@@ -129,22 +139,24 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 				dia = '';
 
 			goles_html = '';
-			if (item.Goles_casa != "" && item.Goles_visitante != "") {
-				marcador = item.Goles_casa + ' - ' + item.Goles_visitante;
-				// partido en xogo: o marcador aínda é temporal, resáltase en amarelo
-				if (item.situacion_juego == '2') {
+			goles_casa = item.Goles_casa || '';
+			goles_visitante = item.Goles_visitante || '';
+			if (goles_casa != '' && goles_visitante != '') {
+				marcador = goles_casa + ' - ' + goles_visitante;
+				// resultado provisional (partido en xogo): o marcador aínda é temporal, resáltase en amarelo
+				if (marcador_provisional(item)) {
 					marcador = '<span class="marcador_temporal">' + marcador + '</span>';
 					hai_temporal = true;
 				}
 				goles_html = marcador + xogo;
-				if (item.codacta != '') {
+				if (item.codacta) {
 					goles_html = '<a href="javascript:load_acta(\'' + item.codacta + '\')">' + goles_html + '</a>';
 				}
 			}
 
 
 			$('#results').append('<tr>'
-				+ '<td style="background-color:' + background + ';" >' + item.fecha.replace(/-/g, "/") + hora + '</td>'
+				+ '<td style="background-color:' + background + ';" >' + fecha + hora + '</td>'
 				+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
 				+ '<td style="background-color:' + background + ';" align="center" >' + goles_html + '</td>'
 				+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'

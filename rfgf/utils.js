@@ -215,6 +215,9 @@ function add_back(pagina) {
 function color_goles(background, cod_equipo, codequipo_casa, codequipo_fuera, goles_casa, goles_fuera) {
 	//console.log(background, cod_equipo, codequipo_casa, codequipo_fuera, goles_casa, goles_fuera)
 	color_resultado = background;
+	// os goles poden non vir no payload: trátanse como baleiros
+	goles_casa = goles_casa || '';
+	goles_fuera = goles_fuera || '';
 	if (goles_casa != "" && goles_fuera != "") {
 		if (codequipo_casa == cod_equipo) {
 			if (Number(goles_casa) > Number(goles_fuera))
@@ -233,6 +236,20 @@ function color_goles(background, cod_equipo, codequipo_casa, codequipo_fuera, go
 		}
 	}
 	return color_resultado;
+}
+
+// O marcador aínda é temporal (partido en xogo). Cada endpoint marca isto cun tag distinto:
+// getresultados manda ResultadoProvisional, o resto partido_en_juego, e o vello situacion_juego
+// usaba '2'. Calquera deles pode non vir no payload, así que se trata como baleiro.
+function marcador_provisional(item) {
+	return (item.ResultadoProvisional || '') == '1'
+		|| (item.partido_en_juego || '') == '1'
+		|| (item.situacion_juego || '') == '2';
+}
+
+// Data en formato dd/mm/aaaa, tolerando que o tag non veña no payload
+function fecha_barras(fecha) {
+	return fecha ? String(fecha).replace(/-/g, "/") : '';
 }
 
 function updateWidth(...tableIds) {
