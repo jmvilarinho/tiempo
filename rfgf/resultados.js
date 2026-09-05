@@ -118,9 +118,9 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 
 			situacion_juego = item.situacion_juego || '';
 
-			if (marcador_provisional(item))
-				xogo = '<br>(en xogo)';
-			else
+			//if (marcador_provisional(item))
+			//	xogo = '<br>(en xogo)';
+			//else
 				xogo = '';
 			if (!(situacion_juego == '1' || situacion_juego == '' || situacion_juego == '2'))
 				xogo += '<br>situacion_juego: "' + situacion_juego + '"';
