@@ -165,7 +165,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		});
 		if (hai_temporal)
 			$('#results').append('<tr>'
-				+ '<td colspan="5" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">Marcador temporal</span> (partido en xogo)</td>'
+				+ '<td colspan="5" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">Marcador temporal</span></td>'
 				+ '</tr>');
 		$('#results').append('</table>');
 
