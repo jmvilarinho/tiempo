@@ -60,11 +60,11 @@ th.font_responsive{
 	vertical-align: middle;
 }
 
-/* A hora baixa 1px para centrarse mellor coa icona da casa, que é máis alta
+/* A hora baixa 2px para centrarse mellor coa icona da casa, que é máis alta
    que o texto. position:relative non cambia a altura da fila. */
 .hora_calendario {
 	position: relative;
-	top: 1px;
+	top: 2px;
 }
 
 .left,
