@@ -60,11 +60,22 @@ th.font_responsive{
 	vertical-align: middle;
 }
 
-/* A hora baixa 2px para centrarse mellor coa icona da casa, que é máis alta
+/* A hora baixa 1px para centrarse mellor coa icona da casa, que é máis alta
    que o texto. position:relative non cambia a altura da fila. */
 .hora_calendario {
 	position: relative;
-	top: 2px;
+	top: 1px;
+}
+
+/* Banda de resalte da fila da hora nos partidos na casa. Tínguese con
+   currentColor, que é a cor de texto que getEquipoTextColor calcula por
+   contraste sobre a cor do equipo: así clarea a banda nos equipos escuros e
+   escurécea nos claros, e vese con calquera das cores do array equipos. O
+   rgba é o fallback para navegadores sen color-mix(). */
+.ec-event-time.hora_casa {
+	background-color: rgba(255, 255, 255, 0.35);
+	background-color: color-mix(in srgb, currentColor 28%, transparent);
+	border-radius: 2px;
 }
 
 .left,

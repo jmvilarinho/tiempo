@@ -151,9 +151,12 @@ function creaCalendario() {
 			var hora = '';
 			if (!info.event.allDay) {
 				var casa = '';
-				if (info.event.extendedProps.home)
+				var clases = 'ec-event-time';
+				if (info.event.extendedProps.home) {
 					casa = '<img class="home_widget_calendario" src=../img/home-black.png>';
-				hora = '<time class="ec-event-time">' + casa + '<span class="hora_calendario">' + info.timeText + '</span></time>';
+					clases += ' hora_casa';
+				}
+				hora = '<time class="' + clases + '">' + casa + '<span class="hora_calendario">' + info.timeText + '</span></time>';
 			}
 			return { html: hora + '<h4 class="ec-event-title">' + titulo + '</h4>' };
 		},
