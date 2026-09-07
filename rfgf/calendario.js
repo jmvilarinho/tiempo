@@ -135,13 +135,28 @@ function creaCalendario() {
 		eventClick: function (info) {
 			load_portada(info.event.id);
 		},
-		eventDidMount: function (info) {
-			if (info.event.extendedProps.home)
-				info.el.firstChild.firstChild.className = "ec-event-time-home";
+		// A icona de "xoga na casa" vai inline diante da hora, e constrúese aquí
+		// (eventContent) e non en eventDidMount: a libraría reconstrúe o contido
+		// do evento (setContent → replaceChildren) cada vez que cambian as datas
+		// ou as opcións — por exemplo no setOption('hiddenDays') do final de
+		// load_calendario — mentres que eventDidMount só se dispara no onMount,
+		// así que o que se inxectaba no DOM desde alí víase e desaparecía.
+		// eventContent reavalíase en cada reconstrución, así que a icona queda.
+		eventContent: function (info) {
+			if (info.event.display !== 'auto')
+				return undefined;
+			var titulo = info.event.title;
+			if (titulo && titulo.html)
+				titulo = titulo.html;
+			var hora = '';
+			if (!info.event.allDay) {
+				var casa = '';
+				if (info.event.extendedProps.home)
+					casa = '<img class="home_widget_calendario" src=../img/home-black.png>';
+				hora = '<time class="ec-event-time">' + casa + '<span class="hora_calendario">' + info.timeText + '</span></time>';
+			}
+			return { html: hora + '<h4 class="ec-event-title">' + titulo + '</h4>' };
 		},
-		// eventContent: function (info) {
-		// 	console.log(info);
-		// },
 		flexibleSlotTimeLimits: false,
 		dayMaxEvents: true,
 		nowIndicator: true,
@@ -234,7 +249,7 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							extendedProps: {
 								home: isHome
 							},
-							styles: ['font-size: 8px;'],
+							styles: ['font-size: 9px;'],
 							color: getEquipoColor(cod_equipo),
 							textColor: getEquipoTextColor(cod_equipo),
 						};
