@@ -91,7 +91,7 @@ async function load_calendario(addHistory = true) {
 		if (arr_event.includes(arr_datos[i])) {
 			label = '#label_' + arr_datos[i] + '_color';
 			var html = $(label).html();
-			$(label).css('color', 'white');
+			$(label).css('color', getEquipoTextColor(arr_datos[i]));
 			$(label).html(html);
 		}
 		//console.log('Set white: #label_color: "' + i + '" ' + html);
@@ -236,6 +236,7 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							},
 							styles: ['font-size: 8px;'],
 							color: getEquipoColor(cod_equipo),
+							textColor: getEquipoTextColor(cod_equipo),
 						};
 						ec.addEvent(eventCalendar);
 						arr_event.push(cod_equipo);
