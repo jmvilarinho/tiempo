@@ -109,10 +109,13 @@ th.font_responsive{
 }
 
 .marcador_temporal {
-	color: #ffd400;
-
-	/* contorno escuro: o amarelo tamén ten que lerse sobre as cores de resultado (#04B431, #F78181, #D7DF01) */
-	text-shadow: 1px 0 0 #3a2f00, -1px 0 0 #3a2f00, 0 1px 0 #3a2f00, 0 -1px 0 #3a2f00;
+	/* Violeta escuro, sen contorno, para un aspecto máis natural.
+	   Estes marcadores píntanse sobre as cores de resultado de color_goles
+	   (#04B431, #F78181, #D7DF01) e sobre branco, así que a cor ten que ser
+	   escura: dá 5.4:1 no peor caso (o verde da vitoria). O ton violeta (273º)
+	   queda lonxe do matiz das tres cores de fondo (135º, 0º, 62º), polo que
+	   non se confunde con ningunha delas. */
+	color: #0b859b;
 }
 
 .racha {
