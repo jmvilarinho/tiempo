@@ -43,6 +43,9 @@ var url_to_id = {
 
     "https://622a10e8864f7.streamlock.net/live/33_carnota.stream/playlist.m3u8"    : 56,
     "https://622a10e8864f7.streamlock.net/camaramar/33_carnota.stream/playlist.m3u8"    : 56,
+
+    "https://622a10e8864f7.streamlock.net/live/3_aguieira.stream/playlist.m3u8"    : 17,
+    "https://622a10e8864f7.streamlock.net/camaramar/3_aguieira.stream/playlist.m3u8"    : 17,
 };
 
 // Minutos que se considera válido o valor gardado na cookie.
