@@ -7,6 +7,7 @@
 		15059:48358, //Ordes
 		15078:71938, // Santiago de Compostela
 		15030:71933, // A Coruña
+		15036:71934, // Ferrol
 		27045:59157, // O Cebreiro
 		15057:71936, // Noia
 		15073:50017, // Ribeira (Santa Uxía de Ribeira)
@@ -94,6 +95,30 @@
 				getPrevisionMunicipio(15030, 'Riazor-prevision', 2137, 43.370865, -8.395928);
 				getTemperatura('Riazor-temperatura', 43.370865, -8.395928);
 				return showVideo(url, 'Riazor')
+			}
+		},
+		{
+			key: 'Ferrol',
+			name: 'Ferrol',
+			html: `
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<a href='https://www.g24.gal/-/ferrol' target=camaramar>
+				<p>Ferrol</p>
+			</a>
+			<div style="visibility: hidden" id="Ferrol-unavailable"><img width="100" src=img/unavailable.png></div>
+			<video controls id="Ferrol"><source /><p>Your browser does not support H.264/MP4.</p></video>
+			<div id='Ferrol-temperatura'></div>
+			<div id='Ferrol-prevision'></div>
+		</div>
+	</div>
+</section>`,
+			init: function () {
+				var url = 'https://www.crtvg.es:1554/hls/ferrol/index.m3u8';
+				getPrevisionMunicipio(15036, 'Ferrol-prevision', 2174, 43.486060, -8.232960);
+				getTemperatura('Ferrol-temperatura', 43.486060, -8.232960);
+				return showVideo(url, 'Ferrol')
 			}
 		},
 		{
