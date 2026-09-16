@@ -49,7 +49,7 @@ async function load_calendario(addHistory = true) {
 			checked = 'checked="true"';
 		}
 		html_fav += start + '<td class="table_noborder" id="td_' + equipos[i].id + '_color">'
-			+ '<div  id="label_' + equipos[i].id + '_color">'
+			+ '<div  id="label_' + equipos[i].id + '_color" style="color: black;">'
 			+ '<input type="checkbox" ' + checked + ' value="' + equipos[i].id + '" onclick="setArrayCookie(\'calendarioItems\',this)">&nbsp;' + equipos[i].name + '&nbsp;'
 			+ '</div></td>' + end;
 	}
@@ -72,18 +72,17 @@ async function load_calendario(addHistory = true) {
 	}
 	$('#equipo_load').html('');
 
+	// Na lenda o texto vai en negro (posto no propio markup, así vale tamén para
+	// os equipos sen datos) e en branco só nos equipos con partido esta semán,
+	// que son os que levan a cor do equipo de fondo.
 	var arrayLength = arr_datos.length;
 	for (var i = 0; i < arrayLength; i++) {
 		td = '#td_' + arr_datos[i] + '_color';
 		$(td).css('backgroundColor', getEquipoColor(arr_datos[i]));
-		label = '#label_' + arr_datos[i] + '_color';
 		if (arr_event.includes(arr_datos[i])) {
 			label = '#label_' + arr_datos[i] + '_color';
-			var html = $(label).html();
 			$(label).css('color', 'white');
-			$(label).html(html);
 		}
-		//console.log('Set white: #label_color: "' + i + '" ' + html);
 	}
 
 	// O calendario amosa sempre a semán a partir do día actual: agóchanse os días
@@ -122,13 +121,31 @@ function creaCalendario() {
 		eventClick: function (info) {
 			load_portada(info.event.id);
 		},
-		eventDidMount: function (info) {
-			if (info.event.extendedProps.home)
-				info.el.firstChild.firstChild.className = "ec-event-time-home";
+		// A icona de "xoga na casa" vai inline diante da hora, e constrúese aquí
+		// (eventContent) e non en eventDidMount: a libraría reconstrúe o contido
+		// do evento (setContent → replaceChildren) cada vez que cambian as datas
+		// ou as opcións — por exemplo no setOption('hiddenDays') do final de
+		// load_calendario — mentres que eventDidMount só se dispara no onMount,
+		// así que o que se inxectaba no DOM desde alí víase e desaparecía.
+		// eventContent reavalíase en cada reconstrución, así que a icona queda.
+		eventContent: function (info) {
+			if (info.event.display !== 'auto')
+				return undefined;
+			var titulo = info.event.title;
+			if (titulo && titulo.html)
+				titulo = titulo.html;
+			var hora = '';
+			if (!info.event.allDay) {
+				var casa = '';
+				var clases = 'ec-event-time';
+				if (info.event.extendedProps.home) {
+					casa = '<img class="home_widget_calendario" src=../img/home-black.png>';
+					clases += ' hora_casa';
+				}
+				hora = '<time class="' + clases + '">' + casa + '<span class="hora_calendario">' + info.timeText + '</span></time>';
+			}
+			return { html: hora + '<h4 class="ec-event-title">' + titulo + '</h4>' };
 		},
-		// eventContent: function (info) {
-		// 	console.log(info);
-		// },
 		flexibleSlotTimeLimits: false,
 		dayMaxEvents: true,
 		nowIndicator: true,
@@ -218,8 +235,9 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							extendedProps: {
 								home: isHome
 							},
-							styles: ['font-size: 8px;'],
+							styles: ['font-size: 9px;'],
 							color: getEquipoColor(cod_equipo),
+							textColor: 'black',
 						};
 						ec.addEvent(eventCalendar);
 						arr_event.push(cod_equipo);

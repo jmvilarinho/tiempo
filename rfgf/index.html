@@ -25,18 +25,18 @@
   <link rel="stylesheet" href="event-calendar.min.css">
   <script src="event-calendar.min.js"></script>
   <script src="../hls.light.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="index.css?nocache=9" />
+  <link rel="stylesheet" type="text/css" href="index.css?nocache=20" />
   <script type="text/javascript" src="jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="jquery.base64.js"></script>
 
   <script src="../common.js?nocache=2"></script>
-  <script type="text/javascript" src="utils.js?nocache=6"></script>
+  <script type="text/javascript" src="utils.js?nocache=7"></script>
   <script>
     version_reducida = true;
 
     equipos = [
       { id: 11292337, name: 'Ural Juvenil', color: '#32288a', duracion_min: 95 },
-      { id: 750, name: 'Ordenes Cadete', color: '#4ccd59', duracion_min: 95 },
+      { id: 750, name: 'Ordenes Cadete', color: '#5BC457', duracion_min: 95 },
       { id: 366543, name: 'Abellá Senior Fem', color: '#ff6600', duracion_min: 105 },
     ]
     clubs = [
@@ -49,39 +49,39 @@
 
     equipos = [
       { id: 5514262, name: 'Jogafan', color: '#c01b19', duracion_min: 95, tv: 'https://tiivii.gal/player/' },
-      // { id: 22580125, name: 'Jogafan Fem', color: '#ed7a78', duracion_min: 90 },
-      //{ id: 23326838, codcompeticion: 23289372, codgrupo: 23289373, name: 'Jogafan Juvenil', color: '#e53734', duracion_min: 90, rfef: 1 },
-      { id: 13810265, name: 'Jogafan Juvenil', color: '#e53734', duracion_min: 65 },
-      //{ id: 25596329, name: 'Jogafan Juvenil B', color: '#cb1d1a', duracion_min: 65 },
-      { id: 10293250, name: 'Jogafan Cadete', color: '#e84d4a', duracion_min: 65 },
-      { id: 10293316, name: 'Jogafan Infantil', color: '#e2211d', duracion_min: 50 },
-    //  { id: 7098295, name: 'Jogafan Alevin', color: '#ea6361', duracion_min: 50 },
+      // { id: 22580125, name: 'Jogafan Fem', color: '#F08B8A', duracion_min: 90 },
+      //{ id: 23326838, codcompeticion: 23289372, codgrupo: 23289373, name: 'Jogafan Juvenil', color: '#DD201D', duracion_min: 90, rfef: 1 },
+      { id: 13810265, name: 'Jogafan Juvenil', color: '#DD201D', duracion_min: 65 },
+      //{ id: 25596329, name: 'Jogafan Juvenil B', color: '#E32926', duracion_min: 65 },
+      { id: 10293250, name: 'Jogafan Cadete', color: '#E53936', duracion_min: 65 },
+      { id: 10293316, name: 'Jogafan Infantil', color: '#E95653', duracion_min: 50 },
+    //  { id: 7098295, name: 'Jogafan Alevin', color: '#EC716F', duracion_min: 50 },
 
-      //{ id: 206140, codcompeticion: 23289361, codgrupo: 23289362, name: 'Noia', color: '#ff3300', duracion_min: 95, rfef: 1 },
-      //{ id: 206140, codcompeticion: 33836170, codgrupo: 33892849, name: 'Noia', color: '#ff3300', duracion_min: 95, rfef: 1 },
-      { id: 206140, codcompeticion: 33836159, name: 'Noia', color: '#ff3300', duracion_min: 95, rfef: 1 },
-      { id: 901770110, codcompeticion: 33836163, codgrupo: 33836164, name: 'Noia B', color: '#ff471a', duracion_min: 95, rfef: 1 },
-      { id: 207191, codcompeticion: 33836170, codgrupo: 33836171, name: 'Noia Juvenil', color: '#cc2900', duracion_min: 90, rfef: 1 },
-      //{ id: 205729, codcompeticion: 23289361, codgrupo: 23289362, name: 'Parrulo', color: '#142987', duracion_min: 95, rfef: 1 },
-      { id: 205729, codcompeticion: 33836159, name: 'Parrulo', color: '#142987', duracion_min: 95, rfef: 1 },
+      //{ id: 206140, codcompeticion: 23289361, codgrupo: 23289362, name: 'Noia', color: '#3D49F5', duracion_min: 95, rfef: 1 },
+      //{ id: 206140, codcompeticion: 33836170, codgrupo: 33892849, name: 'Noia', color: '#3D49F5', duracion_min: 95, rfef: 1 },
+      { id: 206140, codcompeticion: 33836159, name: 'Noia', color: '#3D49F5', duracion_min: 95, rfef: 1 },
+      { id: 901770110, codcompeticion: 33836163, codgrupo: 33836164, name: 'Noia B', color: '#636DF8', duracion_min: 95, rfef: 1 },
+      { id: 207191, codcompeticion: 33836170, codgrupo: 33836171, name: 'Noia Juvenil', color: '#5059F7', duracion_min: 90, rfef: 1 },
+      //{ id: 205729, codcompeticion: 23289361, codgrupo: 23289362, name: 'Parrulo', color: '#0E1F52', duracion_min: 95, rfef: 1 },
+      { id: 205729, codcompeticion: 33836159, name: 'Parrulo', color: '#677CAD', duracion_min: 95, rfef: 1 },
 
-      { id: 748, name: 'Ordenes', color: '#2fa83b', duracion_min: 105 },
-      { id: 9361400, codcompeticion: 24123293, codgrupo: 25773845, name: 'Ordenes Fem', color: '#60d26f', duracion_min: 105 },
-      // { id: 25079827, name: 'Ordenes Fem B', color: '#60d26b', duracion_min: 105 },
-      { id: 749, name: 'Ordenes Juvenil', color: '#32b33f', duracion_min: 95 },
-      { id: 750, name: 'Ordenes Cadete', color: '#38c746', duracion_min: 95 },
-      { id: 364530, name: 'Ordenes Cadete B', color: '#60d26b', duracion_min: 95 },
+      { id: 748, name: 'Ordenes', color: '#2E822B', duracion_min: 105 },
+      { id: 9361400, codcompeticion: 24123293, codgrupo: 25773845, name: 'Ordenes Fem', color: '#84D281', duracion_min: 105 },
+      // { id: 25079827, name: 'Ordenes Fem B', color: '#D4EED3', duracion_min: 105 },
+      { id: 749, name: 'Ordenes Juvenil', color: '#3EAA3A', duracion_min: 95 },
+      { id: 750, name: 'Ordenes Cadete', color: '#5BC457', duracion_min: 95 },
+      { id: 364530, name: 'Ordenes Cadete B', color: '#ACE0AA', duracion_min: 95 },
 
       //{ id: 190, name: 'Victoria Cadete B', color: '#247475', duracion_min: 90 },
       { id: 171, name: 'Victoria Cadete', color: '#247475', duracion_min: 90 },
 
       { id: 20126251, name: 'Abellá Juvenil', color: '#ff6600', duracion_min: 105 },
 
-      { id: 2746, name: 'Oroso Juvenil', color: '#6fbffe', duracion_min: 95 },
-      { id: 2759, name: 'Oroso Infantil B', color: '#90CBF6', duracion_min: 65 },
+      { id: 2746, name: 'Oroso Juvenil', color: '#5ED6E8', duracion_min: 95 },
+      { id: 2759, name: 'Oroso Infantil B', color: '#B1E9F1', duracion_min: 65 },
 
-      { id: 205699, codcompeticion: 33836084, codgrupo: 33836085, name: 'Deportivo', color: '#57175E', duracion_min: 105, rfef: 1 },
-      { id: 205934, codcompeticion: 33836084, codgrupo: 33836085, name: 'Celta de Vigo', color: '#40A9F7', duracion_min: 105, rfef: 1 },
+      { id: 205699, codcompeticion: 33836084, codgrupo: 33836085, name: 'Deportivo', color: '#792083', duracion_min: 105, rfef: 1 },
+      { id: 205934, codcompeticion: 33836084, codgrupo: 33836085, name: 'Celta de Vigo', color: '#0A8FF5', duracion_min: 105, rfef: 1 },
 
       //{ id: 5015201, codcompeticion: 24123380, codgrupo: 24482835, name: 'Sport Sala', color: '#360B8C', duracion_min: 95},
     ]
@@ -107,7 +107,7 @@
   <script type="text/javascript" src="club.js?nocache=4"></script>
   <script type="text/javascript" src="campo.js?nocache=4"></script>
   <script type="text/javascript" src="favoritos.js?nocache=4"></script>
-  <script type="text/javascript" src="calendario.js?nocache=3"></script>
+  <script type="text/javascript" src="calendario.js?nocache=8"></script>
   <script type="text/javascript" src="resultados.js?nocache=4"></script>
   <script type="text/javascript" src="plantilla.js?nocache=2"></script>
 </head>
