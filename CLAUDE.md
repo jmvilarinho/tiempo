@@ -43,12 +43,34 @@ GitHub Pages caching) will serve the stale version.
 The browser cannot call most upstream APIs directly (CORS / API keys), so requests go
 through AWS Lambda / API Gateway proxies. These URLs are hardcoded constants:
 
-- Root app weather proxies — `proxyHost` (AEMET), `proxyHostFarmacia`, `proxyHostMeteosix`
-  defined in `index.js`. Usage: `fetch(proxyHost + upstreamUrl)`.
+- Root app weather proxies — `proxyHost` (AEMET), `proxyHostFarmacia`, `proxyHostMeteosix`,
+  `proxyHostCamaramar`, defined in `index.js`. Usage: `fetch(proxyHost + upstreamUrl)`. They all
+  share one Lambda Function URL (`get_aemet`, in the separate `scripts_movil` repo) and differ
+  only in `?type=`, so adding a source there means adding a `type` branch to that handler.
+- `proxyHostNazare` (also `index.js`, same Lambda, `?type=nazare&cam=1|2|3`) relays the
+  nazarewaves.com webcams, which the browser cannot reach on two independent counts: their
+  session cookie (`jwtcam_N`) is HttpOnly on `.nazarewaves.com`, lives 120 s and is only minted
+  by `GET /en/webcams`, and `blobN.nazarewaves.com` sends no `Access-Control-Allow-Origin`. The
+  Lambda keeps one cookie cached (90 s TTL), rewrites the manifest's segment URLs to point back
+  at itself (`?type=nazare&cam=N&file=<absolute url>`) and streams the `.ts` through base64.
+  Two things there are load-bearing: the `file=` parameter is **allowlisted** to
+  `https://blob<digits>.nazarewaves.com/memfs/` so the proxy can't be used as an open relay, and
+  upstream 401/403/404/410 are **forwarded verbatim** instead of collapsing into 502 — a segment
+  that has rolled out of the 12 s live window is a normal 404, and hls.js only recovers from it
+  (reload the playlist and carry on) if it actually sees a 404. `&photo=1` returns a single JPEG
+  instead of the stream: near-free compared to relaying ~1.5 Mbit/s per viewer through Lambda, and
+  it is what every nazarewaves turn falls back to.
 - Fuel prices come straight from `sedeaplicaciones.minetur.gob.es` (`FUEL_PRICES_*` in
   `index.js`), Spanish tides from `ideihm.covam.es`, current temperature from `api.open-meteo.com`.
-- Portugal beaches (e.g. Costa de Caparica) call IPMA directly (`api.ipma.pt`, CORS-enabled,
-  no proxy) for the forecast. IPMA exposes no water temperature nor tides, and the Spanish IHM
+- Portugal beaches (e.g. Costa de Caparica, Nazaré) call IPMA directly (`api.ipma.pt`,
+  CORS-enabled, no proxy) for the forecast. Two different endpoints, picked by the last
+  (`agregado`) argument of `getPrevisionIPMA`: `open-data/forecast/meteorology/cities/daily/<id>`
+  covers only the 35 district capitals, so anywhere else (Praia da Nazaré is `1101121`) needs
+  `public-data/forecast/aggregate/<id>`, whose payload is a flat list mixing `idPeriodo` 1 / 3 / 24
+  and is normalised to the `cities/daily` shape by `ipmaAgregadoADiario` — keep new locations
+  going through that converter rather than teaching the renderers a second shape. Location ids
+  come from `public-data/forecast/locations.json`.
+  IPMA exposes no water temperature nor tides, and the Spanish IHM
   tide API does not cover Portugal, so those (plus feels-like) come from Open-Meteo: the forecast
   API (`api.open-meteo.com`) for daily apparent temperature and the Marine API
   (`marine-api.open-meteo.com`) for sea-surface temperature and `sea_level_height_msl` (hourly
@@ -121,22 +143,31 @@ When changing data sources, update these constants rather than scattering URLs.
     and `showAlternatingOverlay` / `showAlternatingMediaSmooth` to alternate image and video
     (their internal `switchToVideo` / `showVideoStream` are deliberately *not* named `showVideo`,
     to avoid shadowing the global one).
-  - `alternateMediaSimple(baseid, url1, label1, url2, label2, intervalSeconds, url1Alternative,
-    url2Alternative)` is the one in use for the alternating blocks (Razo, Lapamán). Its markup is
-    `#<key>-img` + `#<key>-video` + `#<key>-title`. **Either turn may be an HLS stream or a still
-    image** — `esStreamHls` decides by the `.m3u8` extension — and each turn has its own fallback
-    snapshot (`url1Alternative` / `url2Alternative`), shown in the shared `<img>` when its stream
-    can't play (`validURL` precheck, fatal/denied `Hls.Events.ERROR`, native-HLS `error`) or when
-    its own snapshot fails to load. When *both* turns are streams the function clones the `<video>`
-    into `#<key>-video2` so neither stream has to be torn down on every switch, and calls
-    `hls.stopLoad()` / `startLoad()` on the hidden one so only the visible stream downloads.
-    It is **`async`**, like `showVideo`: the block is painted synchronously (current turn, title
-    and toggle button) and only the per-turn `validURL` manifest check is awaited, *before*
-    creating that turn's `Hls` — so a dead stream never gets a player, and the caller's task is
-    not blocked. Don't move `amosa` / `creaBoton` / `arrancaTemporizador` behind that `await`:
-    `validURL` has no timeout, so an unresponsive host would leave the block empty and without a
-    toggle forever. Two consequences of the await to keep in mind: `amosa()` must not call
-    `play()` before the player exists (it checks `q.hls || q.video.src`, and `arranca` calls
+  - `alternateMediaVarias(baseid, quendas, intervalSeconds, isPausado)` drives the alternating
+    blocks (Razo, Lapamán, Nazaré) with **any number of turns**; `alternateMediaSimple(baseid,
+    url1, label1, url2, label2, intervalSeconds, url1Alternative, url2Alternative, isPausado)` is
+    a thin synchronous wrapper over it for the two-turn case. A turn is
+    `{url, label, alternativa, stream}`. Its markup is `#<key>-img` + `#<key>-video` +
+    `#<key>-title`. **Any turn may be an HLS stream or a still image** — `esStreamHls` decides by
+    the `.m3u8` extension, and `stream: true|false` overrides it, which is what the Nazaré turns
+    need because the proxy URL carries the manifest in a query string. Each turn has its own
+    fallback snapshot (`alternativa`), shown in the shared `<img>` when its stream can't play
+    (`validURL` precheck, fatal/denied `Hls.Events.ERROR`, native-HLS `error`) or when its own
+    snapshot fails to load. Every stream turn past the first gets its own `<video>`, cloned by
+    `creaVideoExtra()` into `#<key>-video2`, `-video3`, …, so no stream has to be torn down on
+    every switch, and `hls.stopLoad()` / `startLoad()` keep only the visible one downloading.
+    **Never `stopLoad()` a player before its `Hls.Events.MANIFEST_PARSED`**: that aborts the
+    manifest request, and `startLoad()` only resumes level and fragment loading — it never
+    re-requests the manifest, so the turn stays black forever. Hence the `listo` flag on each
+    turn: `arranca()` defers the hidden turn's stop into a `once(MANIFEST_PARSED)` handler and
+    `oculta()` only stops a turn that is already `listo`.
+    `alternateMediaVarias` is **`async`**, like `showVideo`: the block is painted synchronously
+    (current turn, title and toggle button) and only the per-turn `validURL` manifest check is
+    awaited, *before* creating that turn's `Hls` — so a dead stream never gets a player, and the
+    caller's task is not blocked. Don't move `amosa` / `creaBoton` / `arrancaTemporizador` behind
+    that `await`: `validURL` has no timeout, so an unresponsive host would leave the block empty
+    and without a toggle forever. Two consequences of the await to keep in mind: `amosa()` must
+    not call `play()` before the player exists (it checks `q.hls || q.video.src`, and `arranca` calls
     `amosa` again once the player is ready), and a turn whose manifest check outlived the
     rotation interval gets `stopLoad()`ed on the spot if it is no longer the visible one.
     It also injects a pause/resume toggle (`#<key>-toggle`, icons `img/pausa.svg` /
