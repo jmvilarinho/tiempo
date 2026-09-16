@@ -48,34 +48,17 @@ th.font_responsive{
 	background-color: #8a8080;
 }
 
-/* Icona de partido na casa, engadida por eventContent diante da hora do
-   evento no calendario. Vai inline e non como imaxe de fondo nunha posición
-   fixa porque o ancho do evento depende dos días visibles na semana: cos 7
-   días as columnas son tan estreitas que a icona caía fóra do recadro e o
-   overflow:hidden de .ec-event-time non a deixaba ver. */
-.home_widget_calendario {
-	width: 12px;
-	height: 12px;
-	margin-right: 3px;
-	vertical-align: middle;
-}
+.ec-event-time-home {
+	flex-shrink: 0;
+	margin: 0 0 1px;
+	overflow: hidden;
+	white-space: nowrap;
 
-/* A hora baixa 1px para centrarse mellor coa icona da casa, que é máis alta
-   que o texto. position:relative non cambia a altura da fila. */
-.hora_calendario {
-	position: relative;
-	top: 1px;
-}
-
-/* Banda de resalte da fila da hora nos partidos na casa. Tínguese con
-   currentColor, que é a cor de texto que getEquipoTextColor calcula por
-   contraste sobre a cor do equipo: así clarea a banda nos equipos escuros e
-   escurécea nos claros, e vese con calquera das cores do array equipos. O
-   rgba é o fallback para navegadores sen color-mix(). */
-.ec-event-time.hora_casa {
-	background-color: rgba(255, 255, 255, 0.35);
-	background-color: color-mix(in srgb, currentColor 28%, transparent);
-	border-radius: 2px;
+	background-image: url("../img/home-black.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 10px;
+	background-position: 28px 0px;
 }
 
 .left,
@@ -109,13 +92,10 @@ th.font_responsive{
 }
 
 .marcador_temporal {
-	/* Violeta escuro, sen contorno, para un aspecto máis natural.
-	   Estes marcadores píntanse sobre as cores de resultado de color_goles
-	   (#04B431, #F78181, #D7DF01) e sobre branco, así que a cor ten que ser
-	   escura: dá 5.4:1 no peor caso (o verde da vitoria). O ton violeta (273º)
-	   queda lonxe do matiz das tres cores de fondo (135º, 0º, 62º), polo que
-	   non se confunde con ningunha delas. */
-	color: #0b859b;
+	color: #ffd400;
+	font-weight: bold;
+	/* contorno escuro: o amarelo tamén ten que lerse sobre as cores de resultado (#04B431, #F78181, #D7DF01) */
+	text-shadow: 1px 0 0 #3a2f00, -1px 0 0 #3a2f00, 0 1px 0 #3a2f00, 0 -1px 0 #3a2f00;
 }
 
 .racha {

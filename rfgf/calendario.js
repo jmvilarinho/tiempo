@@ -2,6 +2,15 @@ var ec;
 var favorite_load = [];
 var arr_datos = [];
 var arr_event = [];
+var hay_datos = false;
+
+function getSaturday(d) {
+	d = new Date(d);
+	suma = 6 - d.getDay();
+	d.setDate(d.getDate() + suma);
+	return d;
+}
+firstEvent = getSaturday(new Date());
 
 async function load_calendario(addHistory = true) {
 	displayLoading();
@@ -23,6 +32,8 @@ async function load_calendario(addHistory = true) {
 	$('#results').append('<div id="equipo_load">(Cargando datos ...)</div><main class="row" style="white-space: wrap;" ><div id="ec" class="col"></div></main>');
 
 	creaCalendario();
+	hay_datos = false;
+	firstEvent = getSaturday(new Date());
 	arr_datos = [];
 	arr_event = [];
 	favorite_load = [];
@@ -49,7 +60,7 @@ async function load_calendario(addHistory = true) {
 			checked = 'checked="true"';
 		}
 		html_fav += start + '<td class="table_noborder" id="td_' + equipos[i].id + '_color">'
-			+ '<div  id="label_' + equipos[i].id + '_color" style="color: black;">'
+			+ '<div  id="label_' + equipos[i].id + '_color">'
 			+ '<input type="checkbox" ' + checked + ' value="' + equipos[i].id + '" onclick="setArrayCookie(\'calendarioItems\',this)">&nbsp;' + equipos[i].name + '&nbsp;'
 			+ '</div></td>' + end;
 	}
@@ -72,33 +83,36 @@ async function load_calendario(addHistory = true) {
 	}
 	$('#equipo_load').html('');
 
-	// Na lenda o texto vai en negro (posto no propio markup, así vale tamén para
-	// os equipos sen datos) e en branco só nos equipos con partido esta semán,
-	// que son os que levan a cor do equipo de fondo.
 	var arrayLength = arr_datos.length;
 	for (var i = 0; i < arrayLength; i++) {
 		td = '#td_' + arr_datos[i] + '_color';
 		$(td).css('backgroundColor', getEquipoColor(arr_datos[i]));
+		label = '#label_' + arr_datos[i] + '_color';
 		if (arr_event.includes(arr_datos[i])) {
 			label = '#label_' + arr_datos[i] + '_color';
+			var html = $(label).html();
 			$(label).css('color', 'white');
+			$(label).html(html);
 		}
+		//console.log('Set white: #label_color: "' + i + '" ' + html);
 	}
 
-	// O calendario amosa sempre a semán a partir do día actual: agóchanse os días
-	// anteriores a hoxe. O bucle só chega a 5 (venres), así que sábado (6) e domingo
-	// (0, o último coa opción firstDay: 1) quedan sempre visibles; se hoxe é domingo
-	// agóchase ata o venres, para non deixar o domingo só.
-	// Faise sempre, non só cando hai eventos: antes o rango calculábase desde o
-	// primeiro partido (firstEvent, inicializado ao sábado seguinte), así que se
-	// ningún equipo seleccionado xogaba antes do sábado desaparecía o día actual.
-	var hiddenDays = [];
-	var idxnow = new Date().getDay();
-	var last_idx = (idxnow == 0) ? 6 : idxnow;
-	for (var x = 1; x < last_idx; x++) {
-		hiddenDays.push(x);
+	// Ocultar en el calendario los días hasta sabado si no hay eventos
+	if (hay_datos) {
+		hiddenDays = [];
+		last_idx = firstEvent.getDay();
+		var date_now_obj = new Date(Date.now())
+		idxnow=date_now_obj.getDay()
+		if (last_idx < idxnow)
+			last_idx = idxnow;
+		if (idxnow==0)
+			last_idx=6;
+
+		for (var x = 1; x < last_idx; x++) {
+			hiddenDays.push(x);
+		}
+		ec.setOption('hiddenDays', hiddenDays);
 	}
-	ec.setOption('hiddenDays', hiddenDays);
 
 }
 
@@ -121,31 +135,13 @@ function creaCalendario() {
 		eventClick: function (info) {
 			load_portada(info.event.id);
 		},
-		// A icona de "xoga na casa" vai inline diante da hora, e constrúese aquí
-		// (eventContent) e non en eventDidMount: a libraría reconstrúe o contido
-		// do evento (setContent → replaceChildren) cada vez que cambian as datas
-		// ou as opcións — por exemplo no setOption('hiddenDays') do final de
-		// load_calendario — mentres que eventDidMount só se dispara no onMount,
-		// así que o que se inxectaba no DOM desde alí víase e desaparecía.
-		// eventContent reavalíase en cada reconstrución, así que a icona queda.
-		eventContent: function (info) {
-			if (info.event.display !== 'auto')
-				return undefined;
-			var titulo = info.event.title;
-			if (titulo && titulo.html)
-				titulo = titulo.html;
-			var hora = '';
-			if (!info.event.allDay) {
-				var casa = '';
-				var clases = 'ec-event-time';
-				if (info.event.extendedProps.home) {
-					casa = '<img class="home_widget_calendario" src=../img/home-black.png>';
-					clases += ' hora_casa';
-				}
-				hora = '<time class="' + clases + '">' + casa + '<span class="hora_calendario">' + info.timeText + '</span></time>';
-			}
-			return { html: hora + '<h4 class="ec-event-title">' + titulo + '</h4>' };
+		eventDidMount: function (info) {
+			if (info.event.extendedProps.home)
+				info.el.firstChild.firstChild.className = "ec-event-time-home";
 		},
+		// eventContent: function (info) {
+		// 	console.log(info);
+		// },
 		flexibleSlotTimeLimits: false,
 		dayMaxEvents: true,
 		nowIndicator: true,
@@ -221,6 +217,9 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							//nombre_equipo = '<img src=home.png  class="home_widget"> ' + nombre_equipo;
 							isHome = true;
 						}
+						if (date_obj < firstEvent) {
+							firstEvent = date_obj;
+						}
 						end = new Date(date_obj.getTime() + getEquipoDuracion(cod_equipo) * 60000);
 						eventCalendar = {
 							start: date_obj,
@@ -235,12 +234,12 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							extendedProps: {
 								home: isHome
 							},
-							styles: ['font-size: 9px;'],
+							styles: ['font-size: 8px;'],
 							color: getEquipoColor(cod_equipo),
-							textColor: 'black',
 						};
 						ec.addEvent(eventCalendar);
 						arr_event.push(cod_equipo);
+						hay_datos = true;
 					}
 				}
 			});

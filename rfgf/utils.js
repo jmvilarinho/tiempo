@@ -304,23 +304,6 @@ function getEquipoColor(cod_equipo) {
 	}
 	return 'Black';
 }
-function getContrastColor(color) {
-	var hex = String(color || '').replace('#', '');
-	if (hex.length == 3)
-		hex = hex.charAt(0) + hex.charAt(0) + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2);
-	if (!/^[0-9a-fA-F]{6}$/.test(hex))
-		return '#ffffff';
-	var canal = function (par) {
-		var v = parseInt(par, 16) / 255;
-		return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-	};
-	// luminancia relativa WCAG 2.1
-	var l = 0.2126 * canal(hex.substr(0, 2)) + 0.7152 * canal(hex.substr(2, 2)) + 0.0722 * canal(hex.substr(4, 2));
-	return (1.05 / (l + 0.05)) >= ((l + 0.05) / 0.05) ? '#ffffff' : '#000000';
-}
-function getEquipoTextColor(cod_equipo) {
-	return getContrastColor(getEquipoColor(cod_equipo));
-}
 function getEquipoDuracion(cod_equipo) {
 	var arrayLength = equipos.length;
 	for (var i = 0; i < arrayLength; i++) {

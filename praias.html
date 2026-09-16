@@ -316,44 +316,6 @@
 				return showVideo(url + streamParams, 'Carnota', 'Carnota', alternativeuri)
 			}
 		},
-
-		{
-			key: 'Aguieira',
-			name: 'Aguieira',
-			html: `
-<section style="text-align:center;">
-	<div class="rt-container">
-		<div class="col-rt-12">
-			<div id="Aguieira-alternative">
-				<a href='https://www.camaramar.com/webcam/galicia_a-coruna_aguieira' rel="noreferrer" target=camaramar>
-					<p>Praia da Aguieira (Porto do Son)</p>
-				</a>
-			</div>
-			<div style="visibility: hidden" id="Aguieira-unavailable"><img width="100" src=img/unavailable.png></div>
-			<video controls id="Aguieira">
-				<source />
-				<p>Your browser does not support H.264/MP4.</p>
-			</video>
-			<div id='Aguieira-temperatura'></div>
-			<div id='Aguieira-prevision'></div>
-		</div>
-	</div>
-</section>`,
-			init: function () {
-				// AEMET si publica esta praia: código 1507101 (Aguieira, Porto do Son),
-				// polo que non fai falla recorrer a MeteoGalicia (praias/2403).
-				// Mareas do IHM en Portosín (id 24), a estación máis próxima (~8 km).
-				getPrevision(1507101, 'Aguieira-prevision', 24, 42.742146, -8.964672);
-				getTemperatura('Aguieira-temperatura', 42.742146, -8.964672);
-
-				// O stream de camaramar está tras SecureToken de sesión (403 sen el):
-				// getWebcamIdFromUrl (params.js) engade os parámetros da webcam 17.
-				var url = 'https://622a10e8864f7.streamlock.net/live/3_aguieira.stream/playlist.m3u8';
-				var alternativeuri = "https://www.camaramar.com/uploads/webcam/704ef113-4a72-4fcf-8444-28022e9fee42.webp";
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Aguieira', 'Praia da Aguieira', alternativeuri)
-			}
-		},
 		{
 			key: 'Nazare',
 			name: 'Nazaré',
