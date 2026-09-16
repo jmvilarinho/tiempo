@@ -2,15 +2,6 @@ var ec;
 var favorite_load = [];
 var arr_datos = [];
 var arr_event = [];
-var hay_datos = false;
-
-function getSaturday(d) {
-	d = new Date(d);
-	suma = 6 - d.getDay();
-	d.setDate(d.getDate() + suma);
-	return d;
-}
-firstEvent = getSaturday(new Date());
 
 async function load_calendario(addHistory = true) {
 	displayLoading();
@@ -32,8 +23,6 @@ async function load_calendario(addHistory = true) {
 	$('#results').append('<div id="equipo_load">(Cargando datos ...)</div><main class="row" style="white-space: wrap;" ><div id="ec" class="col"></div></main>');
 
 	creaCalendario();
-	hay_datos = false;
-	firstEvent = getSaturday(new Date());
 	arr_datos = [];
 	arr_event = [];
 	favorite_load = [];
@@ -97,22 +86,20 @@ async function load_calendario(addHistory = true) {
 		//console.log('Set white: #label_color: "' + i + '" ' + html);
 	}
 
-	// Ocultar en el calendario los días hasta sabado si no hay eventos
-	if (hay_datos) {
-		hiddenDays = [];
-		last_idx = firstEvent.getDay();
-		var date_now_obj = new Date(Date.now())
-		idxnow=date_now_obj.getDay()
-		if (last_idx < idxnow)
-			last_idx = idxnow;
-		if (idxnow==0)
-			last_idx=6;
-
-		for (var x = 1; x < last_idx; x++) {
-			hiddenDays.push(x);
-		}
-		ec.setOption('hiddenDays', hiddenDays);
+	// O calendario amosa sempre a semán a partir do día actual: agóchanse os días
+	// anteriores a hoxe. O bucle só chega a 5 (venres), así que sábado (6) e domingo
+	// (0, o último coa opción firstDay: 1) quedan sempre visibles; se hoxe é domingo
+	// agóchase ata o venres, para non deixar o domingo só.
+	// Faise sempre, non só cando hai eventos: antes o rango calculábase desde o
+	// primeiro partido (firstEvent, inicializado ao sábado seguinte), así que se
+	// ningún equipo seleccionado xogaba antes do sábado desaparecía o día actual.
+	var hiddenDays = [];
+	var idxnow = new Date().getDay();
+	var last_idx = (idxnow == 0) ? 6 : idxnow;
+	for (var x = 1; x < last_idx; x++) {
+		hiddenDays.push(x);
 	}
+	ec.setOption('hiddenDays', hiddenDays);
 
 }
 
@@ -217,9 +204,6 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 							//nombre_equipo = '<img src=home.png  class="home_widget"> ' + nombre_equipo;
 							isHome = true;
 						}
-						if (date_obj < firstEvent) {
-							firstEvent = date_obj;
-						}
 						end = new Date(date_obj.getTime() + getEquipoDuracion(cod_equipo) * 60000);
 						eventCalendar = {
 							start: date_obj,
@@ -239,7 +223,6 @@ function show_portada_equipo_calendario(data, cod_equipo) {
 						};
 						ec.addEvent(eventCalendar);
 						arr_event.push(cod_equipo);
-						hay_datos = true;
 					}
 				}
 			});
