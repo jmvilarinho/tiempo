@@ -417,24 +417,35 @@ function esStreamHls(url) {
 	return /\.m3u8(\?|$)/i.test(url || '');
 }
 
-// Alterna dúas cámaras no mesmo bloque. Cada quenda pode ser un stream HLS ou unha
-// instantánea (detéctase coa extensión .m3u8), e cada unha ten a súa propia imaxe
-// alternativa — urlImageAlternative para a primeira, urlVideoAlternative para a segunda,
-// na mesma orde que as urls — que a substitúe cando o seu stream non se pode reproducir
-// (camaramar move os streams a /live/ tras un SecureToken de sesión e os vellos devolven
-// 404/403). Sen ela a quenda do vídeo quedaría en negro cada intervalo.
+// Alterna dúas cámaras no mesmo bloque: envoltorio de alternateMediaVarias coa orde
+// (imaxe, vídeo) de sempre. Mantense porque é a que chaman os bloques existentes
+// (Razo, Lapamán) e le mellor con só dúas quendas.
+function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '',isPausado=false) {
+	return alternateMediaVarias(baseid, [
+		{ url: urlImage, label: labelImage, alternativa: urlImageAlternative },
+		{ url: urlVideo, label: labelVideo, alternativa: urlVideoAlternative }
+	], intervalSeconds, isPausado);
+}
+
+// Alterna N cámaras no mesmo bloque (listaQuendas = [{url, label, alternativa, stream},
+// ...], na orde en que se van amosando). Cada quenda pode ser un stream HLS ou unha
+// instantánea (detéctase coa extensión .m3u8, ou fórzase con 'stream' cando a url non a
+// leva, coma no proxy de nazarewaves), e cada unha ten a súa imaxe alternativa que a
+// substitúe cando o seu stream non se pode reproducir (camaramar move os streams a /live/
+// tras un SecureToken de sesión e os vellos devolven 404/403). Sen ela a quenda do vídeo
+// quedaría en negro cada intervalo.
 // É asíncrona coma showVideo: o bloque (imaxe/vídeo, rótulo e botón) queda pintado de
 // forma síncrona, e o que se agarda é a comprobación do manifesto de cada quenda antes
 // de montar o seu reprodutor. Antes era síncrona e facía todo iso —crear os Hls,
 // loadSource, attachMedia— dentro da tarefa de quen a chamaba, que quedaba bloqueada.
-async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '',isPausado=false) {
+async function alternateMediaVarias(baseid, listaQuendas, intervalSeconds = 5, isPausado = false) {
 	const img = document.getElementById(baseid + '-img');
 	const video = document.getElementById(baseid + '-video');
 	const title = document.getElementById(baseid + '-title');
 	const unavailable = document.getElementById(baseid + '-unavailable');
 
 	if (!img || !video || !title) {
-		console.error('Missing elements for alternateMediaSimple: ' + baseid);
+		console.error('Missing elements for alternateMediaVarias: ' + baseid);
 		return;
 	}
 
@@ -470,13 +481,17 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 	// fai falta un segundo elemento.
 	let videoLibre = video;
 
-	// Con dous streams nun só <video> habería que destruír e recargar hls.js en cada
-	// cambio (pantalla en negro cada poucos segundos), así que clonamos o elemento.
+	// Con varios streams nun só <video> habería que destruír e recargar hls.js en cada
+	// cambio (pantalla en negro cada poucos segundos), así que clonamos o elemento: un
+	// <video> por stream, numerados -video2, -video3... a partir do do fragmento.
+	let extras = 1;
 	function creaVideoExtra() {
-		let extra = document.getElementById(baseid + '-video2');
+		extras += 1;
+		const id = baseid + '-video' + extras;
+		let extra = document.getElementById(id);
 		if (!extra) {
 			extra = video.cloneNode(true);
-			extra.id = baseid + '-video2';
+			extra.id = id;
 			video.parentNode.insertBefore(extra, video.nextSibling);
 		}
 		aplicaAncho(extra);
@@ -484,11 +499,14 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 		return extra;
 	}
 
-	function creaQuenda(url, label, urlAlternativa) {
+	function creaQuenda(url, label, urlAlternativa, stream) {
 		const quenda = {
 			url: url,
 			label: label,
-			stream: esStreamHls(url),
+			// Por defecto decídeo a extensión, pero unha quenda pode forzalo: o proxy de
+			// nazarewaves (proxyHostNazare) devolve un m3u8 nunha url que non acaba en
+			// .m3u8, e sen isto trataríase como instantánea.
+			stream: (stream === undefined || stream === null) ? esStreamHls(url) : !!stream,
 			// A instantánea non se refresca por si mesma: as da Xunta xa levan a marca de
 			// tempo no nome (getUltimaXuntaCam), así que un nocache novo devolvería o mesmo
 			// ficheiro. Calcúlase unha vez e o navegador sérvea da caché en cada quenda.
@@ -499,6 +517,9 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 			video: null,
 			hls: null,
 			cargaParada: false,
+			// Ata que hls.js non emite MANIFEST_PARSED non se pode parar a carga desta
+			// quenda (ver arranca/oculta).
+			listo: false,
 			fallou: false
 		};
 		if (quenda.stream) {
@@ -508,13 +529,16 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 		return quenda;
 	}
 
-	const quendas = [
-		creaQuenda(urlImage, labelImage, urlImageAlternative),
-		creaQuenda(urlVideo, labelVideo, urlVideoAlternative)
-	];
+	const quendas = (listaQuendas || []).map(function (q) {
+		return creaQuenda(q.url, q.label, q.alternativa, q.stream);
+	});
+	if (quendas.length === 0) {
+		console.error('No hai quendas para alternateMediaVarias: ' + baseid);
+		return;
+	}
 	let actual = 0;
 
-	// Con dous streams no mesmo bloque só interesa descargar o que se está a ver: hls.js
+	// Con varios streams no mesmo bloque só interesa descargar o que se está a ver: hls.js
 	// seguiría enchendo o buffer do agochado e duplicaría o ancho de banda. Cun só stream
 	// déixase cargando (así non hai que agardar por el ao volver á súa quenda).
 	const paraCargaAgochada = quendas.filter(q => q.stream).length > 1;
@@ -571,6 +595,17 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 				}
 				noDispoñible(q);
 			});
+			// A partir de aquí xa se pode parar a carga con seguridade, e se a quenda non
+			// é a visible párase agora mesmo: non antes, porque un stopLoad() anterior a
+			// MANIFEST_PARSED aborta a petición do manifesto e startLoad() só retoma
+			// niveis e fragmentos, non a repite — a quenda quedaría sen vídeo para sempre.
+			q.hls.once(Hls.Events.MANIFEST_PARSED, function () {
+				q.listo = true;
+				if (paraCargaAgochada && quendas[actual] !== q) {
+					q.hls.stopLoad();
+					q.cargaParada = true;
+				}
+			});
 			q.hls.loadSource(q.url);
 			q.hls.attachMedia(q.video);
 		} else if (q.video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -582,18 +617,14 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 
 		// amosa() xa se chamou (síncrona, para non deixar o bloque baleiro mentres se
 		// comproba o manifesto), cando esta quenda aínda non tiña reprodutor. Se é a
-		// visible hai que amosala de novo, agora que xa se pode reproducir.
+		// visible hai que amosala de novo, agora que xa se pode reproducir. Se está
+		// agochada non hai nada que facer aquí: páraa o MANIFEST_PARSED de arriba.
 		if (quendas[actual] === q && !q.fallou) {
 			amosa(q);
-		} else if (paraCargaAgochada && q.hls) {
-			// Montouse mentres estaba agochada (o manifesto tardou máis que o intervalo):
-			// non ten sentido que encha o buffer sen verse. amosa() fará startLoad().
-			q.hls.stopLoad();
-			q.cargaParada = true;
 		}
 	}
 
-	// O <img> é compartido polas dúas quendas, así que un erro de carga é sempre da quenda
+	// O <img> é compartido por todas as quendas, así que un erro de carga é sempre da quenda
 	// que se está a amosar. Se xa fallou (estamos amosando a alternativa) non se reintenta.
 	img.addEventListener('error', function () {
 		noDispoñible(quendas[actual]);
@@ -605,7 +636,10 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 		}
 		q.video.style.display = 'none';
 		q.video.pause();
-		if (paraCargaAgochada && q.hls) {
+		// Se o manifesto aínda non está parseado non se para: faríao stopLoad() abortando
+		// a súa petición, e startLoad() non a repite. Xa o parará o propio
+		// MANIFEST_PARSED de arranca() cando chegue, se segue agochada.
+		if (paraCargaAgochada && q.hls && q.listo) {
 			q.hls.stopLoad();
 			q.cargaParada = true;
 		}
@@ -700,7 +734,7 @@ async function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labe
 
 	// Primeiro píntase o bloque e móntase o botón, de forma síncrona: se agardásemos
 	// polos manifestos, un servidor que non responde (validURL non ten timeout) deixaría
-	// o bloque baleiro e sen botón para sempre. Despois arrincan as dúas quendas en
+	// o bloque baleiro e sen botón para sempre. Despois arrincan todas as quendas en
 	// paralelo, e agárdase por elas só para quen queira saber cando remataron.
 	amosa(quendas[actual]);
 	creaBoton();
@@ -1441,6 +1475,12 @@ const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1
 const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
 const proxyHostMeteosix = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=meteosix&url=";
 const proxyHostCamaramar = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=camaramar&url=";
+// Webcams de nazarewaves.com: blobN.nazarewaves.com devolve 401 sen a cookie jwtcam
+// (HttpOnly, .nazarewaves.com, 120 s) e non manda Access-Control-Allow-Origin, así que
+// nin a cookie nin o CORS se poden resolver desde o navegador. O proxy renova a sesión e
+// reescribe o manifesto. Úsase como "proxyHostNazare + cam" (1 = Praia do Norte,
+// 2 = panorámica, 3 = North Canyon View), e engadindo "&photo=1" dá a instantánea.
+const proxyHostNazare = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=nazare&cam=";
 
 //const URL_MINISTERIO = "https://sedeaplicaciones.minetur.gob.es";
 //const FUEL_PRICES_HOST = "https://energia.serviciosmin.gob.es";

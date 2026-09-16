@@ -354,6 +354,66 @@
 				return showVideo(url + streamParams, 'Aguieira', 'Praia da Aguieira', alternativeuri)
 			}
 		},
+		{
+			key: 'Nazare',
+			name: 'Nazaré',
+			// IPMA (Portugal): a previsión vén do dataset 'aggregate' (último arg = true),
+			// porque cities/daily só cobre as capitais de distrito e non trae a Nazaré;
+			// 1101121 é 'Praia da Nazaré' (public-data/forecast/locations.json). Coma en
+			// Caparica, a temperatura da auga e a sensación térmica veñen de Open-Meteo
+			// (penúltimo arg = true): IPMA non as dá na previsión de localidade.
+			previsions: 0,
+			html: `
+<section style="text-align:center;">
+	<div class="rt-container">
+		<div class="col-rt-12">
+			<div id="Nazare-alternative" style="margin: 0; padding: 0;">
+				<a href='https://beachcam.meo.pt/livecams/praia-do-norte/' rel="noreferrer" target=camaramar>
+					<p id="Nazare-title" style="margin: 5px 0;">Praia do Norte (Nazaré)</p>
+				</a>
+			</div>
+			<div style="visibility: hidden" id="Nazare-unavailable"><img width="100" src=img/unavailable.png></div>
+			<img id="Nazare-img" style="width: 100%; max-width: 1300px; height: auto; display: block; margin: 0;" />
+			<video controls id="Nazare-video" style="width: 100%; max-width: 1300px; height: auto; display: none; margin: 0;">
+				<source />
+				<p>Your browser does not support H.264/MP4.</p>
+			</video>
+			<div style="height: 5px;"></div>
+			<div id='Nazare-temperatura'></div>
+			<div id='Nazare-prevision'></div>
+		</div>
+	</div>
+</section>`,
+			init: function () {
+				getPrevisionIPMA(1101121, 'Nazare-prevision', 'Nazaré', 39.608200, -9.084700, 'https://www.ipma.pt/pt/otempo/prev.localidade.hora/index.jsp#Leiria&Praia%20da%20Nazar%C3%A9', true, false, true);
+				getTemperatura('Nazare-temperatura', 39.608200, -9.084700);
+
+				// Os dous streams de beachcam publícanse en /auth-beachcam/ na súa web (403 sen
+				// sesión) pero tamén en /beachcam/, que responde 200 con CORS aberto: é a ruta
+				// que xa usa Caparica. Non hai instantánea pública por cámara (a imaxe de
+				// 'offline' de beachcam é xenérica), así que as quendas van sen alternativa.
+				var urlCanhao = 'https://video-auth1.iol.pt/beachcam/canhaonazare/playlist.m3u8';
+				var urlNorte = 'https://video-auth1.iol.pt/beachcam/nazareparadonorte/playlist.m3u8';
+
+				// As tres de nazarewaves.com van polo proxy (type=nazare): os seus manifestos
+				// están á vista na páxina, pero blobN.nazarewaves.com devolve 401 sen a cookie
+				// jwtcam (HttpOnly, .nazarewaves.com, 120 s) e non manda
+				// Access-Control-Allow-Origin, así que desde o navegador non hai nin cookie nin
+				// CORS. 'stream: true' porque a url do proxy non acaba en .m3u8 e esStreamHls
+				// tomaríaa por instantánea; a alternativa é a instantánea do propio proxy
+				// (&photo=1), que é barata e serve se o stream falla.
+				function nazareWaves(cam) { return proxyHostNazare + cam; }
+
+				// Devólvese a promesa para que render_praias() poida agardar por ela.
+				return alternateMediaVarias('Nazare', [
+					{ url: nazareWaves(1), label: 'Praia do Norte (nazarewaves)', stream: true, alternativa: nazareWaves(1) + '&photo=1' },
+					{ url: nazareWaves(2), label: 'Praia do Norte panorámica (nazarewaves)', stream: true, alternativa: nazareWaves(2) + '&photo=1' },
+					{ url: nazareWaves(3), label: 'North Canyon View (nazarewaves)', stream: true, alternativa: nazareWaves(3) + '&photo=1' },
+					{ url: urlCanhao, label: 'Praia do Norte - Canhão (beachcam)' },
+					{ url: urlNorte, label: 'Praia do Norte panorámica (beachcam)' }
+				], 10);
+			}
+		},
 /*
 
 		{

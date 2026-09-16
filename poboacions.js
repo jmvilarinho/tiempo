@@ -872,14 +872,47 @@ function fmtTempRango(min, max) {
 	return (a === b) ? (a + '&deg;') : (a + '&deg;-' + b + '&deg;');
 }
 
-async function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null, augaSensacion = false, conMareas = false) {
-	const url = 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
+// O dataset open-data/.../cities/daily só cobre 35 localidades (capitais de distrito),
+// así que praias como a Nazaré non están nel. Para esas hai que tirar de
+// public-data/forecast/aggregate/<globalIdLocal>.json (tamén keyless e con CORS), que si
+// trae a praia pero cun formato distinto: unha lista plana de rexistros horarios
+// (idPeriodo 1), de 3 horas (idPeriodo 3) e diarios (idPeriodo 24), mesturados e con
+// outros nomes de campo. Convértese aquí á forma de cities/daily para poder reutilizar
+// createPrevisionIPMA / ipmaRow sen tocalos. Os globalIdLocal saen de
+// https://api.ipma.pt/public-data/forecast/locations.json (moito máis completo que
+// distrits-islands.json).
+function ipmaAgregadoADiario(data) {
+	const lista = Array.isArray(data) ? data : [];
+	const diarios = lista.filter(function (d) { return Number(d.idPeriodo) === 24; });
+	return {
+		// dataUpdate vai en cada rexistro no agregado; no diario é un campo do sobre.
+		dataUpdate: diarios.length ? diarios[0].dataUpdate : (lista.length ? lista[0].dataUpdate : null),
+		data: diarios.map(function (d) {
+			return {
+				// dataPrev é 'YYYY-MM-DDT00:00:00'; forecastDate é só a data.
+				forecastDate: String(d.dataPrev || '').substring(0, 10),
+				tMin: d.tMin,
+				tMax: d.tMax,
+				idWeatherType: d.idTipoTempo,
+				precipitaProb: d.probabilidadePrecipita,
+				predWindDir: d.ddVento,
+				classWindSpeed: d.idFfxVento
+			};
+		})
+	};
+}
+
+async function getPrevisionIPMA(globalIdLocal, element, nombre = '', lat = 0, lon = 0, urllink = null, augaSensacion = false, conMareas = false, agregado = false) {
+	const url = agregado
+		? 'https://api.ipma.pt/public-data/forecast/aggregate/' + globalIdLocal + '.json'
+		: 'https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/' + globalIdLocal + '.json';
 	console.log('Get prevision IPMA: ' + url);
 	try {
 		const extras = augaSensacion ? await getOpenMeteoDiario(lat, lon) : null;
 		const mareas = conMareas ? await getMareasCaparica(lat, lon) : '';
 		const response = await fetch(url);
-		const data = await response.json();
+		const json = await response.json();
+		const data = agregado ? ipmaAgregadoADiario(json) : json;
 		createPrevisionIPMA(data, element, globalIdLocal, nombre, lat, lon, urllink, extras, mareas);
 	} catch (error) {
 		console.error('Error IPMA:', error);
