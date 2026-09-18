@@ -44,9 +44,24 @@ The browser cannot call most upstream APIs directly (CORS / API keys), so reques
 through AWS Lambda / API Gateway proxies. These URLs are hardcoded constants:
 
 - Root app weather proxies — `proxyHost` (AEMET), `proxyHostFarmacia`, `proxyHostMeteosix`,
-  `proxyHostCamaramar`, defined in `index.js`. Usage: `fetch(proxyHost + upstreamUrl)`. They all
+  defined in `index.js`. Usage: `fetch(proxyHost + upstreamUrl)`. They all
   share one Lambda Function URL (`get_aemet`, in the separate `scripts_movil` repo) and differ
   only in `?type=`, so adding a source there means adding a `type` branch to that handler.
+  (`?type=camaramar&url=` also still exists there as a plain JSON fetcher, handy for poking at
+  `/webcam/<id>/stream-url` by hand, but nothing in the site calls it any more.)
+- `proxyHostCamaramarStream` (`index.js`, same Lambda, `?type=camaramar&cam=<webcam id>`)
+  serves the **master manifest** of the camaramar.com webcams. Two gates sit on that manifest:
+  a SecureToken (`jdtcbrndmrd*`) minted by `https://www.camaramar.com/webcam/<id>/stream-url`
+  (which the browser could fetch itself) and, since they moved the streams to `/live/`, a
+  mandatory `Referer: https://www.camaramar.com/` — any other referer, or none, gets a 403, and
+  `Referer` is a forbidden header in `fetch`/XHR. Only the master goes through the proxy: the
+  chunklist and the `.ts` segments carry the token inside their *file name* and are served with
+  no `Referer` and `Access-Control-Allow-Origin: *`, so the Lambda just rewrites the master's
+  relative URLs to absolute ones and the video goes straight from the CDN to the browser — one
+  Lambda call per camera per reload, no video relayed (unlike `proxyHostNazare`). Don't call it
+  directly: `camaramarStream('<wowza stream name>')` in `params.js` holds the stream-name →
+  webcam-id map (get the id from the `data-webcam-id` of the `<video>` on camaramar's page).
+  Its URL doesn't end in `.m3u8`, so turns need `stream: true`.
 - `proxyHostNazare` (also `index.js`, same Lambda, `?type=nazare&cam=1|2|3`) relays the
   nazarewaves.com webcams, which the browser cannot reach on two independent counts: their
   session cookie (`jwtcam_N`) is HttpOnly on `.nazarewaves.com`, lives 120 s and is only minted
@@ -115,7 +130,7 @@ When changing data sources, update these constants rather than scattering URLs.
   here: microtasks drain before the browser paints.
   `render_praias` / `render_poboacions` / `renderSelector` are `async` and resolve when every
   `init()` has finished, via `Promise.all`. An entry opts into being waited for by **returning**
-  its promise (`return showVideo(...)` / `return alternateMediaSimple(...)`) — that is why the
+  its promise (`return showVideo(...)` / `return alternateMediaVarias(...)`) — that is why the
   fragments' `init()` bodies end in `return`; an `init()` that returns nothing is only waited
   for up to its own launch. Each entry is caught separately, so one failure doesn't stop the
   rest. Everything up to the first `await` is still synchronous (selector markup, entry HTML,
@@ -144,13 +159,11 @@ When changing data sources, update these constants rather than scattering URLs.
     (their internal `switchToVideo` / `showVideoStream` are deliberately *not* named `showVideo`,
     to avoid shadowing the global one).
   - `alternateMediaVarias(baseid, quendas, intervalSeconds, isPausado)` drives the alternating
-    blocks (Razo, Lapamán, Nazaré) with **any number of turns**; `alternateMediaSimple(baseid,
-    url1, label1, url2, label2, intervalSeconds, url1Alternative, url2Alternative, isPausado)` is
-    a thin synchronous wrapper over it for the two-turn case. A turn is
+    blocks (Razo, Lapamán, Nazaré) with **any number of turns**. A turn is
     `{url, label, alternativa, stream}`. Its markup is `#<key>-img` + `#<key>-video` +
     `#<key>-title`. **Any turn may be an HLS stream or a still image** — `esStreamHls` decides by
-    the `.m3u8` extension, and `stream: true|false` overrides it, which is what the Nazaré turns
-    need because the proxy URL carries the manifest in a query string. Each turn has its own
+    the `.m3u8` extension, and `stream: true|false` overrides it, which is what the Nazaré and
+    camaramar turns need because the proxy URL carries the manifest in a query string. Each turn has its own
     fallback snapshot (`alternativa`), shown in the shared `<img>` when its stream can't play
     (`validURL` precheck, fatal/denied `Hls.Events.ERROR`, native-HLS `error`) or when its own
     snapshot fails to load. Every stream turn past the first gets its own `<video>`, cloned by
@@ -174,9 +187,10 @@ When changing data sources, update these constants rather than scattering URLs.
     `img/continuar.svg`) right after `#<key>-title`, which only starts/stops the rotation timer —
     the stream on screen keeps playing. It is an `<img>` with `preventDefault`/`stopPropagation`
     because the title usually sits inside the `<a>` to the camera's site.
-  - Perbes (`Mino` key in `praias.html`) is the reference case of a camera whose element is an
-    `<img>`, not a `<video>`: its camaramar stream is token-locked, so `showVideo` short-circuits
-    to the public snapshot.
+  - Pobra (`Pobra` key in `praias.html`) is the reference case of a camera with no stream left:
+    camaramar's `/camaramar/` Wowza application is gone (everything 404s) and no
+    `/webcam/<id>/stream-url` resolves to `9_caraminal`, so it goes straight to
+    `showOnlyAlternative` with the Xunta's Corón snapshot.
 - `common.js` is shared with the RFGF app: maps/Waze deep-links (`openMaps`, `openWaze`,
   platform detection in `detectPlatform`).
 - AEMET forecast JSON is fetched as ISO-8859-1 and decoded manually (see `getPrevisionDatos`).

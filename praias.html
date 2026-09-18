@@ -37,17 +37,18 @@
 				getPrevision(1501902, 'Razo-prevision', 21, 43.290787, -8.701617);
 				getTemperatura('Razo-temperatura', 43.290787, -8.701617);
 
-				var url = "https://622a10e8864f7.streamlock.net/live/5_razo.stream/playlist.m3u8";
-				var streamParams = getWebcamIdFromUrl(url);
+				// As dúas son de camaramar: o mestre vai polo proxy (camaramarStream, en
+				// params.js) porque o seu Wowza esixe Referer. 'stream: true' porque a url
+				// do proxy non acaba en .m3u8 e esStreamHls tomaríaa por instantánea.
 				// Instantáneas (poster de camaramar) para cando o stream non se poida reproducir.
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/c914b0e1-5e2d-41cf-8c34-1f110a27c7c5.webp';
-
-				var url2 = "https://622a10e8864f7.streamlock.net/live/2_razo_art.stream/playlist.m3u8"
-				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/ab9f0dcb-db6b-44d8-948d-e1f052a0c6dd.webp';
 
 				// Devólvese a promesa para que render_praias() poida agardar por ela.
-				return alternateMediaSimple('Razo', url + streamParams, 'Praia de Razo', url2 + streamParams2, 'Praia de Razo (oeste)', 8, alternativeuri, alternativeuri2, true);
+				return alternateMediaVarias('Razo', [
+					{ url: camaramarStream('5_razo'), label: 'Praia de Razo', stream: true, alternativa: alternativeuri },
+					{ url: camaramarStream('2_razo_art'), label: 'Praia de Razo (oeste)', stream: true, alternativa: alternativeuri2 }
+				], 8, true);
 			}
 		},
 		{
@@ -79,13 +80,15 @@
 				getTemperatura('Lapaman-temperatura', 42.342433, -8.752242);
 
 				var url = getUltimaXuntaCam('Aguete2');
-				var url2 = 'https://622a10e8864f7.streamlock.net/camaramar/48_menduina.stream/playlist.m3u8';
-				url2 = "https://622a10e8864f7.streamlock.net/live/48_menduina.stream/playlist.m3u8"
-				var streamParams2 = getWebcamIdFromUrl(url2);
 				var alternativeuri2 = 'https://www.camaramar.com/uploads/webcam/1f63d75b-a375-4a66-a97d-ee7f16265cd8.webp';
 
 				// A primeira quenda é a instantánea da Xunta: non ten alternativa que amosar.
-				return alternateMediaSimple('Lapaman', url, 'Praia de Aguete (Ría de Pontevedra)', url2 + streamParams2, 'Praia de Menduiña (Ría de Aldan)', 5, '', alternativeuri2);
+				// A segunda é de camaramar e vai polo proxy (camaramarStream, params.js), cuxa
+				// url non acaba en .m3u8: de aí o 'stream: true'.
+				return alternateMediaVarias('Lapaman', [
+					{ url: url, label: 'Praia de Aguete (Ría de Pontevedra)' },
+					{ url: camaramarStream('48_menduina'), label: 'Praia de Menduiña (Ría de Aldan)', stream: true, alternativa: alternativeuri2 }
+				], 5);
 			}
 		},
 		{
@@ -114,9 +117,13 @@
 				getPrevision(1506702, 'Cabio-prevision', 25, 42.586036, -8.932807);
 				getTemperatura('Cabio-temperatura', 42.586036, -8.932807);
 
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/9_caraminal.stream/playlist.m3u8';
+				// A cámara do Caramiñal xa non está en camaramar: a aplicación /camaramar/
+				// de Wowza desapareceu (todo 404) e ningún id de /webcam/<id>/stream-url
+				// devolve 9_caraminal, así que non hai stream que pedir e sempre se vai á
+				// instantánea de Corón. Se volve aparecer, engádea a CAMARAMAR_WEBCAMS
+				// (params.js) e usa camaramarStream('9_caraminal') con showVideo.
 				var alternativeuri = getUltimaXuntaCam('Coron');
-				return showVideo(url, 'Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
+				return showOnlyAlternative('Pobra', 'Corón (Vilanova de Arousa)', alternativeuri)
 			}
 		},
 		{
@@ -145,12 +152,9 @@
 				getPrevision(1507304, 'Coroso-prevision', 25, 42.568542, -8.982126);
 				getTemperatura('Coroso-temperatura', 42.568542, -8.982126);
 
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/31_coroso.stream/playlist.m3u8';
-				//url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8?jdtcbrndmrdstarttime=1786050174&jdtcbrndmrdendtime=1786051984&jdtcbrndmrdhash=KftgGxNG7vAuy9OYlsyBibGmxfU4o2HEioOWneTDUWQ%3D"
-				url = "https://622a10e8864f7.streamlock.net/live/31_coroso.stream/playlist.m3u8";
+				var url = camaramarStream('31_coroso');
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/865c5099-f700-4a8e-9af5-34c002295ebd.webp";
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Coroso', 'Coroso', alternativeuri)
+				return showVideo(url, 'Coroso', 'Coroso', alternativeuri)
 			}
 		},
 		{
@@ -179,13 +183,11 @@
 				getPrevision(1504801, 'Mino-prevision', 19, 43.357382, -8.211300);
 				getTemperatura('Mino-temperatura', 43.357382, -8.211300);
 
-				// Non hai stream: camaramar move o vídeo tras SecureToken de sesión e
-				// non atopamos ningunha webcam libre en Perbes. Usamos a instantánea
-				// pública da súa cámara (webcam id 96), que se actualiza cada poucos minutos.
-				var url = 'https://622a10e8864f7.streamlock.net/live/61_perbes.stream/playlist.m3u8';
+				// Stream de camaramar polo proxy; se a cámara está apagada cáese na súa
+				// instantánea pública, que se actualiza cada poucos minutos.
+				var url = camaramarStream('61_perbes');
 				var alternativeuri = 'https://www.camaramar.com/uploads/webcam/79d5d078-3b54-4bd6-b842-111acb0ecc20.webp'
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Mino', 'Perbes', alternativeuri)
+				return showVideo(url, 'Mino', 'Perbes', alternativeuri)
 			}
 		},
 		{
@@ -214,9 +216,7 @@
 				getPrevision(1500501, 'Barranan-prevision', 70, 43.311220, -8.552285);
 				getTemperatura('Barranan-temperatura',  43.311220, -8.552285);
 
-				//var url = 'https://622a10e8864f7.streamlock.net/camaramar/sabon.stream/playlist.m3u8';
-				//var alternativeuri = getUltimaXuntaCam('Langosteira');
-				var url = "https://622a10e8864f7.streamlock.net/live/4_barranan.stream/playlist.m3u8";
+				var url = camaramarStream('4_barranan');
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/cadde944-f3ca-490b-8460-ecf5cc818fd1.webp";
 				return showVideo(url, 'Barranan', 'Praia de Barrañán (Arteixo)', alternativeuri)
 			}
@@ -276,11 +276,9 @@
 				getPrevision(3602201, 'Lanzada-prevision', 27, 42.445864, -8.874364);
 				getTemperatura('Lanzada-temperatura', 42.445864, -8.874364);
 
-				var url = 'https://622a10e8864f7.streamlock.net/camaramar/68_lanzada.stream/playlist.m3u8';
-				url = "https://622a10e8864f7.streamlock.net/live/68_lanzada.stream/playlist.m3u8";
+				var url = camaramarStream('68_lanzada');
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/753e6314-6cee-4ae2-aabc-623c248b1613.webp";
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Lanzada', 'Lanzada', alternativeuri)
+				return showVideo(url, 'Lanzada', 'Lanzada', alternativeuri)
 			}
 		},
 
@@ -310,10 +308,9 @@
 				getPrevision(1502001, 'Carnota-prevision', 23, 42.833146, -9.105996);
 				getTemperatura('Carnota-temperatura',  42.833146, -9.105996);
 
-				var url = 'https://622a10e8864f7.streamlock.net/live/33_carnota.stream/playlist.m3u8';
+				var url = camaramarStream('33_carnota');
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/d0a1a079-811d-4b3b-b2e0-36a477f8f650.webp";
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Carnota', 'Carnota', alternativeuri)
+				return showVideo(url, 'Carnota', 'Carnota', alternativeuri)
 			}
 		},
 
@@ -346,12 +343,11 @@
 				getPrevision(1507101, 'Aguieira-prevision', 24, 42.742146, -8.964672);
 				getTemperatura('Aguieira-temperatura', 42.742146, -8.964672);
 
-				// O stream de camaramar está tras SecureToken de sesión (403 sen el):
-				// getWebcamIdFromUrl (params.js) engade os parámetros da webcam 17.
-				var url = 'https://622a10e8864f7.streamlock.net/live/3_aguieira.stream/playlist.m3u8';
+				// O stream de camaramar leva SecureToken e esixe Referer: vai polo proxy
+				// (camaramarStream, en params.js).
+				var url = camaramarStream('3_aguieira');
 				var alternativeuri = "https://www.camaramar.com/uploads/webcam/704ef113-4a72-4fcf-8444-28022e9fee42.webp";
-				var streamParams = getWebcamIdFromUrl(url);
-				return showVideo(url + streamParams, 'Aguieira', 'Praia da Aguieira', alternativeuri)
+				return showVideo(url, 'Aguieira', 'Praia da Aguieira', alternativeuri)
 			}
 		},
 		{

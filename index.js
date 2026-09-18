@@ -370,10 +370,9 @@ async function showVideo(url, videoid, alternative = '', alternativeurl = '', fa
 	}
 }
 
-// Algunhas cámaras (camaramar) xa non permiten enlazar o vídeo HLS: a URL do stream
-// leva un SecureToken ligado á sesión do usuario e caduca aos 30 minutos. Pero a
-// instantánea que empregan como poster si se serve publicamente e actualízase cada
-// poucos minutos, así que a amosamos como imaxe e refrescámola periodicamente.
+// Para cámaras das que só hai imaxe fixa: o poster de camaramar, por exemplo, sérvese
+// publicamente e actualízase cada poucos minutos, así que se amosa como imaxe e se
+// refresca periodicamente.
 function showSnapshot(url, imgid, refreshSeconds = 120) {
 	var img = document.getElementById(imgid);
 	var unavailable = document.getElementById(imgid + "-unavailable");
@@ -411,29 +410,19 @@ function showSnapshot(url, imgid, refreshSeconds = 120) {
 	recarga();
 }
 
-// ¿A URL é un manifesto HLS? Serve para decidir se unha quenda de alternateMediaSimple
+// ¿A URL é un manifesto HLS? Serve para decidir se unha quenda de alternateMediaVarias
 // se reproduce nun <video> ou se amosa como instantánea nun <img>.
 function esStreamHls(url) {
 	return /\.m3u8(\?|$)/i.test(url || '');
 }
 
-// Alterna dúas cámaras no mesmo bloque: envoltorio de alternateMediaVarias coa orde
-// (imaxe, vídeo) de sempre. Mantense porque é a que chaman os bloques existentes
-// (Razo, Lapamán) e le mellor con só dúas quendas.
-function alternateMediaSimple(baseid, urlImage, labelImage, urlVideo, labelVideo, intervalSeconds = 5, urlImageAlternative = '', urlVideoAlternative = '',isPausado=false) {
-	return alternateMediaVarias(baseid, [
-		{ url: urlImage, label: labelImage, alternativa: urlImageAlternative },
-		{ url: urlVideo, label: labelVideo, alternativa: urlVideoAlternative }
-	], intervalSeconds, isPausado);
-}
-
 // Alterna N cámaras no mesmo bloque (listaQuendas = [{url, label, alternativa, stream},
 // ...], na orde en que se van amosando). Cada quenda pode ser un stream HLS ou unha
 // instantánea (detéctase coa extensión .m3u8, ou fórzase con 'stream' cando a url non a
-// leva, coma no proxy de nazarewaves), e cada unha ten a súa imaxe alternativa que a
-// substitúe cando o seu stream non se pode reproducir (camaramar move os streams a /live/
-// tras un SecureToken de sesión e os vellos devolven 404/403). Sen ela a quenda do vídeo
-// quedaría en negro cada intervalo.
+// leva, coma nos proxys de nazarewaves e camaramar), e cada unha ten a súa imaxe
+// alternativa que a substitúe cando o seu stream non se pode reproducir (unha cámara
+// de camaramar apagada devolve 404 no manifesto). Sen ela a quenda do vídeo quedaría
+// en negro cada intervalo.
 // É asíncrona coma showVideo: o bloque (imaxe/vídeo, rótulo e botón) queda pintado de
 // forma síncrona, e o que se agarda é a comprobación do manifesto de cada quenda antes
 // de montar o seu reprodutor. Antes era síncrona e facía todo iso —crear os Hls,
@@ -503,9 +492,9 @@ async function alternateMediaVarias(baseid, listaQuendas, intervalSeconds = 5, i
 		const quenda = {
 			url: url,
 			label: label,
-			// Por defecto decídeo a extensión, pero unha quenda pode forzalo: o proxy de
-			// nazarewaves (proxyHostNazare) devolve un m3u8 nunha url que non acaba en
-			// .m3u8, e sen isto trataríase como instantánea.
+			// Por defecto decídeo a extensión, pero unha quenda pode forzalo: os proxys de
+			// nazarewaves (proxyHostNazare) e camaramar (proxyHostCamaramarStream) devolven
+			// un m3u8 nunha url que non acaba en .m3u8, e sen isto trataríase como instantánea.
 			stream: (stream === undefined || stream === null) ? esStreamHls(url) : !!stream,
 			// A instantánea non se refresca por si mesma: as da Xunta xa levan a marca de
 			// tempo no nome (getUltimaXuntaCam), así que un nocache novo devolvería o mesmo
@@ -1474,7 +1463,12 @@ function geoFindMeRetry(event, divName) {
 const proxyHost = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=aemet&url=";
 const proxyHostFarmacia = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=farmacia&url=";
 const proxyHostMeteosix = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=meteosix&url=";
-const proxyHostCamaramar = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=camaramar&url=";
+// Manifesto mestre das webcams de camaramar: o seu Wowza esixe
+// 'Referer: https://www.camaramar.com/' (403 con calquera outro) e Referer non se pode
+// poñer desde o navegador. Úsase como "proxyHostCamaramarStream + id de webcam", pero
+// o normal é chamar a camaramarStream() (params.js), que ten o mapa de cámaras. Só o
+// mestre vén por aquí: a chunklist e os segmentos van directos ao CDN (CORS aberto).
+const proxyHostCamaramarStream = "https://jl6dcfhxupw4gk4hvy4pxmhjoa0lmhwd.lambda-url.eu-west-1.on.aws/?type=camaramar&cam=";
 // Webcams de nazarewaves.com: blobN.nazarewaves.com devolve 401 sen a cookie jwtcam
 // (HttpOnly, .nazarewaves.com, 120 s) e non manda Access-Control-Allow-Origin, así que
 // nin a cookie nin o CORS se poden resolver desde o navegador. O proxy renova a sesión e
