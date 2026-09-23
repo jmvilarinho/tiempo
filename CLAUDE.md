@@ -228,7 +228,10 @@ When changing data sources, update these constants rather than scattering URLs.
   `rfgf/index.html`. Team properties (`id`, `name`, `color`, `duracion_min`, optional
   `codgrupo`, `codcompeticion`, `rfef`, `tv`) are read via the `getEquipo*`/`isRFEF` helpers
   in `utils.js`. To add or change a team, edit that array — it is the single source of truth,
-  and the sidenav menus are generated from it. `favoritos_default` / `calendario_default`
+  and the sidenav menus are generated from it. `duracion_min` is the category's playing time
+  **plus half-time**, in minutes (football: senior/juvenil 2×45+15 = 105, cadete 2×40+15 = 95,
+  infantil 2×35+15 = 85; futsal entries follow their own category rules). It sizes the
+  calendar events and the live-score window, and `getEquipoDuracion` falls back to 90. `favoritos_default` / `calendario_default`
   set the initial favourites.
 - **`version_reducida`** (set `true` in `rfgf/index.html`) gates which nav buttons appear in
   `crea_botons` — the reduced version hides Resultados/Clasificación/Goleadores unless a
@@ -266,6 +269,14 @@ When changing data sources, update these constants rather than scattering URLs.
   panels cover futsal and football from Primera Federación down, **not LaLiga Primera**
   (Deportivo / Celta get no live score). `rfef.es/es/resultados` was ruled out: Cloudflare
   JS challenge, even through the Google proxy.
+  The futgal fragment only varies by `CodGrupo` and `CodJornada`: `IdCelda=10001540103` is the
+  results page's cell and stays the same for every group (checked with Jogafan senior and
+  juvenil, Oroso Juvenil and Ordes Cadete, futsal and football alike); without `CodJornada`
+  futgal returns the current jornada, but the web always sends the one on screen. The group
+  comes from what `getresultados` returns (`codigo_grupo`), which in turn comes from the team
+  page (`getequipo`) when `equipos` has no `codgrupo`. Some futgal groups come back from
+  `getresultados` without team codes, so the name fallback is not just for RFEF — names from
+  the two futgal pages match exactly.
 - `rfgf/data/` and `rfgf/samples/` hold captured HTML/JSON fixtures of upstream responses,
   useful for understanding payload shapes when working offline.
 
