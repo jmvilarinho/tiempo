@@ -127,6 +127,7 @@ async function showVideo(url) {
 }
 
 function show_portada_equipo(data, cod_equipo, rfef = false) {
+	xeracion_directo += 1;
 	lineas = 0;
 	$('#results').append('<br>');
 
@@ -340,7 +341,11 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		data3 = '';
 	}
 
-	if (goles_casa == "" && goles_fuera == "") {
+	// xornada actual que pode estar en xogo: o marcador en directo chega despois
+	// (actualiza_directo), así que as celdas do marcador pintanse aínda sen goles
+	var directo = codcompeticion && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') && en_xogo_agora(item, cod_equipo);
+
+	if (goles_casa == "" && goles_fuera == "" && !directo) {
 		span = 3;
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
@@ -374,12 +379,12 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		datos = '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + casa + '</td>'
 			+ data1
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + xogo + '&nbsp;</td>'
+			+ '<td id="' + id_tabla + '_goles_casa" ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + xogo + '&nbsp;</td>'
 			+ '</tr>'
 			+ '<tr>'
 			+ '<td style="text-align:' + align + ';" bgcolor="white" colspan=' + span + '>' + fuera + '</td>'
 			+ data2
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_fuera_html + xogo + '&nbsp;</td>'
+			+ '<td id="' + id_tabla + '_goles_fora" ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_fuera_html + xogo + '&nbsp;</td>'
 			+ '</tr>';
 	}
 
@@ -396,6 +401,28 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		+ datos
 		+ data3
 		+ '</table>');
+
+	if (directo) {
+		// a lenda só se amosa se chega algún marcador
+		$('#results').append('<p id="lenda_directo_' + id_tabla + '" style="display:none;font-size:12px;"><span class="marcador_directo">Marcador en directo (' + (rfef ? 'marcadores.rfef.es' : 'futgal.es') + ')</span></p>');
+		var celda_casa = '#' + id_tabla + '_goles_casa';
+		var celda_fora = '#' + id_tabla + '_goles_fora';
+		var codequipo_casa = item.codequipo_casa;
+		var codequipo_fuera = item.codequipo_fuera;
+		actualiza_directo(codcompeticion, codgrupo, item.jornada || '', rfef, [{
+			cod_local: codequipo_casa || '',
+			cod_visitante: codequipo_fuera || '',
+			local: equipo_casa,
+			visitante: equipo_fuera,
+			fecha: item.fecha || '',
+			pinta: function (g1, g2, minuto) {
+				var fondo = color_goles('white', cod_equipo, codequipo_casa, codequipo_fuera, g1, g2);
+				// o minuto só unha vez, baixo o gol do visitante
+				$(celda_casa).html('&nbsp;<span class="marcador_directo">' + g1 + '</span>&nbsp;').css('background-color', fondo);
+				$(celda_fora).html('&nbsp;<span class="marcador_directo">' + g2 + '</span>' + minuto + '&nbsp;').css('background-color', fondo);
+			}
+		}], xeracion_directo, 'lenda_directo_' + id_tabla);
+	}
 
 	if (codcompeticion && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') && !version_reducida)
 		load_comparativa(codcompeticion, codgrupo, item.codequipo_casa, item.codequipo_fuera, nombre_equipo)

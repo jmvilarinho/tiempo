@@ -252,7 +252,9 @@ function busca_partido_directo(partidos, candidato) {
 // futgal.es para a RFGF. Píntase por riba do marcador de getresultados ou
 // getequipo cunha cor propia (marcador_directo) e o minuto, se o trae.
 // Cada candidato leva o id da súa celda (celda) e, se a cor de fondo depende
-// do marcador (xornadas: vitoria / empate / derrota), fondo(goles_casa, goles_fora)
+// do marcador (xornadas: vitoria / empate / derrota), fondo(goles_casa, goles_fora).
+// Se o marcador non cabe nunha celda (portada: un gol en cada fila), o candidato
+// trae pinta(goles_casa, goles_fora, html_minuto) e encárgase el
 async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candidatos, xeracion, lenda = 'lenda_directo') {
 	var valido = v => v && v != 'undefined';
 	var url = remote_url + '?type=getdirecto';
@@ -285,12 +287,14 @@ async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candi
 				return;
 			if (p.estado != 'enjuego' && p.estado != 'prov')
 				return;
-			var html = '<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>';
-			if (p.minuto)
-				html += '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>';
-			$('#' + candidato.celda).html(html);
-			if (candidato.fondo)
-				$('#' + candidato.celda).css('background-color', candidato.fondo(p.Goles_casa, p.Goles_visitante));
+			var minuto = p.minuto ? '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>' : '';
+			if (candidato.pinta) {
+				candidato.pinta(p.Goles_casa, p.Goles_visitante, minuto);
+			} else {
+				$('#' + candidato.celda).html('<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>' + minuto);
+				if (candidato.fondo)
+					$('#' + candidato.celda).css('background-color', candidato.fondo(p.Goles_casa, p.Goles_visitante));
+			}
 			algun = true;
 		});
 		if (algun)
