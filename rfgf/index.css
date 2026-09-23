@@ -117,6 +117,13 @@ th.font_responsive{
 	color: #0b859b;
 }
 
+.marcador_directo {
+	/* Marcador en directo de marcadores.rfef.es: violeta (5.9:1 sobre branco),
+	   distinto do turquesa do marcador temporal */
+	color: #8e24aa;
+	font-weight: bold;
+}
+
 .racha {
 	padding: 0 2px 0 2px;
 	color: white;

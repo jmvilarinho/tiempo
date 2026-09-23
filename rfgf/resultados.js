@@ -44,7 +44,13 @@ async function load_resultados(cod_grupo, cod_equipo, jornada, cod_competicion, 
 	hideLoading();
 }
 
+// Cada render de resultados leva un número: o marcador en directo que chegue
+// dun render anterior (o usuario xa cambiou de xornada) descártase
+var xeracion_resultados = 0;
+
 function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, rfef = false) {
+	xeracion_resultados += 1;
+	var directo_candidatos = [];
 	$('#results').append('<br>');
 	linea_competicion = data.nombre_competicion ? data.nombre_competicion : '';
 	if (data.nombre_grupo && data.nombre_grupo != '')
@@ -86,6 +92,13 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		hai_temporal = false;
 
 		jQuery.each(data.partidos, function (index, item) {
+			if (rfef && en_xogo_agora(item, cod_equipo))
+				directo_candidatos.push({
+					idx: index,
+					local: item.Nombre_equipo_local || '',
+					visitante: item.Nombre_equipo_visitante || '',
+					fecha: item.fecha || ''
+				});
 			background = getBackgroundColor(cont, (item.CodEquipo_local == cod_equipo || item.CodEquipo_visitante == cod_equipo));
 			cont += 1
 
@@ -158,7 +171,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			$('#results').append('<tr>'
 				+ '<td style="background-color:' + background + ';" >' + fecha + hora + '</td>'
 				+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
-				+ '<td style="background-color:' + background + ';" align="center" >' + goles_html + '</td>'
+				+ '<td id="marcador_' + index + '" style="background-color:' + background + ';" align="center" >' + goles_html + '</td>'
 				+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
 				+ '<td style="background-color:' + background + ';" align="center" >' + dia + '</td>'
 				+ '</tr>');
@@ -167,10 +180,101 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 			$('#results').append('<tr>'
 				+ '<td colspan="5" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">&nbsp;&nbsp;Marcador temporal</span></td>'
 				+ '</tr>');
+		// a lenda do directo só se amosa se chega algún marcador
+		if (directo_candidatos.length > 0)
+			$('#results').append('<tr id="lenda_directo" style="display:none;">'
+				+ '<td colspan="5" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_directo">&nbsp;&nbsp;Marcador en directo (marcadores.rfef.es)</span></td>'
+				+ '</tr>');
 		$('#results').append('</table>');
+
+		if (directo_candidatos.length > 0)
+			actualiza_directo(data.codigo_competicion || cod_competicion, data.codigo_grupo || codgrupo, directo_candidatos, xeracion_resultados);
 
 	} else {
 		$('#results').append('<br><p>Non se atoparon resultados.</p><br>');
 	}
 
+}
+
+// Partido que pode estar en xogo agora mesmo: dende a hora de comezo ata
+// duracion_min (xogo + descanso) máis unha hora de marxe por atrasos, ou
+// con marcador provisional do mesmo día
+function en_xogo_agora(item, cod_equipo) {
+	var m = String(item.fecha || '').match(/(\d{2})\D(\d{2})\D(\d{4})/);
+	if (!m)
+		return false;
+	var agora = new Date();
+	var hoxe = agora.getDate() == parseInt(m[1], 10) && (agora.getMonth() + 1) == parseInt(m[2], 10) && agora.getFullYear() == parseInt(m[3], 10);
+	if (marcador_provisional(item) && hoxe)
+		return true;
+	var h = String(item.hora || '').match(/(\d{1,2}):(\d{2})/);
+	if (!h || item.hora == '00:00')
+		return false;
+	var inicio = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10), parseInt(h[1], 10), parseInt(h[2], 10));
+	var fin = inicio.getTime() + (getEquipoDuracion(cod_equipo) + 60) * 60000;
+	return agora.getTime() >= inicio.getTime() && agora.getTime() <= fin;
+}
+
+// Os nomes non sempre coinciden letra a letra entre resultados.rfef.es e
+// marcadores.rfef.es: compáranse sen acentos, maiúsculas nin signos
+function normaliza_nome(nome) {
+	return String(nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function busca_partido_directo(partidos, candidato) {
+	var local = normaliza_nome(candidato.local);
+	var visitante = normaliza_nome(candidato.visitante);
+	var dia = String(candidato.fecha).substring(0, 5).replace(/-/g, '/');
+	var parcial = null;
+	for (var i = 0; i < partidos.length; i++) {
+		var p = partidos[i];
+		var pl = normaliza_nome(p.Nombre_equipo_local);
+		var pv = normaliza_nome(p.Nombre_equipo_visitante);
+		if (pl == local && pv == visitante)
+			return p;
+		// un dos dous nomes igual e o mesmo día
+		if (!parcial && (pl == local || pv == visitante) && p.fecha == dia)
+			parcial = p;
+	}
+	return parcial;
+}
+
+// Segunda fonte para os partidos RFEF en xogo: os paneis de marcadores.rfef.es,
+// que o lambda garda só 90 s. Píntase por riba do marcador de resultados.rfef.es
+// cunha cor propia (marcador_directo) e o minuto, se o trae
+async function actualiza_directo(cod_competicion, codgrupo, candidatos, xeracion) {
+	if (!cod_competicion)
+		return;
+	var url = remote_url + '?type=getdirecto&rfef=1&codcompeticion=' + cod_competicion;
+	if (codgrupo && codgrupo != 'undefined')
+		url += '&codgrupo=' + codgrupo;
+	console.log("GET " + url);
+	try {
+		const response = await fetch(url);
+		if (!response.ok)
+			throw new Error('Network response was not ok');
+		const data = await response.json();
+		if (xeracion != xeracion_resultados)
+			return;
+		if (!data || data.is_ok != 'true' || !data.data || !data.data.partidos)
+			throw new Error('Sen datos do directo: ' + (data ? data.error : ''));
+
+		var algun = false;
+		jQuery.each(candidatos, function (index, candidato) {
+			var p = busca_partido_directo(data.data.partidos, candidato);
+			if (!p || p.Goles_casa === '' || p.Goles_visitante === '')
+				return;
+			if (p.estado != 'enjuego' && p.estado != 'prov')
+				return;
+			var html = '<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>';
+			if (p.minuto)
+				html += '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>';
+			$('#marcador_' + candidato.idx).html(html);
+			algun = true;
+		});
+		if (algun)
+			$('#lenda_directo').show();
+	} catch (error) {
+		console.error('Directo:', error.message);
+	}
 }
