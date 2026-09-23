@@ -199,7 +199,8 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 }
 
 // Partido que pode estar en xogo agora mesmo: dende a hora de comezo ata
-// duracion_min (xogo + descanso) máis unha hora de marxe por atrasos, ou
+// duracion_min (xogo + descanso) máis dúas horas de marxe por atrasos e
+// porque as actas tardan en pecharse, ou
 // con marcador provisional do mesmo día
 function en_xogo_agora(item, cod_equipo) {
 	var m = String(item.fecha || '').match(/(\d{2})\D(\d{2})\D(\d{4})/);
@@ -213,7 +214,7 @@ function en_xogo_agora(item, cod_equipo) {
 	if (!h || item.hora == '00:00')
 		return false;
 	var inicio = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10), parseInt(h[1], 10), parseInt(h[2], 10));
-	var fin = inicio.getTime() + (getEquipoDuracion(cod_equipo) + 60) * 60000;
+	var fin = inicio.getTime() + (getEquipoDuracion(cod_equipo) + 120) * 60000;
 	return agora.getTime() >= inicio.getTime() && agora.getTime() <= fin;
 }
 

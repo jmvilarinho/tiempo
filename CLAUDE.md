@@ -257,7 +257,7 @@ When changing data sources, update these constants rather than scattering URLs.
     fetches `getresultados` just for the name before rendering. Keep the header line
     tolerant of empty values — don't print `Competición ()` when the group is missing.
 - **Live scores:** after a jornada renders, `show_resultados` collects the matches that may be
-  in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 60 min, or a provisional
+  in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 120 min, or a provisional
   score today) and `actualiza_directo` asks `?type=getdirecto` in the background (`directo.py`
   in `scripts_movil`, cached 90 s per page and shared by all users). RFEF teams send
   `&rfef=1&codcompeticion=&codgrupo=` and get the panels of `marcadores.rfef.es/pnfg/?accion=1`;
