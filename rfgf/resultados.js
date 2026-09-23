@@ -44,12 +44,12 @@ async function load_resultados(cod_grupo, cod_equipo, jornada, cod_competicion, 
 	hideLoading();
 }
 
-// Cada render de resultados leva un número: o marcador en directo que chegue
-// dun render anterior (o usuario xa cambiou de xornada) descártase
-var xeracion_resultados = 0;
+// Cada render de resultados ou xornadas leva un número: o marcador en directo
+// que chegue dun render anterior (o usuario xa cambiou de páxina) descártase
+var xeracion_directo = 0;
 
 function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, rfef = false) {
-	xeracion_resultados += 1;
+	xeracion_directo += 1;
 	var directo_candidatos = [];
 	$('#results').append('<br>');
 	linea_competicion = data.nombre_competicion ? data.nombre_competicion : '';
@@ -94,7 +94,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		jQuery.each(data.partidos, function (index, item) {
 			if (en_xogo_agora(item, cod_equipo))
 				directo_candidatos.push({
-					idx: index,
+					celda: 'marcador_' + index,
 					cod_local: item.CodEquipo_local || '',
 					cod_visitante: item.CodEquipo_visitante || '',
 					local: item.Nombre_equipo_local || '',
@@ -190,7 +190,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		$('#results').append('</table>');
 
 		if (directo_candidatos.length > 0)
-			actualiza_directo(data.codigo_competicion || cod_competicion, data.codigo_grupo || codgrupo, data.jornada || jornada, rfef, directo_candidatos, xeracion_resultados);
+			actualiza_directo(data.codigo_competicion || cod_competicion, data.codigo_grupo || codgrupo, data.jornada || jornada, rfef, directo_candidatos, xeracion_directo);
 
 	} else {
 		$('#results').append('<br><p>Non se atoparon resultados.</p><br>');
@@ -249,9 +249,11 @@ function busca_partido_directo(partidos, candidato) {
 
 // Segunda fonte para os partidos en xogo, que o lambda garda só 90 s: os paneis
 // de marcadores.rfef.es para a RFEF e a xornada da portada de resultados de
-// futgal.es para a RFGF. Píntase por riba do marcador de getresultados cunha
-// cor propia (marcador_directo) e o minuto, se o trae
-async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candidatos, xeracion) {
+// futgal.es para a RFGF. Píntase por riba do marcador de getresultados ou
+// getequipo cunha cor propia (marcador_directo) e o minuto, se o trae.
+// Cada candidato leva o id da súa celda (celda) e, se a cor de fondo depende
+// do marcador (xornadas: vitoria / empate / derrota), fondo(goles_casa, goles_fora)
+async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candidatos, xeracion, lenda = 'lenda_directo') {
 	var valido = v => v && v != 'undefined';
 	var url = remote_url + '?type=getdirecto';
 	if (rfef) {
@@ -271,7 +273,7 @@ async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candi
 		if (!response.ok)
 			throw new Error('Network response was not ok');
 		const data = await response.json();
-		if (xeracion != xeracion_resultados)
+		if (xeracion != xeracion_directo)
 			return;
 		if (!data || data.is_ok != 'true' || !data.data || !data.data.partidos)
 			throw new Error('Sen datos do directo: ' + (data ? data.error : ''));
@@ -286,11 +288,13 @@ async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candi
 			var html = '<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>';
 			if (p.minuto)
 				html += '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>';
-			$('#marcador_' + candidato.idx).html(html);
+			$('#' + candidato.celda).html(html);
+			if (candidato.fondo)
+				$('#' + candidato.celda).css('background-color', candidato.fondo(p.Goles_casa, p.Goles_visitante));
 			algun = true;
 		});
 		if (algun)
-			$('#lenda_directo').show();
+			$('#' + lenda).show();
 	} catch (error) {
 		console.error('Directo:', error.message);
 	}

@@ -52,6 +52,8 @@ async function load_xornadas(cod_equipo, addHistory = true, rfef = false, codgru
 }
 
 function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
+	xeracion_directo += 1;
+	var xeracion = xeracion_directo;
 	lineas = 0;
 	$('#results').append('<br>');
 	jQuery.each(data.competiciones_equipo, function (index, itemCompeticion) {
@@ -70,6 +72,8 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 		crea_botons('xornadas', cod_equipo, itemCompeticion.cod_grupo, itemCompeticion.cod_competicion, rfef);
 
 		if (itemCompeticion.partidos.length > 0) {
+			var bloque = index;
+			var directo_candidatos = [];
 
 			$('#results').append('<table class="partidos" >');
 			$('#results').append('<tr>'
@@ -152,6 +156,21 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				goles_fuera = item.goles_fuera || '';
 				color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, goles_casa, goles_fuera);
 
+				// partido que pode estar en xogo: o marcador en directo chega despois (actualiza_directo)
+				if (en_xogo_agora(item, cod_equipo)) {
+					var fondo_fila = background;
+					directo_candidatos.push({
+						celda: 'xmarcador_' + bloque + '_' + index,
+						jornada: item.jornada || '',
+						cod_local: item.codequipo_casa || '',
+						cod_visitante: item.codequipo_fuera || '',
+						local: equipo_casa,
+						visitante: equipo_fuera,
+						fecha: item.fecha || '',
+						fondo: (g1, g2) => color_goles(fondo_fila, cod_equipo, item.codequipo_casa, item.codequipo_fuera, g1, g2)
+					});
+				}
+
 				if (marcador_provisional(item))
 					xogo = '<br>(en xogo)';
 				else
@@ -176,7 +195,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				$('#results').append('<tr>'
 					+ '<td style="background-color:' + background + ';" >' + fecha_barras(item.fecha) + hora + '</td>'
 					+ '<td style="background-color:' + background + ';" align="right" >' + casa + '</td>'
-					+ '<td style="background-color:' + color_resultado + ';" align="center" >' + goles_html + '</td>'
+					+ '<td id="xmarcador_' + bloque + '_' + index + '" style="background-color:' + color_resultado + ';" align="center" >' + goles_html + '</td>'
 					+ '<td style="background-color:' + background + ';" align="left" >' + fuera + '</td>'
 					+ '<td style="background-color:' + background + ';" >' + fecha_barras(item.fecha) + hora2 + '</td>'
 					+ '<td style="background-color:' + background + ';" >' + (item.campo ? campo : '') + '</td>'
@@ -186,7 +205,16 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				$('#results').append('<tr>'
 					+ '<td colspan="6" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_temporal">Marcador temporal</span> (partido en xogo)</td>'
 					+ '</tr>');
+			// a lenda do directo só se amosa se chega algún marcador
+			if (directo_candidatos.length > 0)
+				$('#results').append('<tr id="lenda_directo_' + bloque + '" style="display:none;">'
+					+ '<td colspan="6" align="left" style="background-color:#ffffff;font-size:12px;"><span class="marcador_directo">Marcador en directo (' + (rfef ? 'marcadores.rfef.es' : 'futgal.es') + ')</span></td>'
+					+ '</tr>');
 			$('#results').append('</table>');
+
+			// só pode estar en xogo o partido da xornada actual: unha consulta por competición
+			if (directo_candidatos.length > 0)
+				actualiza_directo(itemCompeticion.cod_competicion, itemCompeticion.cod_grupo, directo_candidatos[0].jornada, rfef, directo_candidatos, xeracion, 'lenda_directo_' + bloque);
 
 		} else {
 			$('#results').append('<br><p>Non se atoparon xornadas.</p><br>');

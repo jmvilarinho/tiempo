@@ -256,7 +256,8 @@ When changing data sources, update these constants rather than scattering URLs.
     `#clasificacion/...` nothing is cached yet, so `cache_nombre_competicion` (in `index.js`)
     fetches `getresultados` just for the name before rendering. Keep the header line
     tolerant of empty values — don't print `Competición ()` when the group is missing.
-- **Live scores:** after a jornada renders, `show_resultados` collects the matches that may be
+- **Live scores:** after a jornada renders, `show_resultados` (and `show_xornadas`, per
+  competition block, recomputing the `color_goles` background of the cell) collects the matches that may be
   in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 120 min, or a provisional
   score today) and `actualiza_directo` asks `?type=getdirecto` in the background (`directo.py`
   in `scripts_movil`, cached 90 s per page and shared by all users). RFEF teams send
@@ -265,7 +266,10 @@ When changing data sources, update these constants rather than scattering URLs.
   futgal.es results page (`NPortada?CodPortada=1000154`) loads (POST in the browser, but it
   takes the same parameters by GET, which is all the Google proxy does). Matches are paired by
   team codes when both sides have them (futgal) and otherwise by accent-insensitive names
-  (`normaliza_nome`), then painted in `.marcador_directo` (violet) with the minute. The RFEF
+  (`normaliza_nome`), then painted in `.marcador_directo` (violet) with the minute. Both views
+  render into `#results`, so they share one render counter (`xeracion_directo`) and a late
+  answer for a page the user already left is dropped. In xornadas only the current jornada
+  can be in play, so each competition makes a single request with that match's `jornada`. The RFEF
   panels cover futsal and football from Primera Federación down, **not LaLiga Primera**
   (Deportivo / Celta get no live score). `rfef.es/es/resultados` was ruled out: Cloudflare
   JS challenge, even through the Google proxy.
