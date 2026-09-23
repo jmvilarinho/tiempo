@@ -253,14 +253,17 @@ When changing data sources, update these constants rather than scattering URLs.
     `#clasificacion/...` nothing is cached yet, so `cache_nombre_competicion` (in `index.js`)
     fetches `getresultados` just for the name before rendering. Keep the header line
     tolerant of empty values — don't print `Competición ()` when the group is missing.
-- **Live scores (RFEF only):** after a jornada renders, `show_resultados` collects the RFEF
-  matches that may be in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 60 min,
-  or a provisional score today) and `actualiza_directo` asks `?type=getdirecto&codcompeticion=&codgrupo=`
-  in the background. That type scrapes the panels of `marcadores.rfef.es/pnfg/?accion=1`
-  (`directo.py` in `scripts_movil`, cached 90 s per panel, shared by all users), which trail the
-  match minute by minute; the score is matched by accent-insensitive team names
-  (`normaliza_nome`) and painted in `.marcador_directo` (violet) with the minute. The panels
-  cover RFEF futsal and football from Primera Federación down, **not LaLiga Primera**
+- **Live scores:** after a jornada renders, `show_resultados` collects the matches that may be
+  in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 60 min, or a provisional
+  score today) and `actualiza_directo` asks `?type=getdirecto` in the background (`directo.py`
+  in `scripts_movil`, cached 90 s per page and shared by all users). RFEF teams send
+  `&rfef=1&codcompeticion=&codgrupo=` and get the panels of `marcadores.rfef.es/pnfg/?accion=1`;
+  RFGF teams send `&codgrupo=&jornada=` and get `NFG_CmpResultados_POR_Exe`, the fragment the
+  futgal.es results page (`NPortada?CodPortada=1000154`) loads (POST in the browser, but it
+  takes the same parameters by GET, which is all the Google proxy does). Matches are paired by
+  team codes when both sides have them (futgal) and otherwise by accent-insensitive names
+  (`normaliza_nome`), then painted in `.marcador_directo` (violet) with the minute. The RFEF
+  panels cover futsal and football from Primera Federación down, **not LaLiga Primera**
   (Deportivo / Celta get no live score). `rfef.es/es/resultados` was ruled out: Cloudflare
   JS challenge, even through the Google proxy.
 - `rfgf/data/` and `rfgf/samples/` hold captured HTML/JSON fixtures of upstream responses,
