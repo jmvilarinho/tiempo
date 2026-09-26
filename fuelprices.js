@@ -241,7 +241,7 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 
 	tbody.innerHTML += "<tr><td " + td_style + " colspan='2'>"
 		+ "<img  src=\"img/down.png\" title=\"Distancia -5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + downDistanceKm + ")\" style=\"cursor: pointer;\"  >"
-		+ "&nbsp;&nbsp;<b>Precios Gasóleo A</b>&nbsp;&nbsp;"
+		+ "&nbsp;&nbsp;<b>Precios Gasóleo \"A\"</b>&nbsp;&nbsp;"
 		+ "<img  src=\"img/up.png\" title=\"Distancia +5 km.\" height=\"15px\" onclick=\"loadGasolinera('" + text + "'," + id_municipio + "," + lat + "," + lon + "," + upDistanceKm + ")\" style=\"cursor: pointer;\"  >"
 		+ "<br>"
 		+ "<small>Cerca de " + text + "</small><br>"
