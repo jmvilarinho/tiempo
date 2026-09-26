@@ -103,7 +103,10 @@ When changing data sources, update these constants rather than scattering URLs.
 - `index.html` loads `common.js`, `index.js`, `farmacia.cofc.js`, `fuelprices.js`,
   `farmacia.cofpo.js`, `poboacions.js`. On-call pharmacies are split by provincial college:
   `farmacia.cofc.js` (cofc.es, A Coruña, via `proxyHostFarmacia`) and `farmacia.cofpo.js`
-  (cofpo.org, Pontevedra, direct CORS). Fuel prices (ES + PT) live in `fuelprices.js`.
+  (cofpo.org, Pontevedra, direct CORS). Fuel prices (ES + PT) live in `fuelprices.js`; the
+  🗺️ row at the end of each price table (`fuelMapaRow`) opens `mapa.html` in a new tab — a
+  Google Maps JS API page (key `GOOGLE_MAPS_API_KEY` in that file) that plots the listed
+  stations labelled with their price plus the current location, all passed as JSON in the hash.
   The shared geo helpers `distance` (Haversine) and `getSafeLocation` are in `common.js`.
   `getSafeLocation()` is the single entry point for the current position: it tries a fast
   low-accuracy fix first and then GPS with a long timeout (Android needs far more than a

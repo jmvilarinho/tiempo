@@ -55,6 +55,21 @@ async function fetchFuelJson(url) {
 	return data;
 }
 
+// Fila final coa icona que abre mapa.html (Google Maps) nunha pestana nova coas gasolineras
+// da táboa etiquetadas co prezo e a ubicación actual (se se coñece). Os datos van no hash.
+function fuelMapaRow(td_style, result, pos, titulo, nomeDe, enderezoDe) {
+	const datos = {
+		t: titulo,
+		u: (pos && pos.latitude !== 0 && pos.longitude !== 0) ? [pos.latitude, pos.longitude] : null,
+		p: result.map(item => [item._lat, item._lon, item._price, nomeDe(item), enderezoDe(item)])
+	};
+	const row = document.createElement("tr");
+	row.innerHTML = "<td " + td_style + " colspan='2'>"
+		+ "<a href=\"mapa.html#" + encodeURIComponent(JSON.stringify(datos)) + "\" target=\"_blank\" rel=\"noopener\" title=\"Ver no mapa\" style=\"text-decoration:none;font-size:22px;\">🗺️</a>"
+		+ "</td>";
+	return row;
+}
+
 const CCAA_CODES = {
 	"Andalucía": "01",
 	"Aragón": "02",
@@ -337,6 +352,9 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 					const row = document.createElement("tr");
 					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal (" + comunidad + ")</a> " + data.Fecha + "</td>";
 					tbody.appendChild(row);
+					tbody.appendChild(fuelMapaRow(td_style, result, pos, "Gasóleo A cerca de " + text,
+						item => getField(item, ["Rótulo", "Rotulo"]),
+						item => getField(item, ["Dirección", "Direccion"]) + ", " + getField(item, ["Localidad"])));
 				}
 
 				showGasolinera(id_municipio, tbody, table);
@@ -522,6 +540,9 @@ async function loadGasolineraPT(text, id_municipio, lat, lon, fuel_distancia_max
 			const row = document.createElement("tr");
 			row.innerHTML = "<td " + td_style + " colspan='2'><a href='https://precoscombustiveis.dgeg.gov.pt' target=_new rel=noopener>DGEG (" + (distritoName || 'Portugal') + ")</a> " + lastDate + "</td>";
 			tbody.appendChild(row);
+			tbody.appendChild(fuelMapaRow(td_style, result, pos, "Gasóleo perto de " + text,
+				item => item.Marca || item.Nome || '-',
+				item => (item.Morada || '') + ", " + (item.Localidade || '')));
 		}
 
 		showGasolinera(id_municipio, tbody, table);

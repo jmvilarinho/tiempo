@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="gl">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Mapa gasolineras</title>
+	<link rel="icon" href="/tiempo/favicon.ico">
+	<script src="common.js?nocache=4"></script>
+	<style>
+		html, body { margin: 0; height: 100%; font-family: sans-serif; }
+		#cabeceira { padding: 6px 10px; font-size: 14px; background: #f5f5f5; border-bottom: 1px solid #ccc; }
+		#mapa { position: absolute; top: 32px; bottom: 0; left: 0; right: 0; }
+		.prezo {
+			background: #fff; border: 2px solid #1a73e8; border-radius: 6px; padding: 1px 4px;
+			font-size: 12px; font-weight: bold; white-space: nowrap;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+		}
+		.prezo.barato { border-color: #188038; background: #e6f4ea; }
+		.eu {
+			width: 14px; height: 14px; border-radius: 50%; background: #4285f4;
+			border: 3px solid #fff; box-shadow: 0 0 0 2px #4285f4;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="cabeceira"></div>
+	<div id="mapa"></div>
+	<script>
+		// Clave da Google Maps JavaScript API. É pública por deseño (o navegador tena que ver);
+		// protéxese na consola de Google Cloud, non ocultándoa:
+		//  - referentes HTTP: https://jmvilarinho.github.io/tiempo/* (+ http://localhost:8765/* para probas)
+		//  - restrición de API: só "Maps JavaScript API"
+		//  - cota diaria de cargas de mapa e alerta de orzamento
+		const GOOGLE_MAPS_API_KEY = 'AIzaSyCw5yHIaDsU_Ec95vFlTirFgrUMwKdpMnY';
+		// Os AdvancedMarker precisan un Map ID; DEMO_MAP_ID vale para probas.
+		const GOOGLE_MAPS_MAP_ID = 'DEMO_MAP_ID';
+
+		// Datos no hash (os pon fuelMapaLink en fuelprices.js):
+		//   { t: título, u: [lat, lon] ubicación actual ou null,
+		//     p: [[lat, lon, prezo, nome, enderezo], ...] }
+		let datos = null;
+		try {
+			datos = JSON.parse(decodeURIComponent(location.hash.substring(1)));
+		} catch (e) {
+			console.log('Datos do mapa non válidos: ' + e.message);
+		}
+
+		const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
+			c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+		async function initMapa() {
+			const { Map, InfoWindow } = await google.maps.importLibrary('maps');
+			const { LatLngBounds } = await google.maps.importLibrary('core');
+			const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
+
+			const mapa = new Map(document.getElementById('mapa'), {
+				center: { lat: 42.88, lng: -8.54 }, zoom: 8, mapId: GOOGLE_MAPS_MAP_ID
+			});
+
+			if (!datos || !Array.isArray(datos.p) || datos.p.length === 0) {
+				document.getElementById('cabeceira').textContent = 'Sen gasolineras para amosar.';
+				return;
+			}
+			document.getElementById('cabeceira').innerHTML = '<b>' + esc(datos.t) + '</b>';
+
+			const info = new InfoWindow();
+			const limites = new LatLngBounds();
+			const minimo = Math.min(...datos.p.map(p => p[2]));
+
+			datos.p.forEach(([lat, lon, prezo, nome, enderezo]) => {
+				const etiqueta = document.createElement('div');
+				etiqueta.className = prezo === minimo ? 'prezo barato' : 'prezo';
+				etiqueta.textContent = prezo.toFixed(3) + ' €';
+				const marcador = new AdvancedMarkerElement({
+					map: mapa, position: { lat: lat, lng: lon }, content: etiqueta, title: nome, gmpClickable: true
+				});
+				marcador.addEventListener('gmp-click', () => {
+					info.setContent('<b>' + esc(nome) + '</b><br>' + esc(enderezo) + '<br>' + prezo.toFixed(3) + ' €/l<br>'
+						+ '<a href="#" onclick="openMaps(event,' + lat + ',' + lon + ')">Google Maps</a>'
+						+ '&nbsp;|&nbsp;<a href="#" onclick="openWaze(event,' + lat + ',' + lon + ')">Waze</a>');
+					info.open({ map: mapa, anchor: marcador });
+				});
+				limites.extend({ lat: lat, lng: lon });
+			});
+
+			if (Array.isArray(datos.u)) {
+				const punto = document.createElement('div');
+				punto.className = 'eu';
+				new AdvancedMarkerElement({
+					map: mapa, position: { lat: datos.u[0], lng: datos.u[1] }, content: punto,
+					title: 'Ubicación actual', zIndex: 1000
+				});
+				limites.extend({ lat: datos.u[0], lng: datos.u[1] });
+			}
+
+			mapa.fitBounds(limites, 40);
+			// Cunha soa gasolineira fitBounds achégase de máis.
+			google.maps.event.addListenerOnce(mapa, 'idle', () => {
+				if (mapa.getZoom() > 15) mapa.setZoom(15);
+			});
+		}
+
+		const s = document.createElement('script');
+		s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(GOOGLE_MAPS_API_KEY)
+			+ '&v=weekly&loading=async&callback=initMapa';
+		s.async = true;
+		document.head.appendChild(s);
+	</script>
+</body>
+
+</html>
