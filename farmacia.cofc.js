@@ -66,7 +66,9 @@ function loadFarmacia(id_municipio, id_cofc) {
 						`;
 						cont += 1;
 					});
-					html += "";
+					html += "<hr>" + mapaLink("Farmacias de guardia en " + result[0].nombrePoblacion, pos,
+						result.map(f => [parseFloat(f.latitud), parseFloat(f.longitud), null, f.nombre, f.direccion,
+							"Horario: " + f.horario + "\nGuardia: " + f.nombreGuardiaTipoTurno + "\nTeléfono: " + f.telefono]));
 
 					const farmaciaDiv = document.getElementById("divFarmacia-" + id_cofc);
 					if (farmaciaDiv) {

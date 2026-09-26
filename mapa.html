@@ -4,9 +4,9 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Mapa gasolineras</title>
+	<title>Mapa</title>
 	<link rel="icon" href="/tiempo/favicon.ico">
-	<script src="common.js?nocache=4"></script>
+	<script src="common.js?nocache=5"></script>
 	<style>
 		html, body { margin: 0; height: 100%; font-family: sans-serif; }
 		#cabeceira { padding: 6px 10px; font-size: 14px; background: #f5f5f5; border-bottom: 1px solid #ccc; }
@@ -17,6 +17,11 @@
 			box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
 		}
 		.prezo.barato { border-color: #188038; background: #e6f4ea; }
+		.farmacia {
+			width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 4px;
+			background: #188038; color: #fff; font-size: 18px; font-weight: bold;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+		}
 		.eu {
 			width: 14px; height: 14px; border-radius: 50%; background: #4285f4;
 			border: 3px solid #fff; box-shadow: 0 0 0 2px #4285f4;
@@ -37,9 +42,10 @@
 		// Os AdvancedMarker precisan un Map ID; DEMO_MAP_ID vale para probas.
 		const GOOGLE_MAPS_MAP_ID = 'DEMO_MAP_ID';
 
-		// Datos no hash (os pon fuelMapaLink en fuelprices.js):
+		// Datos no hash (os pon mapaLink en common.js; úsano fuelprices.js e farmacia.*.js):
 		//   { t: título, u: [lat, lon] ubicación actual ou null,
-		//     p: [[lat, lon, prezo, nome, enderezo], ...] }
+		//     p: [[lat, lon, prezo|null, nome, enderezo, detalle], ...] }
+		// Sen prezo (farmacias) o marcador é unha cruz; detalle son liñas separadas por salto de liña.
 		let datos = null;
 		try {
 			datos = JSON.parse(decodeURIComponent(location.hash.substring(1)));
@@ -60,24 +66,34 @@
 			});
 
 			if (!datos || !Array.isArray(datos.p) || datos.p.length === 0) {
-				document.getElementById('cabeceira').textContent = 'Sen gasolineras para amosar.';
+				document.getElementById('cabeceira').textContent = 'Nada que amosar no mapa.';
 				return;
 			}
 			document.getElementById('cabeceira').innerHTML = '<b>' + esc(datos.t) + '</b>';
+			if (datos.t) document.title = datos.t;
 
 			const info = new InfoWindow();
 			const limites = new LatLngBounds();
-			const minimo = Math.min(...datos.p.map(p => p[2]));
+			const prezos = datos.p.map(p => p[2]).filter(v => typeof v === 'number');
+			const minimo = prezos.length ? Math.min(...prezos) : null;
 
-			datos.p.forEach(([lat, lon, prezo, nome, enderezo]) => {
+			datos.p.forEach(([lat, lon, prezo, nome, enderezo, detalle]) => {
+				const conPrezo = typeof prezo === 'number';
 				const etiqueta = document.createElement('div');
-				etiqueta.className = prezo === minimo ? 'prezo barato' : 'prezo';
-				etiqueta.textContent = prezo.toFixed(3) + ' €';
+				if (conPrezo) {
+					etiqueta.className = prezo === minimo ? 'prezo barato' : 'prezo';
+					etiqueta.textContent = prezo.toFixed(3) + ' €';
+				} else {
+					etiqueta.className = 'farmacia';
+					etiqueta.textContent = '+';
+				}
 				const marcador = new AdvancedMarkerElement({
 					map: mapa, position: { lat: lat, lng: lon }, content: etiqueta, title: nome, gmpClickable: true
 				});
 				marcador.addEventListener('gmp-click', () => {
-					info.setContent('<b>' + esc(nome) + '</b><br>' + esc(enderezo) + '<br>' + prezo.toFixed(3) + ' €/l<br>'
+					info.setContent('<b>' + esc(nome) + '</b><br>' + esc(enderezo) + '<br>'
+						+ (conPrezo ? prezo.toFixed(3) + ' €/l<br>' : '')
+						+ (detalle ? esc(detalle).replace(/\n/g, '<br>') + '<br>' : '')
 						+ '<a href="#" onclick="openMaps(event,' + lat + ',' + lon + ')">Google Maps</a>'
 						+ '&nbsp;|&nbsp;<a href="#" onclick="openWaze(event,' + lat + ',' + lon + ')">Waze</a>');
 					info.open({ map: mapa, anchor: marcador });
@@ -96,7 +112,7 @@
 			}
 
 			mapa.fitBounds(limites, 40);
-			// Cunha soa gasolineira fitBounds achégase de máis.
+			// Cun só punto fitBounds achégase de máis.
 			google.maps.event.addListenerOnce(mapa, 'idle', () => {
 				if (mapa.getZoom() > 15) mapa.setZoom(15);
 			});

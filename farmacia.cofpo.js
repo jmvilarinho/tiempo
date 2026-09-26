@@ -71,7 +71,7 @@ function loadFarmaciaCofpo(id_municipio, id_cofpo) {
 					f._distance = distance(currentLat, currentLon, latitem, lonitem);
 				});
 
-				renderFarmaciaCofpo(id_municipio, id_cofpo, buildFarmaciaCofpoHtml(farmacias));
+				renderFarmaciaCofpo(id_municipio, id_cofpo, buildFarmaciaCofpoHtml(farmacias, pos));
 			});
 		})
 		.catch(error => {
@@ -81,7 +81,8 @@ function loadFarmaciaCofpo(id_municipio, id_cofpo) {
 }
 
 // Constrúe o HTML dunha lista de farmacias xa deduplicadas (cada unha con .tipos e ._obs).
-function buildFarmaciaCofpoHtml(farmacias) {
+// pos (opcional) é a ubicación actual, para amosala tamén no mapa.
+function buildFarmaciaCofpoHtml(farmacias, pos) {
 	if (farmacias.length === 0) {
 		return "<p>No hay farmacias de guardia en esta población.</p>";
 	}
@@ -107,6 +108,9 @@ function buildFarmaciaCofpoHtml(farmacias) {
 			${distanceInfo}
 		`;
 	});
+	html += "<hr>" + mapaLink("Farmacias de guardia en " + farmacias[0].municipio, pos,
+		farmacias.map(f => [parseFloat(f.latitud), parseFloat(f.longitud), null, f.nombre, f.direccion,
+			"Turno: " + (f.tipos.length ? f.tipos.join(', ') : f.tipo) + "\nTeléfono: " + f.telefono]));
 	return html;
 }
 

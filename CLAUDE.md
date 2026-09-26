@@ -107,6 +107,8 @@ When changing data sources, update these constants rather than scattering URLs.
   🗺️ row at the end of each price table (`fuelMapaRow`) opens `mapa.html` in a new tab — a
   Google Maps JS API page (key `GOOGLE_MAPS_API_KEY` in that file) that plots the listed
   stations labelled with their price plus the current location, all passed as JSON in the hash.
+  The link itself is built by `mapaLink` in `common.js`, which both pharmacy lists also append
+  at their end (points with a `null` price get a pharmacy-cross marker instead of a price label).
   The shared geo helpers `distance` (Haversine) and `getSafeLocation` are in `common.js`.
   `getSafeLocation()` is the single entry point for the current position: it tries a fast
   low-accuracy fix first and then GPS with a long timeout (Android needs far more than a

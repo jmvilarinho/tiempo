@@ -128,6 +128,18 @@ function geoResetCache() {
     _geoLastError = null;
 }
 
+// Ligazón (🗺️) que abre mapa.html nunha pestana nova cos puntos e a ubicación actual (se se
+// coñece). Os datos van en JSON no hash; cada punto é [lat, lon, prezo|null, nome, enderezo, detalle]
+// (prezo null = sen etiqueta de prezo, p.ex. farmacias; detalle é texto opcional para o InfoWindow).
+function mapaLink(titulo, pos, puntos) {
+    const datos = {
+        t: titulo,
+        u: (pos && pos.latitude !== 0 && pos.longitude !== 0) ? [pos.latitude, pos.longitude] : null,
+        p: puntos.filter(p => isFinite(p[0]) && isFinite(p[1]))
+    };
+    return "<a href=\"mapa.html#" + encodeURIComponent(JSON.stringify(datos)) + "\" target=\"_blank\" rel=\"noopener\" title=\"Ver no mapa\" style=\"text-decoration:none;font-size:22px;\">🗺️</a>";
+}
+
 function detectPlatform() {
     return {
         isAndroid: /Android/i.test(navigator.userAgent),

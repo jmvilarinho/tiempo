@@ -55,17 +55,12 @@ async function fetchFuelJson(url) {
 	return data;
 }
 
-// Fila final coa icona que abre mapa.html (Google Maps) nunha pestana nova coas gasolineras
-// da táboa etiquetadas co prezo e a ubicación actual (se se coñece). Os datos van no hash.
+// Fila final coa icona que abre mapa.html (Google Maps, ver mapaLink en common.js) nunha
+// pestana nova coas gasolineras da táboa etiquetadas co prezo e a ubicación actual.
 function fuelMapaRow(td_style, result, pos, titulo, nomeDe, enderezoDe) {
-	const datos = {
-		t: titulo,
-		u: (pos && pos.latitude !== 0 && pos.longitude !== 0) ? [pos.latitude, pos.longitude] : null,
-		p: result.map(item => [item._lat, item._lon, item._price, nomeDe(item), enderezoDe(item)])
-	};
 	const row = document.createElement("tr");
 	row.innerHTML = "<td " + td_style + " colspan='2'>"
-		+ "<a href=\"mapa.html#" + encodeURIComponent(JSON.stringify(datos)) + "\" target=\"_blank\" rel=\"noopener\" title=\"Ver no mapa\" style=\"text-decoration:none;font-size:22px;\">🗺️</a>"
+		+ mapaLink(titulo, pos, result.map(item => [item._lat, item._lon, item._price, nomeDe(item), enderezoDe(item)]))
 		+ "</td>";
 	return row;
 }
