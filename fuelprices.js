@@ -347,7 +347,7 @@ async function loadGasolinera(text, id_municipio, lat, lon, fuel_distancia_max_k
 					const row = document.createElement("tr");
 					row.innerHTML = "<td " + td_style + " colspan='2'><a href=https://geoportalgasolineras.es/geoportal-instalaciones/Inicio target=_new  rel=noopener >Geoportal (" + comunidad + ")</a> " + data.Fecha + "</td>";
 					tbody.appendChild(row);
-					tbody.appendChild(fuelMapaRow(td_style, result, pos, "Gasóleo A cerca de " + text,
+					tbody.appendChild(fuelMapaRow(td_style, result, pos, "Gasóleo \"A\" cerca de " + text,
 						item => getField(item, ["Rótulo", "Rotulo"]),
 						item => getField(item, ["Dirección", "Direccion"]) + ", " + getField(item, ["Localidad"])));
 				}
