@@ -300,10 +300,18 @@ Cada app instálase por separado: `manifest.webmanifest` na raíz (Webcam Galici
 `/tiempo/` e nun servidor local. As iconas viven en `img/app/` (192, 512, unha `maskable`
 512 con marxe de seguridade e unha `apple-touch-icon` de 180 sen transparencia).
 
-`pwa.js` (na raíz, cargado tamén por `rfgf/index.html` como `../pwa.js`) rexistra o service
-worker e amosa o botón flotante «Instalar» cando salta `beforeinstallprompt`. Rexistra
-sempre `sw.js` da raíz **co ámbito do propio `sw.js`** (`/tiempo/`), non co da páxina, para
-que as dúas apps compartan un único rexistro.
+`pwa.js` (na raíz, cargado tamén por `rfgf/index.html` como `../pwa.js`) só rexistra o
+service worker, sempre o `sw.js` da raíz e **co ámbito do propio `sw.js`** (`/tiempo/`), non
+co da páxina, para que as dúas apps compartan un único rexistro. Non hai botón propio de
+instalar: probouse e sobraba, instálase desde o menú do navegador.
+
+`rfgf/index.html` **non leva `<meta name="viewport">` a propósito**: o seu deseño (as tablas,
+os `font-size` en px espallados polos `*.js` e o `clamp(18px, 2vw, 20px)` do body) está feito
+para o ancho de reserva de 980 px que o móbil escala ata a pantalla. Engadirllo fai que todo
+se vexa moito máis grande e que as táboas non collan; habería que retocar todos eses tamaños.
+Non é necesario para instalar: comprobouse que Chrome dispara igual `beforeinstallprompt`.
+O da raíz si o leva (deseñouse con el). Por iso as media queries de 600/800 px de
+`rfgf/index.css` nunca se disparan nun móbil.
 
 `sw.js` non ten lista de precache a propósito: habería que mantela en sincronía cos
 `?nocache=` de cada HTML. Cachea o que se vai pedindo e apóiase en que a versión viaxa na
