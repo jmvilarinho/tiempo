@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "Info Fútbol",
+  "short_name": "Fútbol",
+  "description": "Resultados, clasificacións, calendario e actas dos equipos da RFGF e da RFEF.",
+  "lang": "gl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#598381",
+  "background_color": "#598381",
+  "icons": [
+    {
+      "src": "../img/app/rfgf-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../img/app/rfgf-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../img/app/rfgf-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

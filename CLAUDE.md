@@ -292,6 +292,28 @@ When changing data sources, update these constants rather than scattering URLs.
 - `rfgf/data/` and `rfgf/samples/` hold captured HTML/JSON fixtures of upstream responses,
   useful for understanding payload shapes when working offline.
 
+### Instalable como app (PWA)
+
+Cada app instálase por separado: `manifest.webmanifest` na raíz (Webcam Galicia) e
+`rfgf/manifest.webmanifest` (Info Fútbol). Todas as URLs dos manifests son **relativas**
+(`start_url: "./"`, iconas `img/app/...`) para que funcionen igual en GitHub Pages baixo
+`/tiempo/` e nun servidor local. As iconas viven en `img/app/` (192, 512, unha `maskable`
+512 con marxe de seguridade e unha `apple-touch-icon` de 180 sen transparencia).
+
+`pwa.js` (na raíz, cargado tamén por `rfgf/index.html` como `../pwa.js`) rexistra o service
+worker e amosa o botón flotante «Instalar» cando salta `beforeinstallprompt`. Rexistra
+sempre `sw.js` da raíz **co ámbito do propio `sw.js`** (`/tiempo/`), non co da páxina, para
+que as dúas apps compartan un único rexistro.
+
+`sw.js` non ten lista de precache a propósito: habería que mantela en sincronía cos
+`?nocache=` de cada HTML. Cachea o que se vai pedindo e apóiase en que a versión viaxa na
+URL, así que un bump de `nocache` xa é un fallo de caché. Documentos (navegacións e os
+fragmentos `.html` de `$.load`) van **rede primeiro** para que un deploy se vexa de
+inmediato; os estáticos (`script`/`style`/`font`, e `image` só de orixe propia) van
+stale-while-revalidate; **todo o demais pasa directo á rede sen tocar**: os proxies, as
+APIs, os `.m3u8`/`.ts` e as instantáneas das webcams non se deben cachear nunca. Se se
+cambia a estratexia, sobe `VERSION` en `sw.js` (borra as caches vellas ao activarse).
+
 ### State conventions
 
 State lives entirely in cookies (no localStorage, no server session). Helpers are duplicated
