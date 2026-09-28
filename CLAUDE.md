@@ -226,6 +226,17 @@ When changing data sources, update these constants rather than scattering URLs.
   `calendario.js`, `club.js`, `campo.js`, `acta.js`, `plantilla.js`, `favoritos.js`,
   `equipo.js`. Their `load_*`/`show_*` functions render directly into `#results` by appending
   HTML strings.
+- **Favoritos and calendario fetch one `getequipo` per team**, through a pool of six workers
+  that each take the next team off `por_cargar` as soon as they finish theirs, and are then
+  awaited with `Promise.all` (capped by a 30 s `Promise.race`, since the sort and the colour
+  legend come after). `get_data_equipo_async*` must therefore **return** its `fetch` chain.
+  Both used to gate concurrency and wait for completion by polling `favorite_load.length`
+  every 300 ms, which with a warm cache *was* the whole load time: 610 ms for eight
+  favourites, of which 26 ms were the requests. Compute the worker count **before** the loop
+  (`var fios = Math.min(6, por_cargar.length)`) — the workers shrink `por_cargar`, so
+  evaluating it in the `for` condition starts fewer of them than intended. Note
+  `favorite_load` is declared with `var` in `favoritos.js`, `calendario.js` *and*
+  `plantilla.js`, so they share one global; `plantilla.js` still gates with the 300 ms poll.
 - **`rfgf/utils.js`** is the shared toolkit: routing, the nav button bar (`crea_botons`,
   `add_back`), cookies, team metadata lookups, result colouring (`color_goles`), week/date
   helpers, loading spinner.

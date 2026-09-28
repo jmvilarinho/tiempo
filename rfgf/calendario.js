@@ -26,12 +26,27 @@ async function load_calendario(addHistory = true) {
 	arr_datos = [];
 	arr_event = [];
 	favorite_load = [];
-	for (var i = 0; i < arrayLength; i++) {
-		favorite_load.push(calendario[i]);
-		// limita concurrencia a 6
-		while (favorite_load.length > 6)
-			await new Promise(r => setTimeout(r, 300));
-		get_data_equipo_async_calendario(calendario[i])
+	// Seis fíos que van collendo equipos da cola (ver load_favoritos): cada un
+	// colle o seguinte en canto remata o seu, sen agardar quendas de 300 ms
+	var por_cargar = calendario.slice();
+	var tarefas_calendario = [];
+	// o número de fíos calcúlase antes: os propios fíos van baleirando
+	// por_cargar, así que na condición do for iría decrecendo
+	var fios = Math.min(6, por_cargar.length);
+	for (var fio = 0; fio < fios; fio++) {
+		tarefas_calendario.push((async function () {
+			while (por_cargar.length > 0) {
+				var equipo = por_cargar.shift();
+				favorite_load.push(equipo);
+				try {
+					await get_data_equipo_async_calendario(equipo);
+				} catch (e) {
+					console.error('calendario:', e.message);
+				}
+				if (favorite_load.length > 0)
+					$('#equipo_load').html(' (Cargando datos, pendientes ' + favorite_load.length + ')');
+			}
+		})());
 	}
 
 	var arrayLength = equipos.length;
@@ -61,15 +76,11 @@ async function load_calendario(addHistory = true) {
 	end_page();
 	hideLoading();
 
-	var x = 0;
-	while (x < 60000) {
-		$('#equipo_load').html(' (Cargando datos, pendientes ' + favorite_load.length + ')');
-		if (favorite_load.length <= 0)
-			break
-		// sleep 300 ms
-		await new Promise(r => setTimeout(r, 300));
-		x += 500;
-	}
+	// tope de seguridade, coma en load_favoritos: a lenda de cores vén despois
+	await Promise.race([
+		Promise.all(tarefas_calendario),
+		new Promise(r => setTimeout(r, 30000))
+	]);
 	$('#equipo_load').html('');
 
 	// Na lenda o texto vai en negro (posto no propio markup, así vale tamén para
@@ -174,7 +185,8 @@ async function get_data_equipo_async_calendario(cod_equipo) {
 	}
 	//console.log("GET " + url);
 
-	fetch(url)
+	// devólvese a promesa: load_calendario agárdaas con Promise.all
+	return fetch(url)
 		.then(response => {
 			if (!response.ok) {
 				favorite_load.pop();

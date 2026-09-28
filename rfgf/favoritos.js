@@ -20,12 +20,30 @@ async function load_favoritos(addHistory = true) {
 	add_back('favoritos');
 	$('#results').append('<div id="equipo_load">(Cargando datos ...)</div><div id="favoritos_tabla"></div><div id="favoritos_list"></div>');
 	favorite_load = [];
-	for (var i = 0; i < arrayLength; i++) {
-		favorite_load.push(favoritos[i]);
-		// limita concurrencia a 6
-		while (favorite_load.length > 6)
-			await new Promise(r => setTimeout(r, 300));
-		get_data_equipo_async(favoritos[i])
+	// Seis fíos que van collendo equipos da cola: cada un colle o seguinte en
+	// canto remata o seu. Antes isto era un bucle que agardaba 300 ms por
+	// quenda, e con oito favoritos e a caché quente eses 300 ms eran case toda
+	// a carga (as peticións tardaban 26 ms). Non se agarda por elas aquí: o
+	// resto da páxina píntase mentres chegan, e Promise.all está máis abaixo
+	var por_cargar = favoritos.slice();
+	var tarefas_favoritos = [];
+	// o número de fíos calcúlase antes: os propios fíos van baleirando
+	// por_cargar, así que na condición do for iría decrecendo
+	var fios = Math.min(6, por_cargar.length);
+	for (var fio = 0; fio < fios; fio++) {
+		tarefas_favoritos.push((async function () {
+			while (por_cargar.length > 0) {
+				var equipo = por_cargar.shift();
+				favorite_load.push(equipo);
+				try {
+					await get_data_equipo_async(equipo);
+				} catch (e) {
+					console.error('favoritos:', e.message);
+				}
+				if (favorite_load.length > 0)
+					$('#equipo_load').html(' (Cargando datos, pendientes ' + favorite_load.length + ')');
+			}
+		})());
 	}
 
 	var arrayLength = equipos.length;
@@ -54,15 +72,13 @@ async function load_favoritos(addHistory = true) {
 	end_page();
 	hideLoading();
 
-	var x = 0;
-	while (x < 60000) {
-		$('#equipo_load').html(' (Cargando datos, pendientes ' + favorite_load.length + ')');
-		if (favorite_load.length <= 0)
-			break
-		// sleep 300 ms
-		await new Promise(r => setTimeout(r, 300));
-		x += 500;
-	}
+	// Tope de seguridade: se algunha petición non contestase, non quedamos sen
+	// ordenar a táboa (o bucle de sondeo vello rendíase aos ~36 s). API Gateway
+	// corta aos 29 s, así que en condicións normais non se chega aquí
+	await Promise.race([
+		Promise.all(tarefas_favoritos),
+		new Promise(r => setTimeout(r, 30000))
+	]);
 	$('#equipo_load').html('');
 
 	//Ordenar resultados
@@ -105,7 +121,9 @@ async function get_data_equipo_async(cod_equipo, rfef = false) {
 	}
 	console.log("GET " + url);
 
-	fetch(url)
+	// devólvese a promesa: load_favoritos agárdaas con Promise.all, en vez de
+	// sondear favorite_load cada 300 ms
+	return fetch(url)
 		.then(response => {
 			if (!response.ok) {
 				favorite_load.pop();
