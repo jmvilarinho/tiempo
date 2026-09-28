@@ -342,7 +342,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 	}
 
 	// xornada actual que pode estar en xogo: o marcador en directo chega despois
-	// (actualiza_directo), así que as celdas do marcador pintanse aínda sen goles
+	// (pide_directo), así que as celdas do marcador pintanse aínda sen goles
 	var directo = codcompeticion && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') && en_xogo_agora(item, cod_equipo);
 
 	if (goles_casa == "" && goles_fuera == "" && !directo) {
@@ -409,7 +409,7 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 		var celda_fora = '#' + id_tabla + '_goles_fora';
 		var codequipo_casa = item.codequipo_casa;
 		var codequipo_fuera = item.codequipo_fuera;
-		actualiza_directo(codcompeticion, codgrupo, item.jornada || '', rfef, [{
+		pide_directo(codcompeticion, codgrupo, item.jornada || '', rfef, [{
 			cod_local: codequipo_casa || '',
 			cod_visitante: codequipo_fuera || '',
 			local: equipo_casa,

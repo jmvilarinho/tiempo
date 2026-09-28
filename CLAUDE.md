@@ -267,17 +267,26 @@ When changing data sources, update these constants rather than scattering URLs.
   separate rows, so the score cells are drawn even with no goals yet and the candidate brings its
   own `pinta(g1, g2, minuto)`) collects the matches that may be
   in play (`en_xogo_agora`: kick-off to kick-off + `duracion_min` + 120 min, or a provisional
-  score today) and `actualiza_directo` asks `?type=getdirecto` in the background (`directo.py`
-  in `scripts_movil`, cached 90 s per page and shared by all users). RFEF teams send
-  `&rfef=1&codcompeticion=&codgrupo=` and get the panels of `marcadores.rfef.es/pnfg/?accion=1`;
-  RFGF teams send `&codgrupo=&jornada=` and get `NFG_CmpResultados_POR_Exe`, the fragment the
-  futgal.es results page (`NPortada?CodPortada=1000154`) loads (POST in the browser, but it
-  takes the same parameters by GET, which is all the Google proxy does). Matches are paired by
+  score today). Each block hands them to `pide_directo`, which only **registers** them;
+  `lanza_directo` runs on the next task (a `setTimeout(…, 0)`, so the whole render has already
+  pushed its blocks) and fires the requests to `?type=getdirecto` (`directo.py` in
+  `scripts_movil`, cached 90 s per page and shared by all users). **One request per source, not
+  per block:** an RFEF panel carries every competition of that sport (the futsal one is ~350 KB
+  with 17 groups of 5 competitions), so all the RFEF blocks of the page go in a single
+  `&rfef=1&codcompeticion=A,B&codgrupo=gA,gB` — two **parallel** lists, competition *i* played in
+  group *i*, an empty group meaning "every group of that competition"; `partidos_do_bloque` then
+  hands each block its own matches by the `codcompeticion` / `codgrupo` the answer carries. The
+  futgal fragment `NFG_CmpResultados_POR_Exe` (the one the results page
+  `NPortada?CodPortada=1000154` loads — POST in the browser, but it takes the same parameters by
+  GET, which is all the Google proxy does) **cannot** do that: without `CodGrupo` it answers an
+  empty 548-byte page and the portada that loads it carries no score at all, only the AJAX hole,
+  so RFGF blocks still send `&codgrupo=&jornada=` one per group and only identical ones merge.
+  Matches are paired by
   team codes when both sides have them (futgal) and otherwise by accent-insensitive names
   (`normaliza_nome`), then painted in `.marcador_directo` (violet) with the minute. All three views
   render into `#results`, so they share one render counter (`xeracion_directo`) and a late
-  answer for a page the user already left is dropped. In xornadas only the current jornada
-  can be in play, so each competition makes a single request with that match's `jornada`. The RFEF
+  answer for a page the user already left is dropped, block by block. In xornadas only the current
+  jornada can be in play, so a block asks with that match's `jornada`. The RFEF
   panels cover futsal and football from Primera Federación down, **not LaLiga Primera**
   (Deportivo / Celta get no live score). `rfef.es/es/resultados` was ruled out: Cloudflare
   JS challenge, even through the Google proxy.

@@ -190,7 +190,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 		$('#results').append('</table>');
 
 		if (directo_candidatos.length > 0)
-			actualiza_directo(data.codigo_competicion || cod_competicion, data.codigo_grupo || codgrupo, data.jornada || jornada, rfef, directo_candidatos, xeracion_directo);
+			pide_directo(data.codigo_competicion || cod_competicion, data.codigo_grupo || codgrupo, data.jornada || jornada, rfef, directo_candidatos, xeracion_directo);
 
 	} else {
 		$('#results').append('<br><p>Non se atoparon resultados.</p><br>');
@@ -254,51 +254,106 @@ function busca_partido_directo(partidos, candidato) {
 // Cada candidato leva o id da súa celda (celda) e, se a cor de fondo depende
 // do marcador (xornadas: vitoria / empate / derrota), fondo(goles_casa, goles_fora).
 // Se o marcador non cabe nunha celda (portada: un gol en cada fila), o candidato
-// trae pinta(goles_casa, goles_fora, html_minuto) e encárgase el
-async function actualiza_directo(cod_competicion, codgrupo, jornada, rfef, candidatos, xeracion, lenda = 'lenda_directo') {
+// trae pinta(goles_casa, goles_fora, html_minuto) e encárgase el.
+//
+// Os bloques non piden cada un o seu: rexístranse aquí e resólvense xuntos na
+// tarefa seguinte, cando o render xa rematou de pendurar todos (por iso o
+// setTimeout, e non un microtask). Un panel da RFEF trae todas as competicións
+// do deporte, así que todos os bloques RFEF da páxina van nunha soa petición,
+// coas competicións e os grupos en listas paralelas. O fragmento de futgal.es
+// só sabe dar un grupo — sen CodGrupo devolve a páxina baleira —, así que aí
+// segue habendo unha petición por grupo e xornada e só se xuntan os idénticos.
+var pendentes_directo = [];
+var temporizador_directo = null;
+
+function pide_directo(cod_competicion, codgrupo, jornada, rfef, candidatos, xeracion, lenda = 'lenda_directo') {
 	var valido = v => v && v != 'undefined';
+	if (!candidatos || candidatos.length == 0)
+		return;
+	if (rfef ? !valido(cod_competicion) : !(valido(codgrupo) && valido(jornada)))
+		return;
+	pendentes_directo.push({
+		rfef: rfef,
+		cod_competicion: valido(cod_competicion) ? String(cod_competicion) : '',
+		codgrupo: valido(codgrupo) ? String(codgrupo) : '',
+		jornada: valido(jornada) ? String(jornada) : '',
+		candidatos: candidatos,
+		xeracion: xeracion,
+		lenda: lenda
+	});
+	if (temporizador_directo === null)
+		temporizador_directo = setTimeout(lanza_directo, 0);
+}
+
+function lanza_directo() {
+	var bloques = pendentes_directo;
+	pendentes_directo = [];
+	temporizador_directo = null;
+	var peticions = {};
+	jQuery.each(bloques, function (index, bloque) {
+		var chave = bloque.rfef ? 'rfef' : 'futgal/' + bloque.codgrupo + '/' + bloque.jornada;
+		if (!peticions[chave])
+			peticions[chave] = [];
+		peticions[chave].push(bloque);
+	});
+	for (var chave in peticions)
+		actualiza_directo(peticions[chave]);
+}
+
+// Unha resposta pode traer varias competicións e varios grupos: quédanse os
+// partidos deste bloque. Os códigos só se comparan cando veñen, para que siga
+// valendo unha resposta da lambda vella (que non manda codcompeticion)
+function partidos_do_bloque(partidos, bloque) {
+	return partidos.filter(function (p) {
+		if (p.codcompeticion && bloque.cod_competicion && p.codcompeticion != bloque.cod_competicion)
+			return false;
+		if (p.codgrupo && bloque.codgrupo && p.codgrupo != bloque.codgrupo)
+			return false;
+		return true;
+	});
+}
+
+async function actualiza_directo(bloques) {
 	var url = remote_url + '?type=getdirecto';
-	if (rfef) {
-		if (!valido(cod_competicion))
-			return;
-		url += '&rfef=1&codcompeticion=' + cod_competicion;
-		if (valido(codgrupo))
-			url += '&codgrupo=' + codgrupo;
-	} else {
-		if (!valido(codgrupo) || !valido(jornada))
-			return;
-		url += '&codgrupo=' + codgrupo + '&jornada=' + jornada;
-	}
+	if (bloques[0].rfef)
+		// listas paralelas: a competición i xógase no grupo i
+		url += '&rfef=1&codcompeticion=' + bloques.map(b => b.cod_competicion).join(',')
+			+ '&codgrupo=' + bloques.map(b => b.codgrupo).join(',');
+	else
+		url += '&codgrupo=' + bloques[0].codgrupo + '&jornada=' + bloques[0].jornada;
 	console.log("GET " + url);
 	try {
 		const response = await fetch(url);
 		if (!response.ok)
 			throw new Error('Network response was not ok');
 		const data = await response.json();
-		if (xeracion != xeracion_directo)
-			return;
 		if (!data || data.is_ok != 'true' || !data.data || !data.data.partidos)
 			throw new Error('Sen datos do directo: ' + (data ? data.error : ''));
 
-		var algun = false;
-		jQuery.each(candidatos, function (index, candidato) {
-			var p = busca_partido_directo(data.data.partidos, candidato);
-			if (!p || p.Goles_casa === '' || p.Goles_visitante === '')
+		jQuery.each(bloques, function (index, bloque) {
+			if (bloque.xeracion != xeracion_directo)
 				return;
-			if (p.estado != 'enjuego' && p.estado != 'prov')
-				return;
-			var minuto = p.minuto ? '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>' : '';
-			if (candidato.pinta) {
-				candidato.pinta(p.Goles_casa, p.Goles_visitante, minuto);
-			} else {
-				$('#' + candidato.celda).html('<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>' + minuto);
-				if (candidato.fondo)
-					$('#' + candidato.celda).css('background-color', candidato.fondo(p.Goles_casa, p.Goles_visitante));
-			}
-			algun = true;
+			var partidos = partidos_do_bloque(data.data.partidos, bloque);
+			var algun = false;
+			jQuery.each(bloque.candidatos, function (index, candidato) {
+				var p = busca_partido_directo(partidos, candidato);
+				if (!p || p.Goles_casa === '' || p.Goles_visitante === '')
+					return;
+				if (p.estado != 'enjuego' && p.estado != 'prov')
+					return;
+				var minuto = p.minuto ? '<br><span class="marcador_directo" style="font-size:10px;">min ' + p.minuto + '</span>' : '';
+				if (candidato.pinta) {
+					candidato.pinta(p.Goles_casa, p.Goles_visitante, minuto);
+				} else {
+					$('#' + candidato.celda).html('<span class="marcador_directo">' + p.Goles_casa + ' - ' + p.Goles_visitante + '</span>' + minuto);
+					if (candidato.fondo)
+						$('#' + candidato.celda).css('background-color', candidato.fondo(p.Goles_casa, p.Goles_visitante));
+				}
+				algun = true;
+			});
+			if (algun)
+				$('#' + bloque.lenda).show();
 		});
-		if (algun)
-			$('#' + lenda).show();
 	} catch (error) {
 		console.error('Directo:', error.message);
 	}

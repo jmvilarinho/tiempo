@@ -156,7 +156,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 				goles_fuera = item.goles_fuera || '';
 				color_resultado = color_goles(background, cod_equipo, item.codequipo_casa, item.codequipo_fuera, goles_casa, goles_fuera);
 
-				// partido que pode estar en xogo: o marcador en directo chega despois (actualiza_directo)
+				// partido que pode estar en xogo: o marcador en directo chega despois (pide_directo)
 				if (en_xogo_agora(item, cod_equipo)) {
 					var fondo_fila = background;
 					directo_candidatos.push({
@@ -214,7 +214,7 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 
 			// só pode estar en xogo o partido da xornada actual: unha consulta por competición
 			if (directo_candidatos.length > 0)
-				actualiza_directo(itemCompeticion.cod_competicion, itemCompeticion.cod_grupo, directo_candidatos[0].jornada, rfef, directo_candidatos, xeracion, 'lenda_directo_' + bloque);
+				pide_directo(itemCompeticion.cod_competicion, itemCompeticion.cod_grupo, directo_candidatos[0].jornada, rfef, directo_candidatos, xeracion, 'lenda_directo_' + bloque);
 
 		} else {
 			$('#results').append('<br><p>Non se atoparon xornadas.</p><br>');
