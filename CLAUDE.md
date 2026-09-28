@@ -325,13 +325,22 @@ service worker, sempre o `sw.js` da raíz e **co ámbito do propio `sw.js`** (`/
 co da páxina, para que as dúas apps compartan un único rexistro. Non hai botón propio de
 instalar: probouse e sobraba, instálase desde o menú do navegador.
 
-`rfgf/index.html` **non leva `<meta name="viewport">` a propósito**: o seu deseño (as tablas,
-os `font-size` en px espallados polos `*.js` e o `clamp(18px, 2vw, 20px)` do body) está feito
-para o ancho de reserva de 980 px que o móbil escala ata a pantalla. Engadirllo fai que todo
-se vexa moito máis grande e que as táboas non collan; habería que retocar todos eses tamaños.
-Non é necesario para instalar: comprobouse que Chrome dispara igual `beforeinstallprompt`.
-O da raíz si o leva (deseñouse con el). Por iso as media queries de 600/800 px de
-`rfgf/index.css` nunca se disparan nun móbil.
+`rfgf/index.html` leva `<meta name="viewport" content="width=820">`: **un ancho de maquetado
+fixo, non `device-width`**. O seu deseño (as táboas, os `font-size` en px espallados polos
+`*.js` e o `clamp(18px, 2vw, 20px)` do body) está feito para que o móbil maquete a un ancho
+grande e escale ata a pantalla, que é o que fai o de reserva de 980 px cando non hai meta
+ningún. Poñer `width=device-width` deixa a páxina a tamaño real: todo moito máis grande e as
+táboas sen collen, e habería que retocar todos eses tamaños. Baixar ese número é, pola contra,
+a palanca para **agrandar** a vista: a 820 px todo sae ~10% máis grande e por igual, medido
+nun móbil de 390 px (a escala pasa de 390/980 = 0,398 a 390/820 = 0,476). Dous límites
+medidos: non subir de 900, porque aí o `2vw` do body dá exactamente 18 px, o `clamp` topa no
+mínimo e a ampliación cancélase soa (900 vese igual que 980); e ter en conta que `#results`
+xa desborda hoxe (1779 px de contido en 949 visibles no bloque de xornadas), así que agrandar
+custa a mesma proporción de scroll horizontal. As media queries de 800 e 450 px de
+`rfgf/index.css` están **comentadas**, e a de 600 px só toca o spinner, así que non hai
+breakpoint que se dispare ao cambiar ese ancho. O meta non é necesario para instalar:
+comprobouse que Chrome dispara igual `beforeinstallprompt`. O da raíz leva
+`width=device-width` (deseñouse con el).
 
 `sw.js` non ten lista de precache a propósito: habería que mantela en sincronía cos
 `?nocache=` de cada HTML. Cachea o que se vai pedindo e apóiase en que a versión viaxa na
