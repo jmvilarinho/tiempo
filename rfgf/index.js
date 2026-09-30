@@ -336,7 +336,14 @@ function show_clasificacion(data, cod_grupo, cod_equipo, rfef = false) {
 
 		html += base64_decode(data.html);
 		//console.log(html)
-		$('#results').append('<br><br>' + html + '<br>');
+		// O HTML de futgal/RFEF vén envolto nun <div class="col-sm-12">, ao que o
+		// bootstrap 3 lle pon float:left e width:100% desde 768 px (co viewport
+		// fixo de 800 do móbil, sempre). Como #results leva white-space:nowrap, a
+		// liña dos botóns que add_back() engade despois non pode partir e o
+		// navegador non a baixa debaixo do float: déixaa ao seu carón, en x=800,
+		// fóra da pantalla e só alcanzable con scroll horizontal. Este clear:both
+		// pecha o float para que o que veña detrás caia abaixo.
+		$('#results').append('<br><br>' + html + '<div style="clear:both;"></div><br>');
 		return;
 	}
 
