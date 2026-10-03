@@ -1,4 +1,8 @@
 var favorite_load = [];
+// Bloques do marcador en directo: cada táboa de favoritos rexístrase aquí mentres
+// se constrúe e pídense todos xuntos ao final (ver load_favoritos)
+var directo_favoritos = [];
+var directo_fav_seq = 0;
 
 async function load_favoritos(addHistory = true) {
 	displayLoading();
@@ -16,6 +20,10 @@ async function load_favoritos(addHistory = true) {
 	var arrayLength = favoritos.length;;
 
 	$('#results').html('');
+	// render novo: o marcador en directo que chegue dun render anterior descártase
+	xeracion_directo += 1;
+	var xeracion = xeracion_directo;
+	directo_favoritos = [];
 	var arr = [];
 	add_back('favoritos');
 	$('#results').append('<div id="equipo_load">(Cargando datos ...)</div><div id="favoritos_tabla"></div><div id="favoritos_list"></div>');
@@ -103,6 +111,13 @@ async function load_favoritos(addHistory = true) {
 	} catch (e) {
 		console.log(e);
 	}
+
+	// O directo pídese ao final, con todas as táboas xa pegadas: así todos os bloques
+	// entran na mesma quenda e os da RFEF van nunha soa petición (un panel da RFEF
+	// trae todas as competicións do deporte)
+	jQuery.each(directo_favoritos, function (index, bloque) {
+		pide_directo(bloque.cod_competicion, bloque.cod_grupo, bloque.jornada, bloque.rfef, [bloque.candidato], xeracion, bloque.lenda);
+	});
 }
 
 async function get_data_equipo_async(cod_equipo, rfef = false) {
@@ -207,6 +222,12 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 	goles_casa = item.goles_casa || '';
 	goles_fuera = item.goles_fuera || '';
 
+	// partido que pode estar en xogo: o marcador en directo chega despois, así que as
+	// celdas do marcador píntanse aínda sen goles
+	var directo = cod_competicion && !(equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') && en_xogo_agora(item, cod_equipo);
+	// as táboas de favoritos comparten id (a hora do partido): as celdas levan o seu
+	var id_directo = directo ? 'directo_fav_' + (++directo_fav_seq) : '';
+
 	campo = '';
 	if (equipo_casa == 'Descansa' || equipo_fuera == 'Descansa') {
 		dia_str = fecha_barras(item.fecha);
@@ -251,7 +272,7 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 			fuera = '&nbsp;' + equipo_fuera + '&nbsp;';
 	}
 
-	if (goles_casa == "" && goles_fuera == "") {
+	if (goles_casa == "" && goles_fuera == "" && !directo) {
 		datos = '<tr>'
 			+ '<td bgcolor="white" colspan=2>' + casa + '</td>'
 			+ '</tr>'
@@ -278,14 +299,47 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 			click = '';
 
 
+		var id_casa = directo ? ' id="' + id_directo + '_casa"' : '';
+		var id_fora = directo ? ' id="' + id_directo + '_fora"' : '';
+
 		datos = '<tr>'
 			+ '<td bgcolor="white">' + casa + '</td>'
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + '&nbsp;' + xogo + '</td>'
+			+ '<td' + id_casa + ' ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_casa_html + '&nbsp;' + xogo + '</td>'
 			+ '</tr>'
 			+ '<tr>'
 			+ '<td bgcolor="white">' + fuera + '</td>'
-			+ '<td ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_fuera_html + '&nbsp;' + xogo + '</td>'
+			+ '<td' + id_fora + ' ' + click + ' bgcolor="white" style="background-color:' + color_resultado + ';" align="center">&nbsp;' + goles_fuera_html + '&nbsp;' + xogo + '</td>'
 			+ '</tr>';
+	}
+
+	if (directo) {
+		// o marcador píntase nas dúas celdas (un gol en cada fila), como na portada
+		var celda_casa = '#' + id_directo + '_casa';
+		var celda_fora = '#' + id_directo + '_fora';
+		var codequipo_casa = item.codequipo_casa;
+		var codequipo_fuera = item.codequipo_fuera;
+		directo_favoritos.push({
+			cod_competicion: cod_competicion,
+			cod_grupo: cod_grupo,
+			jornada: item.jornada || '',
+			rfef: rfef,
+			lenda: 'lenda_' + id_directo,
+			candidato: {
+				cod_local: codequipo_casa || '',
+				cod_visitante: codequipo_fuera || '',
+				local: equipo_casa,
+				visitante: equipo_fuera,
+				fecha: item.fecha || '',
+				goles_local: goles_casa,
+				goles_visitante: goles_fuera,
+				pinta: function (g1, g2, minuto) {
+					var fondo = color_goles('white', cod_equipo, codequipo_casa, codequipo_fuera, g1, g2);
+					// o minuto só unha vez, baixo o gol do visitante
+					$(celda_casa).html('&nbsp;<span class="marcador_directo">' + g1 + '</span>&nbsp;').css('background-color', fondo);
+					$(celda_fora).html('&nbsp;<span class="marcador_directo">' + g2 + '</span>' + minuto + '&nbsp;').css('background-color', fondo);
+				}
+			}
+		});
 	}
 
 	return '<table id="' + id + '" class="favoritos">'
@@ -299,6 +353,7 @@ function show_portada_data_favoritos(title, cod_equipo, item, id, rfef = false, 
 		+ '<td bgcolor="#e8e5e4" colspan=2><b>Campo:</b>&nbsp;' + campo + '</td>'
 		+ '</tr>'
 		+ datos
+		+ (directo ? '<tr id="lenda_' + id_directo + '" style="display:none;"><td colspan=2 bgcolor="white" style="font-size:10px;"><span class="marcador_directo">Marcador en directo</span> (' + (rfef ? 'marcadores.rfef.es' : 'futgal.es') + ')</td></tr>' : '')
 		+ '<tr>'
 		+ '<td class="table_noborder">&nbsp;</td>'
 		+ '</tr>'

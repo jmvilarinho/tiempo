@@ -101,8 +101,7 @@ function show_resultados(data, codgrupo, cod_equipo, jornada, cod_competicion, r
 					visitante: item.Nombre_equipo_visitante || '',
 					fecha: item.fecha || '',
 					goles_local: item.Goles_casa,
-					goles_visitante: item.Goles_visitante,
-					provisional: marcador_provisional(item)
+					goles_visitante: item.Goles_visitante
 				});
 			background = getBackgroundColor(cont, (item.CodEquipo_local == cod_equipo || item.CodEquipo_visitante == cod_equipo));
 			cont += 1
@@ -254,15 +253,15 @@ function busca_partido_directo(partidos, candidato) {
 // a saltos e ás veces corta o antiscraper): se o marcador que xa está pintado (o de
 // getresultados ou getequipo, definitivo ou temporal) ten máis goles, é ese o máis
 // recente e non se pisa. Os goles non baixan nunca, así que o total vale de reloxo.
-// Co mesmo total só se pinta o directo se o que hai é temporal, para engadirlle o
-// minuto; se xa é definitivo déixase como está.
+// Co mesmo total si se pinta: é o que trae o minuto, e a RFEF non marca nunca o
+// resultado como provisional, así que o empate de totais é o caso normal dun
+// partido en xogo.
 function directo_mais_recente(candidato, p) {
 	var baleiro = g => g === '' || g === null || g === undefined;
 	if (baleiro(candidato.goles_local) || baleiro(candidato.goles_visitante))
 		return true;
 	var total = (a, b) => (parseInt(a, 10) || 0) + (parseInt(b, 10) || 0);
-	var diferenza = total(p.Goles_casa, p.Goles_visitante) - total(candidato.goles_local, candidato.goles_visitante);
-	return diferenza > 0 || (diferenza == 0 && candidato.provisional);
+	return total(p.Goles_casa, p.Goles_visitante) >= total(candidato.goles_local, candidato.goles_visitante);
 }
 
 // Segunda fonte para os partidos en xogo, que o lambda garda só 90 s: os paneis
@@ -273,8 +272,8 @@ function directo_mais_recente(candidato, p) {
 // do marcador (xornadas: vitoria / empate / derrota), fondo(goles_casa, goles_fora).
 // Se o marcador non cabe nunha celda (portada: un gol en cada fila), o candidato
 // trae pinta(goles_casa, goles_fora, html_minuto) e encárgase el.
-// Todos levan tamén o marcador que xa está pintado (goles_local, goles_visitante e
-// provisional) para non deixar que un directo atrasado pise un resultado máis novo
+// Todos levan tamén o marcador que xa está pintado (goles_local, goles_visitante)
+// para non deixar que un directo atrasado pise un resultado máis novo
 // (directo_mais_recente).
 //
 // Os bloques non piden cada un o seu: rexístranse aquí e resólvense xuntos na
