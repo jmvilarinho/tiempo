@@ -415,6 +415,9 @@ function show_portada_data(title, id_tabla, item, codcompeticion, codgrupo, nomb
 			local: equipo_casa,
 			visitante: equipo_fuera,
 			fecha: item.fecha || '',
+			goles_local: goles_casa,
+			goles_visitante: goles_fuera,
+			provisional: marcador_provisional(item),
 			pinta: function (g1, g2, minuto) {
 				var fondo = color_goles('white', cod_equipo, codequipo_casa, codequipo_fuera, g1, g2);
 				// o minuto só unha vez, baixo o gol do visitante

@@ -167,6 +167,9 @@ function show_xornadas(data, cod_equipo, codgrupo, rfef = false) {
 						local: equipo_casa,
 						visitante: equipo_fuera,
 						fecha: item.fecha || '',
+						goles_local: goles_casa,
+						goles_visitante: goles_fuera,
+						provisional: marcador_provisional(item),
 						fondo: (g1, g2) => color_goles(fondo_fila, cod_equipo, item.codequipo_casa, item.codequipo_fuera, g1, g2)
 					});
 				}
