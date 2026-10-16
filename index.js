@@ -290,10 +290,26 @@ function showOnlyAlternative(videoid, alternative, alternativeurl) {
 	showAlternative(videoid, alternative, alternativeurl);
 }
 
-async function showVideo(url, videoid, alternative = '', alternativeurl = '', fallbackurl = '') {
+async function showVideo(url, videoid, alternative = '', alternativeurl = '', fallbackurl = '', useIframe = false) {
 	var video = document.getElementById(videoid);
 	var image = document.getElementById(videoid + "-unavailable");
 	let urlToUse = url;
+	if (useIframe) {
+		if (!video || video.tagName !== 'IFRAME') {
+			console.error('Expected an iframe for showVideo: ' + videoid);
+			return;
+		}
+		video.src = url;
+		video.style.width = getAncho();
+		video.style.maxWidth = '1300px';
+		video.style.height = 'auto';
+		video.style.aspectRatio = '16 / 9';
+		video.style.border = '0';
+		video.style.display = 'block';
+		video.style.margin = '16px auto 0';
+		if (image) image.style.display = 'none';
+		return;
+	}
 
 	let alternativeShown = false;
 	function fallbackAlternative() {
