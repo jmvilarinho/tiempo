@@ -18,6 +18,7 @@
 var CAMARAMAR_WEBCAMS = {
 	'5_razo': 11,
 	'2_razo_art': 1034,
+	'23_razo_art_180': 1035,
 	'4_barranan': 15,
 	'3_aguieira': 17,
 	'33_carnota': 56,

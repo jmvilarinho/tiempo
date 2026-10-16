@@ -47,7 +47,10 @@
 				// Devólvese a promesa para que render_praias() poida agardar por ela.
 				return alternateMediaVarias('Razo', [
 					{ url: camaramarStream('5_razo'), label: 'Praia de Razo', stream: true, alternativa: alternativeuri },
-					{ url: camaramarStream('2_razo_art'), label: 'Praia de Razo (oeste)', stream: true, alternativa: alternativeuri2 }
+					{ url: camaramarStream('2_razo_art'), label: 'Praia de Razo (oeste)', stream: true, alternativa: alternativeuri2 },
+					// Paya Razo 180 (camaramar webcam 1035). Sen instantánea alternativa: a páxina
+					// de camaramar non expón unha propia para esta cámara.
+					{ url: camaramarStream('23_razo_art_180'), label: 'Paya Razo 180', stream: true }
 				], 8, true);
 			}
 		},
