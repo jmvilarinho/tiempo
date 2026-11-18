@@ -19,6 +19,7 @@ async function load_calendario(addHistory = true) {
 	var arrayLength = calendario.length;
 
 	$('#results').html('');
+	$('#other_msg').html(''); // a orixe dos datos non ten sentido cun equipo por petición
 	add_back('calendario');
 	$('#results').append('<div id="equipo_load">(Cargando datos ...)</div><main class="row" style="white-space: wrap;" ><div id="ec" class="col"></div></main>');
 
@@ -196,7 +197,7 @@ async function get_data_equipo_async_calendario(cod_equipo) {
 		})
 		.then(data => {
 			if (data) {
-				show_error(data);
+				show_error(data, false);
 				show_portada_equipo_calendario(data.data, cod_equipo);
 				favorite_load.pop();
 			} else {

@@ -554,7 +554,10 @@ function waitForElementToExist(selector) {
 		});
 	});
 }
-function show_error(data) {
+// mostrar_fonte = false: non se pinta a orixe dos datos ("cache, data (60 min cache)").
+// Favoritos e calendario fan unha petición por equipo, e a liña só reflectiría a do
+// último en contestar, así que nesas páxinas déixase baleira
+function show_error(data, mostrar_fonte = true) {
 	$('#error_msg').html('');
 	try {
 		if (data['is_ok'] != 'true') {
@@ -568,24 +571,21 @@ function show_error(data) {
 
 	//console.log(data);
 	$('#other_msg').html('');
+	if (!mostrar_fonte)
+		return;
 	try {
-		var msg = '<small>'
-		if ('source' in data) {
-			msg += data['source'];
-			if ('src_date' in data['data']) {
-				const date = new Date(data['data']['src_date'] * 1000);
-				const humanDate = date.toLocaleString('es-ES');
-				msg += ', ' + humanDate;
-			} else if ('timestamp' in data) {
-				const date = new Date(data['timestamp'] * 1000);
-				const humanDate = date.toLocaleString('es-ES');
-				msg += ', ' + humanDate;
-			}
-			if (data['source'] == 'cache' && 'cached_time' in data) {
-				msg += ' (' + data['cached_time'] + " min cache)";
-			}
-		} else if ('src_origin' in data['data']) {
-			msg += data['data']['src_origin'];
+		var datos = (data['data'] && typeof data['data'] == 'object') ? data['data'] : {};
+		// A Lambda só pon `source` cando a resposta sae da caché ('cache'); a primeira
+		// petición (dato recén obtido) chega sen el, e entón amósase a orixe (src_origin)
+		var fonte = data['source'] || datos['src_origin'] || '';
+		var msg = '<small>' + fonte;
+		var ts = ('src_date' in datos) ? datos['src_date'] : data['timestamp'];
+		if (ts) {
+			const humanDate = new Date(ts * 1000).toLocaleString('es-ES');
+			msg += (fonte ? ', ' : '') + humanDate;
+		}
+		if (data['source'] == 'cache' && 'cached_time' in data) {
+			msg += ' (' + data['cached_time'] + " min cache)";
 		}
 
 		msg += '</small>';

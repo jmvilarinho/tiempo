@@ -20,6 +20,7 @@ async function load_favoritos(addHistory = true) {
 	var arrayLength = favoritos.length;;
 
 	$('#results').html('');
+	$('#other_msg').html(''); // a orixe dos datos non ten sentido cun equipo por petición
 	// render novo: o marcador en directo que chegue dun render anterior descártase
 	xeracion_directo += 1;
 	var xeracion = xeracion_directo;
@@ -148,7 +149,7 @@ async function get_data_equipo_async(cod_equipo, rfef = false) {
 		})
 		.then(data => {
 			if (data) {
-				show_error(data);
+				show_error(data, false);
 				show_portada_equipo_favoritos(data.data, cod_equipo, rfef).forEach((element) => {
 					$('#favoritos_tabla').append(element['html']);
 				});
